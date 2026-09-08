@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Signup from '../components/modern/Signup';
+import { authApi } from '../api/authApi';
 
 const RegisterPage = () => {
   const { register } = useAuth();
@@ -27,7 +28,8 @@ const RegisterPage = () => {
   return (
     <Signup 
       onRegister={handleRegister} 
-      onNavigateToLogin={handleNavigateToLogin} 
+	  onNavigateToLogin={handleNavigateToLogin} 
+	  onOAuth={(provider) => { window.location.href = authApi.oauthStartUrl(provider); }}
     />
   );
 };

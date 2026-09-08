@@ -54,10 +54,10 @@ const ProfilePage = () => {
       title: post.title,
       content: post.content,
       image: post.media?.length > 0 && post.media[0].media_type === 'image' ? post.media[0].media_url : undefined,
-      likesCount: post.likesCount || 0,
-      commentsCount: post.commentsCount || 0,
+      likesCount: post.likes_count || 0,
+      commentsCount: post.comments_count || 0,
       sharesCount: 0,
-      isLikedByMe: false,
+      isLikedByMe: Boolean(post.is_liked_by_me),
       linkPreview: post.post_type === 'link' && post.link ? {
         url: post.link.url,
         title: post.link.title || post.link.url,

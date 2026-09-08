@@ -5,8 +5,10 @@ export const messageApi = {
     const res = await api.get('/messages/conversations');
     return res.data;
   },
-  getMessages: async (conversationId) => {
-    const res = await api.get(`/messages?conversation_id=${conversationId}`);
+  getMessages: async (conversationId, beforeId = null) => {
+    let url = `/messages?conversation_id=${conversationId}`;
+    if (beforeId) url += `&before_id=${beforeId}`;
+    const res = await api.get(url);
     return res.data;
   },
   sendMessage: async (receiverId, content) => {

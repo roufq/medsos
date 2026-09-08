@@ -27,6 +27,7 @@ func (r *NetworkRepositoryImpl) GetConnections(userID int64) ([]models.User, err
 		SELECT u.* FROM users u
 		INNER JOIN follows f ON (f.follower_id = ? AND f.followed_id = u.id) OR (f.followed_id = ? AND f.follower_id = u.id)
 		WHERE f.status = 'accepted'
+		LIMIT 200
 	`, userID, userID).Scan(&users).Error
 	return users, err
 }
@@ -37,6 +38,7 @@ func (r *NetworkRepositoryImpl) GetPendingRequests(userID int64) ([]models.User,
 		SELECT u.* FROM users u
 		INNER JOIN follows f ON f.follower_id = u.id
 		WHERE f.followed_id = ? AND f.status = 'pending'
+		LIMIT 100
 	`, userID).Scan(&users).Error
 	return users, err
 }

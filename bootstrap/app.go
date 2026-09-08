@@ -11,6 +11,7 @@ import (
 func Boot() contractsfoundation.Application {
 	return foundation.Setup().
 		WithMigrations(Migrations).
+		WithJobs(Jobs).
 		WithRouting(func() {
 			routes.Web()
 			routes.Api()

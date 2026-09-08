@@ -8,6 +8,8 @@ import (
 type UserRepository interface {
 	GetByID(id int64) (*models.User, error)
 	GetByEmail(email string) (*models.User, error)
+	GetByUsername(username string) (*models.User, error)
+	GetByIdentifier(identifier string) (*models.User, error)
 	Create(user *models.User) error
 	Update(user *models.User) error
 	ListAll() ([]models.User, error)
@@ -30,6 +32,22 @@ func (r *userRepo) GetByID(id int64) (*models.User, error) {
 func (r *userRepo) GetByEmail(email string) (*models.User, error) {
 	var user models.User
 	if err := db.DB.Where("email = ?", email).First(&user).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+func (r *userRepo) GetByUsername(username string) (*models.User, error) {
+	var user models.User
+	if err := db.DB.Where("LOWER(username) = LOWER(?)", username).First(&user).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+func (r *userRepo) GetByIdentifier(identifier string) (*models.User, error) {
+	var user models.User
+	if err := db.DB.Where("LOWER(email) = LOWER(?) OR LOWER(username) = LOWER(?)", identifier, identifier).First(&user).Error; err != nil {
 		return nil, err
 	}
 	return &user, nil

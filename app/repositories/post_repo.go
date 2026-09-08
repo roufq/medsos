@@ -3,13 +3,14 @@ package repositories
 import (
 	"goravel/app/models"
 	"goravel/pkg/db"
+	"gorm.io/gorm"
 )
 
 type PostRepository interface {
 	Create(post *models.Post) error
 	GetByID(id int64) (*models.Post, error)
-	ListAll(limit, offset int) ([]models.Post, error)
-	ListByUserID(userID int64) ([]models.Post, error)
+	ListAll(viewerID int64, limit, offset int, beforeID int64) ([]models.Post, error)
+	ListByUserID(viewerID, userID int64) ([]models.Post, error)
 	Delete(id int64) error
 	Update(post *models.Post) error
 	ToggleLike(postID, userID int64) (bool, error)
@@ -28,35 +29,65 @@ func (r *postRepo) Create(post *models.Post) error {
 
 func (r *postRepo) GetByID(id int64) (*models.Post, error) {
 	var post models.Post
-	if err := db.DB.Preload("User").Preload("Media").Preload("Link").Preload("Likes").Preload("Comments").Preload("Comments.User").First(&post, id).Error; err != nil {
+	if err := postPreloads(db.DB).First(&post, id).Error; err != nil {
 		return nil, err
 	}
 	return &post, nil
 }
 
-func (r *postRepo) ListAll(limit, offset int) ([]models.Post, error) {
+func (r *postRepo) ListAll(viewerID int64, limit, offset int, beforeID int64) ([]models.Post, error) {
 	var posts []models.Post
-	err := db.DB.Preload("User").Preload("Media").Preload("Link").Preload("Likes").Preload("Comments").Preload("Comments.User").
-		Order("created_at desc").
-		Limit(limit).Offset(offset).
-		Find(&posts).Error
+	query := db.DB.Model(&models.Post{}).
+		Select(`posts.*,
+			(SELECT COUNT(*) FROM post_likes WHERE post_likes.post_id = posts.id) AS likes_count,
+			(SELECT COUNT(*) FROM post_comments WHERE post_comments.post_id = posts.id) AS comments_count,
+			EXISTS(SELECT 1 FROM post_likes WHERE post_likes.post_id = posts.id AND post_likes.user_id = ?) AS is_liked_by_me,
+			EXISTS(SELECT 1 FROM saved_posts WHERE saved_posts.post_id = posts.id AND saved_posts.user_id = ?) AS is_saved_by_me,
+			(SELECT COUNT(*) FROM post_views WHERE post_views.post_id = posts.id) AS views_count,
+			(SELECT COUNT(*) FROM post_shares WHERE post_shares.post_id = posts.id) AS shares_count`, viewerID, viewerID).
+		Where(`EXISTS (SELECT 1 FROM users author WHERE author.id = posts.user_id AND author.account_status = 'active')`).
+		Where(`NOT EXISTS (SELECT 1 FROM user_blocks b WHERE (b.blocker_id = ? AND b.blocked_id = posts.user_id) OR (b.blocker_id = posts.user_id AND b.blocked_id = ?))`, viewerID, viewerID).
+		Where(`(posts.user_id = ? OR (posts.visibility = 'public' AND EXISTS (SELECT 1 FROM users author WHERE author.id = posts.user_id AND author.is_private = 0)) OR EXISTS (SELECT 1 FROM follows f WHERE f.follower_id = ? AND f.followed_id = posts.user_id AND f.status = 'accepted'))`, viewerID, viewerID)
+	query = postPreloads(query)
+	if beforeID > 0 {
+		query = query.Where("posts.id < ?", beforeID)
+	} else {
+		query = query.Offset(offset)
+	}
+	err := query.Order("posts.id desc").Limit(limit).Find(&posts).Error
 	if err != nil {
 		return nil, err
 	}
 	return posts, nil
 }
 
-func (r *postRepo) ListByUserID(userID int64) ([]models.Post, error) {
+func (r *postRepo) ListByUserID(viewerID, userID int64) ([]models.Post, error) {
 	var posts []models.Post
-	err := db.DB.Preload("User").Preload("Media").Preload("Link").Preload("Likes").Preload("Comments").Preload("Comments.User").
+	query := db.DB.Model(&models.Post{}).
+		Select(`posts.*,
+			(SELECT COUNT(*) FROM post_likes WHERE post_likes.post_id = posts.id) AS likes_count,
+			(SELECT COUNT(*) FROM post_comments WHERE post_comments.post_id = posts.id) AS comments_count,
+			EXISTS(SELECT 1 FROM post_likes WHERE post_likes.post_id = posts.id AND post_likes.user_id = ?) AS is_liked_by_me,
+			EXISTS(SELECT 1 FROM saved_posts WHERE saved_posts.post_id = posts.id AND saved_posts.user_id = ?) AS is_saved_by_me,
+			(SELECT COUNT(*) FROM post_views WHERE post_views.post_id = posts.id) AS views_count,
+			(SELECT COUNT(*) FROM post_shares WHERE post_shares.post_id = posts.id) AS shares_count`, viewerID, viewerID).
 		Where("user_id = ?", userID).
-		Order("created_at desc").
+		Where(`NOT EXISTS (SELECT 1 FROM user_blocks b WHERE (b.blocker_id = ? AND b.blocked_id = ?) OR (b.blocker_id = ? AND b.blocked_id = ?))`, viewerID, userID, userID, viewerID).
+		Where(`(? = ? OR EXISTS (SELECT 1 FROM users u WHERE u.id = ? AND u.is_private = 0) OR EXISTS (SELECT 1 FROM follows f WHERE f.follower_id = ? AND f.followed_id = ? AND f.status = 'accepted'))`, viewerID, userID, userID, viewerID, userID).
+		Where(`(posts.visibility = 'public' OR posts.user_id = ? OR EXISTS (SELECT 1 FROM follows f WHERE f.follower_id = ? AND f.followed_id = posts.user_id AND f.status = 'accepted'))`, viewerID, viewerID)
+	query = postPreloads(query)
+	err := query.
+		Order("posts.id desc").
 		Limit(50).
 		Find(&posts).Error
 	if err != nil {
 		return nil, err
 	}
 	return posts, nil
+}
+
+func postPreloads(query *gorm.DB) *gorm.DB {
+	return query.Preload("User").Preload("Media").Preload("Link").Preload("Hashtags").Preload("Mentions.User").Preload("Shop").Preload("OriginalPost.User").Preload("OriginalPost.Media").Preload("OriginalPost.Link")
 }
 
 func (r *postRepo) Delete(id int64) error {

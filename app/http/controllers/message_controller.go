@@ -39,12 +39,13 @@ func (c *MessageController) GetMessages(ctx http.Context) http.Response {
 
 	convIDStr := ctx.Request().Query("conversation_id", "")
 	convID, _ := strconv.ParseInt(convIDStr, 10, 64)
+	beforeID, beforeErr := strconv.ParseInt(ctx.Request().Query("before_id", "0"), 10, 64)
 
-	if convID == 0 {
-		return ctx.Response().Json(400, http.Json{"error": "conversation_id is required"})
+	if convID == 0 || beforeErr != nil || beforeID < 0 {
+		return ctx.Response().Json(400, http.Json{"error": "conversation_id and before_id must be valid"})
 	}
 
-	msgs, err := c.msgRepo.GetMessages(convID, userID)
+	msgs, err := c.msgRepo.GetMessages(convID, userID, beforeID)
 	if err != nil {
 		return ctx.Response().Json(500, http.Json{"error": "Failed to get messages"})
 	}

@@ -2,11 +2,12 @@ import { useState, FormEvent } from 'react';
 import { Eye, EyeOff, ArrowRight, Shield, Zap, Users, BarChart3, HelpCircle, CheckCircle } from 'lucide-react';
 
 interface SignupProps {
-  onRegister: (email: string, fullName: string, password?: string) => void;
-  onNavigateToLogin: () => void;
+	onRegister: (email: string, fullName: string, password?: string) => void;
+	onNavigateToLogin: () => void;
+	onOAuth: (provider: string) => void;
 }
 
-export default function Signup({ onRegister, onNavigateToLogin }: SignupProps) {
+export default function Signup({ onRegister, onNavigateToLogin, onOAuth }: SignupProps) {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -131,7 +132,7 @@ export default function Signup({ onRegister, onNavigateToLogin }: SignupProps) {
           <div className="grid grid-cols-2 gap-4 mb-8">
             <button 
               type="button"
-              onClick={() => onRegister('google@sso.com', 'Google Professional')}
+			  onClick={() => onOAuth('google')}
               className="flex items-center justify-center gap-2 h-11 border border-outline-variant bg-white rounded-xl hover:bg-surface-container-low transition-colors font-semibold text-xs text-text-primary cursor-pointer select-none"
             >
               <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDXwueVzJRy4Y6lfOUTvn4Jxq0_-FaKLjiuuCQPsCrFoqF48qrHnINMhfIW35TOFo3tA6yMnmSLOw-35WmD5P_qB5p8Jpafd0kpSF3KGTKiEQ0I4MKvb73cDMGOhouaZukEzM4B2rlKwb8n8SPTG0kZXqG2RWHwgtg3sFAIvu8Vq36mY1D7oNgVVkbwWLcq3VrPEPOTv_doODBv8LZh-QEnvMexAMYkRsH42prT5aOCiJsvrV6W9G3AN55jNE-jzSTakmrcYVGo7Kg" alt="Google" className="w-4 h-4 object-contain" />
@@ -139,7 +140,7 @@ export default function Signup({ onRegister, onNavigateToLogin }: SignupProps) {
             </button>
             <button 
               type="button"
-              onClick={() => onRegister('linkedin@sso.com', 'LinkedIn Member')}
+			  onClick={() => onOAuth('linkedin')}
               className="flex items-center justify-center gap-2 h-11 border border-outline-variant bg-white rounded-xl hover:bg-surface-container-low transition-colors font-semibold text-xs text-text-primary cursor-pointer select-none"
             >
               {/* Simple inline linkedin styled block */}

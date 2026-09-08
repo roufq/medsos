@@ -102,15 +102,49 @@ func InitDB() {
 		&models.PostLike{},
 		&models.PostComment{},
 		&models.Follow{},
+		&models.UserBlock{},
+		&models.SavedPost{},
+		&models.PostHashtag{},
+		&models.PostMention{},
+		&models.PostView{},
+		&models.PostShare{},
+		&models.PostReport{},
+		&models.Notification{},
+		&models.ShopProduct{},
+		&models.VerificationCode{},
+		&models.OAuthIdentity{},
+		&models.OAuthLoginState{},
 		&models.JobPosting{},
 		&models.JobApplication{},
 		&models.Conversation{},
 		&models.Message{},
+		&models.QueueRecord{},
+		&models.FailedQueueRecord{},
 	)
 	if err != nil {
 		log.Fatalf("Failed to run AutoMigrate: %v", err)
 	}
+	queueRetryAfter := time.Duration(envInt("QUEUE_RETRY_AFTER_SECONDS", 90)) * time.Second
+	result := DB.Model(&models.QueueRecord{}).
+		Where("reserved_at IS NOT NULL AND reserved_at < ?", time.Now().Add(-queueRetryAfter)).
+		Update("reserved_at", nil)
+	if result.Error != nil {
+		log.Printf("Failed to release stale queue jobs: %v", result.Error)
+	} else if result.RowsAffected > 0 {
+		log.Printf("Released %d stale queue jobs", result.RowsAffected)
+	}
 	log.Println("Database AutoMigrate completed successfully.")
+
+	// Account deletion has a 30-day recovery window. Expired accounts are
+	// permanently removed; foreign-key cascades remove their owned records.
+	expiredAccounts := DB.Where("account_status = ? AND deletion_requested_at < ?", "pending_deletion", time.Now().Add(-30*24*time.Hour)).Delete(&models.User{})
+	if expiredAccounts.Error != nil {
+		log.Printf("Failed to purge expired accounts: %v", expiredAccounts.Error)
+	} else if expiredAccounts.RowsAffected > 0 {
+		log.Printf("Permanently removed %d expired accounts", expiredAccounts.RowsAffected)
+	}
+	DB.Where("expires_at < ?", time.Now()).Delete(&models.VerificationCode{})
+	DB.Where("expires_at < ?", time.Now()).Delete(&models.OAuthLoginState{})
 
 	// 4. Seed Default Admin if the database is empty
 	var userCount int64

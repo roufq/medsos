@@ -6,15 +6,20 @@ import (
 
 // RegisterRequest defines the input payload for user registration
 type RegisterRequest struct {
-	Name     string `form:"name" json:"name" binding:"required,min=2,max=100"`
-	Email    string `form:"email" json:"email" binding:"required,email,max=100"`
-	Password string `form:"password" json:"password" binding:"required,min=6,max=255"`
+	Name        string `form:"name" json:"name" binding:"required,min=2,max=100"`
+	Username    string `form:"username" json:"username"`
+	Email       string `form:"email" json:"email" binding:"required,email,max=100"`
+	Phone       string `form:"phone" json:"phone"`
+	AccountType string `form:"account_type" json:"account_type"`
+	Password    string `form:"password" json:"password" binding:"required,min=8,max=255"`
 }
 
 // LoginRequest defines the credentials payload for log in
 type LoginRequest struct {
-	Email    string `form:"email" json:"email" binding:"required,email"`
-	Password string `form:"password" json:"password" binding:"required"`
+	Identifier string `form:"identifier" json:"identifier"`
+	Email      string `form:"email" json:"email"`
+	Username   string `form:"username" json:"username"`
+	Password   string `form:"password" json:"password" binding:"required"`
 }
 
 // RefreshRequest defines the input payload for token rotation

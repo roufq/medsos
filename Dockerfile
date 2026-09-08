@@ -11,6 +11,8 @@ RUN go build --ldflags "-s -w -extldflags -static" -o main .
 
 FROM alpine:latest
 
+RUN apk add --no-cache ca-certificates ffmpeg wget
+
 WORKDIR /www
 
 COPY --from=builder /build/main /www/

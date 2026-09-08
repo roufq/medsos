@@ -36,7 +36,7 @@ func init() {
 			// then the new MaxIdleConns will be reduced to match the MaxOpenConns limit.
 			//
 			// If n <= 0, no idle connections are retained.
-			"max_idle_conns": 10,
+			"max_idle_conns": config.Env("DB_MAX_IDLE_CONNS", 25),
 			// Sets the maximum number of open connections to the database.
 			//
 			// If MaxIdleConns is greater than 0 and the new MaxOpenConns is less than
@@ -44,21 +44,21 @@ func init() {
 			// MaxOpenConns limit.
 			//
 			// If n <= 0, then there is no limit on the number of open connections.
-			"max_open_conns": 100,
+			"max_open_conns": config.Env("DB_MAX_OPEN_CONNS", 100),
 			// Sets the maximum amount of time a connection may be idle.
 			//
 			// Expired connections may be closed lazily before reuse.
 			//
 			// If d <= 0, connections are not closed due to a connection's idle time.
 			// Unit: Second
-			"conn_max_idletime": 3600,
+			"conn_max_idletime": config.Env("DB_CONN_MAX_IDLE_SECONDS", 300),
 			// Sets the maximum amount of time a connection may be reused.
 			//
 			// Expired connections may be closed lazily before reuse.
 			//
 			// If d <= 0, connections are not closed due to a connection's age.
 			// Unit: Second
-			"conn_max_lifetime": 3600,
+			"conn_max_lifetime": config.Env("DB_CONN_MAX_LIFETIME_SECONDS", 1800),
 		},
 		// Sets the threshold for slow queries in milliseconds, the slow query will be logged.
 		// Unit: Millisecond

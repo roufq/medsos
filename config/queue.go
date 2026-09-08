@@ -8,7 +8,7 @@ func init() {
 	config := facades.Config()
 	config.Add("queue", map[string]any{
 		// Default Queue Connection Name
-		"default": "sync",
+		"default": config.Env("QUEUE_CONNECTION", "database"),
 
 		// Queue Connections
 		//
@@ -19,10 +19,12 @@ func init() {
 				"driver": "sync",
 			},
 			"database": map[string]any{
-				"driver":     "database",
-				"connection": "postgres",
-				"queue":      "default",
-				"concurrent": 1,
+				"driver":      "database",
+				"connection":  config.Env("DB_CONNECTION", "mysql"),
+				"table":       "jobs",
+				"queue":       "default",
+				"concurrent":  config.Env("QUEUE_CONCURRENT", 4),
+				"retry_after": config.Env("QUEUE_RETRY_AFTER_SECONDS", 90),
 			},
 		},
 
@@ -31,7 +33,7 @@ func init() {
 		// These options configure the behavior of failed queue job logging so you
 		// can control how and where failed jobs are stored.
 		"failed": map[string]any{
-			"database": config.Env("DB_CONNECTION", "postgres"),
+			"database": config.Env("DB_CONNECTION", "mysql"),
 			"table":    "failed_jobs",
 		},
 	})

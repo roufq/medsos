@@ -2,14 +2,16 @@ import { useState, FormEvent } from 'react';
 import { Mail, Lock, Eye, EyeOff, ShieldCheck, Zap, Globe, ArrowRight } from 'lucide-react';
 
 interface LoginProps {
-  onLogin: (email: string, password?: string) => void;
-  onNavigateToSignup: () => void;
+	onLogin: (identifier: string, password?: string) => void;
+	onNavigateToSignup: () => void;
+	onNavigateToForgot: () => void;
+	onOAuth: (provider: string) => void;
   defaultEmail?: string;
 }
 
-export default function Login({ onLogin, onNavigateToSignup, defaultEmail = '' }: LoginProps) {
-  const [email, setEmail] = useState(defaultEmail || 'roufmawanto194@gmail.com');
-  const [password, setPassword] = useState('password123');
+export default function Login({ onLogin, onNavigateToSignup, onNavigateToForgot, onOAuth, defaultEmail = '' }: LoginProps) {
+	const [email, setEmail] = useState(defaultEmail);
+	const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(true);
 
@@ -52,7 +54,7 @@ export default function Login({ onLogin, onNavigateToSignup, defaultEmail = '' }
             {/* Professional Email field */}
             <div className="flex flex-col gap-1.5">
               <label htmlFor="email" className="font-bold text-xs pl-1 text-on-surface-variant">
-                Professional Email
+				Email or Username
               </label>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-3.5 flex items-center pointer-events-none text-outline group-focus-within:text-primary">
@@ -60,11 +62,11 @@ export default function Login({ onLogin, onNavigateToSignup, defaultEmail = '' }
                 </div>
                 <input 
                   id="email"
-                  type="email"
+					type="text"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@company.com"
+					placeholder="name@company.com or username"
                   className="w-full pl-11 pr-4 py-3 bg-surface-container-low border border-transparent rounded-xl text-xs font-medium focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-text-primary placeholder:text-outline"
                 />
               </div>
@@ -76,9 +78,9 @@ export default function Login({ onLogin, onNavigateToSignup, defaultEmail = '' }
                 <label htmlFor="password" className="font-bold text-xs text-on-surface-variant">
                   Password
                 </label>
-                <a href="#" className="font-bold text-xs text-primary hover:underline transition-all">
-                  Forgot password?
-                </a>
+				<button type="button" onClick={onNavigateToForgot} className="font-bold text-xs text-primary hover:underline transition-all">
+				  Forgot password?
+				</button>
               </div>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-3.5 flex items-center pointer-events-none text-outline group-focus-within:text-primary">
@@ -141,7 +143,7 @@ export default function Login({ onLogin, onNavigateToSignup, defaultEmail = '' }
           {/* SSO Google Trigger */}
           <button 
             type="button"
-            onClick={() => onLogin('roufmawanto194@gmail.com')}
+			onClick={() => onOAuth('google')}
             className="w-full py-3 border border-border-subtle bg-white text-text-primary rounded-xl font-semibold text-xs hover:bg-surface-container-low transition-all flex items-center justify-center gap-3 cursor-pointer"
           >
             <img 
@@ -150,7 +152,7 @@ export default function Login({ onLogin, onNavigateToSignup, defaultEmail = '' }
               className="w-5 h-5 object-contain"
               referrerPolicy="no-referrer"
             />
-            <span>Sign in with Enterprise SSO</span>
+			<span>Sign in with Google</span>
           </button>
 
           <div className="text-center">

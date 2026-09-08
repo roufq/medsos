@@ -8,6 +8,7 @@ import (
 	"goravel/app/dto"
 	"goravel/app/models"
 	"goravel/app/services"
+	"goravel/pkg/db"
 	"goravel/pkg/jwt"
 	"goravel/resources/views/backend"
 
@@ -69,6 +70,10 @@ func (h *UserController) getWebUser(c goravelhttp.Context) (*models.User, gorave
 // ==========================================
 
 func (h *UserController) GetProfileAPI(c goravelhttp.Context) goravelhttp.Response {
+	viewerID, viewerErr := authenticatedUserID(c)
+	if viewerErr != nil {
+		return c.Response().Json(http.StatusUnauthorized, goravelhttp.Json{"error": "Unauthorized"})
+	}
 	var targetID int64
 	idParam := c.Request().Route("id")
 
@@ -90,6 +95,24 @@ func (h *UserController) GetProfileAPI(c goravelhttp.Context) goravelhttp.Respon
 	user, err := h.userService.GetByID(targetID)
 	if err != nil {
 		return c.Response().Json(http.StatusNotFound, goravelhttp.Json{"error": "User not found"})
+	}
+	if user.AccountStatus != "active" || blockedBetween(viewerID, targetID) {
+		return c.Response().Json(http.StatusNotFound, goravelhttp.Json{"error": "User not found"})
+	}
+	if user.IsPrivate && viewerID != targetID && !acceptedFollower(viewerID, targetID) {
+		return c.Response().Json(http.StatusForbidden, goravelhttp.Json{"error": "Profile is private"})
+	}
+	db.DB.Model(&models.Follow{}).Where("followed_id = ? AND status = 'accepted'", targetID).Count(&user.FollowersCount)
+	db.DB.Model(&models.Follow{}).Where("follower_id = ? AND status = 'accepted'", targetID).Count(&user.FollowingCount)
+	user.IsFollowedByMe = viewerID != targetID && acceptedFollower(viewerID, targetID)
+	if viewerID != targetID {
+		user.Email = ""
+		user.Phone = nil
+		user.BirthDate = nil
+		user.EmailVerifiedAt = nil
+		user.PhoneVerifiedAt = nil
+		user.PasswordChangedAt = nil
+		user.DeletionRequestedAt = nil
 	}
 
 	return c.Response().Json(http.StatusOK, user)
@@ -171,7 +194,7 @@ func (h *UserController) ShowProfileWeb(c goravelhttp.Context) goravelhttp.Respo
 	}
 
 	// Fetch target user posts
-	posts, _ := h.postService.GetUserPosts(targetUser.ID)
+	posts, _ := h.postService.GetUserPosts(currentUser.ID, targetUser.ID)
 
 	var buf bytes.Buffer
 	data := backend.ProfileData{
@@ -223,7 +246,7 @@ func (h *UserController) ShowAdminPostsWeb(c goravelhttp.Context) goravelhttp.Re
 		return c.Response().String(http.StatusForbidden, "Forbidden: Only administrators can access this area.")
 	}
 
-	posts, _ := h.postService.GetFeed(100, 0)
+	posts, _ := h.postService.GetFeed(user.ID, 100, 0, 0)
 	var buf bytes.Buffer
 	_ = backend.RenderDashboardAdminPosts(&buf, posts)
 	return c.Response().Data(http.StatusOK, "text/html; charset=utf-8", buf.Bytes())
