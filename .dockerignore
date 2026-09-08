@@ -1,0 +1,10 @@
+.git
+.env
+*.exe
+database/*.db
+frontend/node_modules
+frontend/view/node_modules
+graphify-out
+storage
+uploads
+scratch

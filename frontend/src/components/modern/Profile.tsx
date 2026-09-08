@@ -1,0 +1,643 @@
+import { useState, useRef, useEffect } from 'react';
+import { 
+  Camera, 
+  MapPin, 
+  Link as LinkIcon, 
+  Calendar, 
+  LayoutGrid, 
+  List, 
+  ThumbsUp, 
+  MessageCircle, 
+  Share2, 
+  Edit3,
+  Globe,
+  Settings as SettingsIcon,
+  Trash2,
+  X
+} from 'lucide-react';
+import { User, Post } from '../types';
+import { postApi } from '../../api/postApi';
+import { userApi } from '../../api/userApi';
+import AddPortfolioModal from './AddPortfolioModal';
+
+interface ProfileProps {
+  user: User;
+  onUpdateUser: (updatedUser: User) => void;
+  onNavigateToMessages: () => void;
+  profilePosts: Post[];
+  onLikePost: (postId: string) => void;
+  onDeletePost?: (postId: string) => void;
+  isCurrentUser?: boolean;
+}
+
+export default function Profile({
+  user,
+  onUpdateUser,
+  onNavigateToMessages,
+  profilePosts,
+  onLikePost,
+  onDeletePost,
+  isCurrentUser
+}: ProfileProps) {
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [activeLayout, setActiveLayout] = useState<'grid' | 'list'>('grid');
+  const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [portfolios, setPortfolios] = useState<any[]>([]);
+  const [isAddPortfolioModalOpen, setIsAddPortfolioModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (user?.id) {
+      userApi.getPortfolios(user.id).then(data => {
+        setPortfolios(data || []);
+      }).catch(console.error);
+    }
+  }, [user.id]);
+
+  const handleAddPortfolio = (newPortfolio: any) => {
+    userApi.createPortfolio(newPortfolio).then(saved => {
+      setPortfolios([saved, ...portfolios]);
+    }).catch(e => alert('Error saving portfolio: ' + e.message));
+  };
+
+  const handleDeletePortfolio = (portfolioId: string) => {
+    if (window.confirm('Are you sure you want to delete this featured work?')) {
+      userApi.deletePortfolio(portfolioId).then(() => {
+        setPortfolios(portfolios.filter(p => p.id !== portfolioId));
+      }).catch(e => alert('Error deleting portfolio: ' + e.message));
+    }
+  };
+
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
+
+  // Edit fields backup inside state
+  const [editName, setEditName] = useState(user.name);
+  const [editTitle, setEditTitle] = useState(user.title);
+  const [editCompany, setEditCompany] = useState(user.company);
+  const [editLocation, setEditLocation] = useState(user.location || '');
+  const [editBio, setEditBio] = useState(user.bio || '');
+  const [editWebsite, setEditWebsite] = useState(user.website || '');
+
+  // Cover photo options list
+  const coverUrls = [
+    'https://lh3.googleusercontent.com/aida-public/AB6AXuBNRe7599PvPWjme4G1AfCuqcb7I6UtEfFvUtdGPnRFJECAdNMFPb1kcrd9KwQ_87mYgQbHbQ2ctj_ZHqmtJb_doWqfMrutKHzE7NQNjLUInqnZIHZ4XTX8S7sOChktBxP-tn-PkdoXLSH-k4ukJZ4jLc_2aqQjsALi4S_HCg7wMsqDjgVxO13OFWIvo9OuSY2Qsru3E1aCOcXRmRjxobRIn1NFEHlFaK23OQ43zvup3-6gZZfNtg6PyGcHnDft9Db2izkVaYVWIaQ',
+    'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?q=80&w=1200&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=1200&auto=format&fit=crop'
+  ];
+
+  const handleEditSave = () => {
+    if (editWebsite && !editWebsite.startsWith('http')) {
+      alert('Website URL must start with http:// or https://');
+      return;
+    }
+
+    onUpdateUser({
+      ...user,
+      name: editName,
+      title: editTitle,
+      company: editCompany,
+      location: editLocation,
+      bio: editBio,
+      website: editWebsite
+    });
+    setIsEditModalOpen(false);
+  };
+
+  const handleCoverChange = (url: string) => {
+    onUpdateUser({
+      ...user,
+      coverImage: url
+    });
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      try {
+        setIsUploading(true);
+        const res = await postApi.uploadMedia(e.target.files[0]);
+        const avatarUrl = res.url.startsWith('http') ? res.url : `http://localhost:8080${res.url}`;
+        onUpdateUser({ ...user, avatar: avatarUrl });
+      } catch (err) {
+        alert('Failed to upload avatar');
+      } finally {
+        setIsUploading(false);
+      }
+    }
+  };
+
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      try {
+        setIsUploading(true);
+        const res = await postApi.uploadMedia(e.target.files[0]);
+        const coverUrl = res.url.startsWith('http') ? res.url : `http://localhost:8080${res.url}`;
+        onUpdateUser({ ...user, coverImage: coverUrl });
+      } catch (err) {
+        alert('Failed to upload cover');
+      } finally {
+        setIsUploading(false);
+      }
+    }
+  };
+
+  return (
+    <div className="max-w-[1000px] mx-auto py-8">
+      {/* Profile Hero section */}
+      <div className="relative mb-8">
+        {/* Cover image wrap */}
+        <div className="h-64 md:h-80 w-full rounded-2xl overflow-hidden relative shadow-sm border border-border-subtle/50 bg-surface-container">
+          <img 
+            src={user.coverImage} 
+            alt="Cover background" 
+            className="w-full h-full object-cover"
+            referrerPolicy="no-referrer"
+          />
+          {/* Cover editor selector */}
+          <div className="absolute bottom-4 right-4 flex gap-2">
+            <button
+              onClick={() => coverInputRef.current?.click()}
+              className="w-8 h-8 rounded-full border-2 border-white overflow-hidden shadow-md bg-white text-text-primary flex items-center justify-center cursor-pointer hover:scale-110 active:scale-95 transition-all"
+              title="Upload Custom Cover"
+            >
+              <Camera className="w-4 h-4" />
+            </button>
+            {coverUrls.map((url, idx) => (
+              <button
+                key={idx}
+                onClick={() => handleCoverChange(url)}
+                className="w-8 h-8 rounded-full border-2 border-white overflow-hidden shadow-md bg-cover bg-center cursor-pointer hover:scale-110 active:scale-95 transition-all"
+                style={{ backgroundImage: `url(${url})` }}
+                title={`Change color cover theme ${idx + 1}`}
+              />
+            ))}
+          </div>
+          <input 
+            type="file" 
+            ref={coverInputRef} 
+            className="hidden" 
+            accept="image/*" 
+            onChange={handleCoverUpload} 
+          />
+        </div>
+
+        {/* Profile Info alignment overlap */}
+        <div className="px-8 -mt-16 flex flex-col md:flex-row md:items-end justify-between gap-6 relative z-10 select-none">
+          <div className="flex flex-col md:flex-row items-center md:items-end gap-6">
+            <div className="w-32 h-32 md:w-36 md:h-36 rounded-full border-4 border-background bg-background shadow-md overflow-hidden flex-shrink-0 relative group">
+              <img 
+                src={user.avatar} 
+                alt={user.name} 
+                className="w-full h-full object-cover"
+                referrerPolicy="no-referrer"
+              />
+              <div 
+                onClick={() => avatarInputRef.current?.click()}
+                className="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer duration-200"
+                title="Change Avatar"
+              >
+                <Camera className="w-6 h-6" />
+              </div>
+              <input 
+                type="file" 
+                ref={avatarInputRef} 
+                className="hidden" 
+                accept="image/*" 
+                onChange={handleAvatarUpload} 
+              />
+            </div>
+
+            <div className="text-center md:text-left pb-2">
+              <div className="flex items-center justify-center md:justify-start gap-2">
+                <h2 className="font-bold text-2xl md:text-3xl text-text-primary tracking-tight">{user.name}</h2>
+                <button
+                  onClick={() => setIsEditModalOpen(true)}
+                  className="text-text-secondary hover:text-primary p-1 rounded-full cursor-pointer transition-colors"
+                  title="Edit profile information"
+                >
+                  <Edit3 className="w-4 h-4" />
+                </button>
+              </div>
+              <p className="font-semibold text-sm text-text-secondary mb-1">
+                {user.title} @ <span className="text-primary font-bold">{user.company}</span>
+              </p>
+              {user.location && (
+                <p className="text-xs text-outline flex items-center justify-center md:justify-start gap-1">
+                  <MapPin className="w-3.5 h-3.5 text-primary" />
+                  <span>{user.location}</span>
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Social connections actions button panel */}
+          <div className="flex gap-3 pb-2 justify-center">
+            <button 
+              onClick={() => setIsFollowing(!isFollowing)}
+              className={`px-6 py-2.5 rounded-full font-bold shadow-sm transition-all text-xs cursor-pointer select-none ${
+                isFollowing 
+                  ? 'bg-success text-white hover:brightness-105' 
+                  : 'bg-primary text-white hover:brightness-110 active:scale-95'
+              }`}
+            >
+              {isFollowing ? 'Following' : 'Follow'}
+            </button>
+            <button 
+              onClick={onNavigateToMessages}
+              className="bg-secondary-container text-on-secondary-container px-6 py-2.5 rounded-full font-bold text-xs transition-all active:scale-95 cursor-pointer selection:bg-transparent"
+            >
+              Message
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Profile Main Content Layout (Left card column + Featured Work grid column) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* Left column info metadata stats */}
+        <div className="lg:col-span-1 flex flex-col gap-6 select-none">
+          {/* Bio about details block */}
+          <div className="bg-white rounded-2xl p-6 border border-border-subtle/50 shadow-sm">
+            <h3 className="font-bold text-text-primary text-base mb-4">About</h3>
+            <p className="text-sm text-text-secondary leading-relaxed mb-6">
+              {user.bio}
+            </p>
+            <div className="space-y-3 pt-3 border-t border-border-subtle/20">
+              {user.website && (
+                <div className="flex items-center gap-3 text-text-secondary">
+                  <LinkIcon className="w-4 h-4 text-primary" />
+                  <a className="text-xs font-semibold text-primary hover:underline" href={`https://${user.website}`} target="_blank" rel="noreferrer">
+                    {user.website}
+                  </a>
+                </div>
+              )}
+              {user.joinedDate && (
+                <div className="flex items-center gap-3 text-text-secondary">
+                  <Calendar className="w-4 h-4 text-primary" />
+                  <span className="text-xs font-semibold">{user.joinedDate}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Skills expertise badges */}
+          <div className="bg-white rounded-2xl p-6 border border-border-subtle/50 shadow-sm">
+            <h3 className="font-bold text-text-primary text-base mb-4">Expertise</h3>
+            <div className="flex flex-wrap gap-2">
+              {user.expertise?.map((tag) => (
+                <span 
+                  key={tag} 
+                  className="bg-secondary-fixed text-on-secondary-fixed-variant px-3.5 py-1.5 rounded-full font-semibold text-xs text-primary"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Network fast connections preview */}
+          <div className="bg-white rounded-2xl p-6 border border-border-subtle/50 shadow-sm animate-fadeIn">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-bold text-text-primary text-base">Network</h3>
+              <span className="text-primary font-bold text-xs hover:underline cursor-pointer">
+                {user.networkCount} connections
+              </span>
+            </div>
+            
+            {/* 4 network grid cells */}
+            <div className="grid grid-cols-4 gap-3">
+              {[
+                { name: 'Marcus Holloway', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAvcd5bGYnbFUZ7YtQ3FLVHDwGTj5Cy8kaSNDRHNysfmKbWcl-zEJxBZ73mhLhs-VehP5q5ZORZXzjw9r1zuIeZijsqbMM6SDOniOb7zHleG4VYC0qmEXSl91l8EwVg0023YkUzIBRxVTo3CT0Cal4TjAYmpmadytlltDZOwobBrIZQJXST6nzrXDdB1z_ErFrG39oH_D3k40UsEIaKDHNKe7HhVvy0A-zvhEAhxYn-SstPZpvOZYi05-Wkj63tSFyyrFYui0YnqwI' },
+                { name: 'Sarah Chen', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDnwasLonkl65aqS1BSliBHMmL7bL-QV8V3Klns2NtVzCi9N2uTVdK-qMvslBLu82IL6vkXb95sh3GY8zddzVHlVAY4_aKMa-ZeSKC7mIIBV2Wqo__tWRHf9h_-SR9EJccTob9dQXsPOuVxQIGtN8BC3kbgX5NtNmEFsMVTiDg-AuamUgtq86WNxmcrgtf83HOmrGtiGd_2X3oU2ZLkGgIQ95QH65bPslsgi5eryTsko87R-hSo2N_Xz7VxPhvA_hPuZHlZAaXKW8c' },
+                { name: 'Elena Rodriguez', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAAn4yY9AHfgHf5xSDNmE2A_L8DgJV3uWazYrzWuZumv1lrZwSzNTy_txsCyzyjHJwa_RCAMj3-jpkiZDeAQejuQH9-SfGrYGVO20mpRl9bH2mMrmj1j1KJLx1lePrt_iaSi4pehX40r--N232fR7mpquvoZPcdW3BdBpeOcPekx3tLOUzgfyNN9gqcMYpExpiZ5hm73m_hcAslYaQYwfuIKQNchDQ9O-Uor4rYDfKDlVewLOW3KacaJhso7-C43V3Jjrt76AqC1I8' },
+                { name: 'David Kim', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCedLssi65pkFtXaIA57YXi66Ok0ZGTRYJd7g98hae6DomlVgcljphZ0b_E0rgP2rTJgvEwD6wLrbFO2TiTN7zvI2H027q3GyneqDLexQlHDddxmqrtJG5sknAbg-ZR4zvrdXMcehkDHSekt5HsDLsoYJ3-kYn7qdA7cIVsExv6B7PxdG0NakMRJZO91vjo1zSzOTUowZWgC-y-_jYPVqYlNNI-J6J3J-7jvoGXGgBJti14Nbdp-fxGbxN1lxFuExwFDoQOCV2IICA' }
+              ].map((conn, idx) => (
+                <div key={idx} className="aspect-square rounded-xl overflow-hidden bg-surface-container relative group cursor-pointer" title={conn.name}>
+                  <img src={conn.img} alt={conn.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Right column bento grid + activity posts */}
+        <div className="lg:col-span-2">
+          
+          {/* Header layout controls */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-4">
+              <h3 className="font-bold text-text-primary text-xl tracking-tight">Featured Work</h3>
+              {isCurrentUser && (
+                <button 
+                  onClick={() => setIsAddPortfolioModalOpen(true)}
+                  className="bg-primary/10 text-primary hover:bg-primary/20 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                >
+                  + Add
+                </button>
+              )}
+            </div>
+            <div className="flex gap-1.5 bg-white p-1 rounded-xl border border-border-subtle/50 shadow-sm select-none">
+              <button 
+                onClick={() => setActiveLayout('grid')}
+                className={`p-1.5 rounded-lg cursor-pointer transition-all ${
+                  activeLayout === 'grid' 
+                    ? 'bg-secondary-container text-primary' 
+                    : 'text-text-secondary hover:text-text-primary'
+                }`}
+              >
+                <LayoutGrid className="w-4.5 h-4.5" />
+              </button>
+              <button 
+                onClick={() => setActiveLayout('list')}
+                className={`p-1.5 rounded-lg cursor-pointer transition-all ${
+                  activeLayout === 'list' 
+                    ? 'bg-secondary-container text-primary' 
+                    : 'text-text-secondary hover:text-text-primary'
+                }`}
+              >
+                <List className="w-4.5 h-4.5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Bento grid layout screen */}
+          {portfolios.length === 0 ? (
+            <div className="bg-surface-container rounded-2xl p-8 flex flex-col items-center justify-center text-text-secondary border border-dashed border-border-subtle mb-8">
+              <p className="text-sm font-medium">No featured work added yet.</p>
+            </div>
+          ) : activeLayout === 'grid' ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 select-none">
+              {portfolios.map((item, idx) => {
+                const isLarge = idx % 3 === 0;
+                return (
+                  <div 
+                    key={item.id} 
+                    className={`${isLarge ? 'md:col-span-2 md:row-span-2 min-h-[320px]' : 'min-h-[160px]'} bg-white rounded-2xl overflow-hidden border border-border-subtle/50 shadow-sm relative group cursor-pointer`}
+                    onClick={() => item.link_url && window.open(item.link_url, '_blank')}
+                  >
+                    {item.image_url ? (
+                      <img 
+                        src={item.image_url.startsWith('http') ? item.image_url : `http://localhost:8080${item.image_url}`} 
+                        alt={item.title} 
+                        className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105`}
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-surface-container-low flex items-center justify-center">
+                        <span className="text-text-secondary text-xs">No Image</span>
+                      </div>
+                    )}
+                    
+                    <div className={`absolute inset-0 bg-gradient-to-t ${isLarge ? 'from-black/80 via-black/20' : 'from-black/70'} to-transparent flex flex-col justify-end p-4 ${isLarge ? 'md:p-6' : ''} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}>
+                      <span className="text-primary-fixed-dim text-[10px] md:text-xs font-bold uppercase tracking-wider mb-1">{item.project_type}</span>
+                      <h4 className="text-white font-bold text-sm md:text-lg mb-1">{item.title}</h4>
+                      {isLarge && item.description && (
+                        <p className="text-white/80 text-xs leading-relaxed line-clamp-2">
+                          {item.description}
+                        </p>
+                      )}
+                    </div>
+
+                    {isCurrentUser && (
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); handleDeletePortfolio(item.id); }}
+                        className="absolute top-3 right-3 bg-red-500/80 hover:bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-all z-10 shadow-md"
+                        title="Delete Portfolio"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3 mb-8 select-none">
+              {portfolios.map((item) => (
+                <div 
+                  key={item.id} 
+                  className="bg-white p-5 rounded-2xl border border-border-subtle/50 shadow-sm flex flex-col gap-1 cursor-pointer hover:border-primary transition-colors relative group"
+                  onClick={() => item.link_url && window.open(item.link_url, '_blank')}
+                >
+                  <span className="text-[10px] text-primary font-bold uppercase tracking-widest">{item.project_type}</span>
+                  <h4 className="font-bold text-text-primary text-sm">{item.title}</h4>
+                  {item.description && (
+                    <p className="text-xs text-text-secondary leading-relaxed line-clamp-2">{item.description}</p>
+                  )}
+                  {isCurrentUser && (
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); handleDeletePortfolio(item.id); }}
+                      className="absolute top-5 right-5 text-text-secondary hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all z-10"
+                      title="Delete Portfolio"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Profile Recent Activity Posts */}
+          <div className="mt-8 flex flex-col gap-6">
+            <h3 className="font-bold text-text-primary text-lg">Recent Posts</h3>
+            
+            {profilePosts.map((post) => (
+              <div 
+                key={post.id} 
+                className="bg-white p-6 rounded-2xl border border-border-subtle/50 shadow-sm flex flex-col gap-4"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+                    <img src={post.author.avatar} alt={post.author.name} className="w-full h-full object-cover" />
+                  </div>
+                  <div>
+                    <h5 className="font-bold text-text-primary text-sm">{post.author.name}</h5>
+                    <p className="text-[11px] text-text-secondary">{post.timeAgo}</p>
+                  </div>
+                </div>
+
+                {post.title && (
+                  <h4 className="font-bold text-base text-text-primary mb-1">{post.title}</h4>
+                )}
+                <p className="text-xs text-text-primary leading-relaxed whitespace-pre-wrap">{post.content}</p>
+
+                {post.image && (
+                  <div 
+                    className="rounded-xl overflow-hidden border border-border-subtle/30 mt-3 bg-surface-container-low max-h-[360px] flex items-center justify-center cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={() => setFullscreenImage(post.image.startsWith('http') ? post.image : `http://localhost:8080${post.image}`)}
+                  >
+                    <img 
+                      src={post.image.startsWith('http') ? post.image : `http://localhost:8080${post.image}`} 
+                      alt="Post attachment" 
+                      className="w-full h-full object-cover max-h-[360px]"
+                      referrerPolicy="no-referrer"
+                    />
+                  </div>
+                )}
+
+                {/* Link Preview standard representation inside post */}
+                {post.linkPreview && (
+                  <div className="rounded-xl overflow-hidden border border-border-subtle hover:border-primary-container transition-colors">
+                    {post.linkPreview.image && (
+                      <div className="h-32 overflow-hidden bg-cover img-container">
+                        <img src={post.linkPreview.image} alt={post.linkPreview.title} className="w-full h-full object-cover" />
+                      </div>
+                    )}
+                    <div className="p-4 bg-surface-container-low">
+                      <p className="font-medium text-[10px] text-primary uppercase tracking-wider mb-1">
+                        {post.linkPreview.url}
+                      </p>
+                      <h6 className="font-bold text-xs text-text-primary">
+                        {post.linkPreview.title}
+                      </h6>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-6 pt-4 border-t border-border-subtle/20 select-none relative">
+                  <button 
+                    onClick={() => onLikePost(post.id)}
+                    className={`flex items-center gap-1.5 text-xs font-semibold cursor-pointer ${
+                      post.isLikedByMe ? 'text-primary' : 'text-text-secondary hover:text-text-primary'
+                    }`}
+                  >
+                    <ThumbsUp className={`w-4.5 h-4.5 ${post.isLikedByMe ? 'fill-current' : ''}`} />
+                    <span>{post.likesCount + (post.isLikedByMe ? 1 : 0)} Likes</span>
+                  </button>
+                  <div className="flex items-center gap-1.5 text-xs text-text-secondary font-semibold">
+                    <MessageCircle className="w-4.5 h-4.5" />
+                    <span>{post.comments?.length || 0} Comments</span>
+                  </div>
+                  
+                  {post.author.id === user.id && onDeletePost && (
+                    <button 
+                      onClick={() => onDeletePost(post.id)}
+                      className="absolute right-0 text-text-secondary hover:text-error cursor-pointer p-1.5 rounded-full hover:bg-error/10 transition-colors"
+                      title="Delete Post"
+                    >
+                      <Trash2 className="w-4.5 h-4.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+        </div>
+      </div>
+
+      {/* Edit Profile modal block */}
+      {isEditModalOpen && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-xs animate-fadeIn">
+          <div className="bg-white rounded-2xl w-full max-w-lg p-6 shadow-xl border border-border-subtle flex flex-col gap-4 animate-modalSlideUp select-none">
+            <h3 className="font-bold text-text-primary text-lg">Edit Profile Information</h3>
+            <div className="flex flex-col gap-3 max-h-[380px] overflow-y-auto pr-1">
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-text-secondary pl-1">Professional Fullname</label>
+                <input 
+                  type="text" 
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="w-full border border-border-subtle px-4 py-2 rounded-xl text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-text-secondary pl-1">Current Role Title</label>
+                <input 
+                  type="text" 
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  className="w-full border border-border-subtle px-4 py-2 rounded-xl text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-text-secondary pl-1">Company</label>
+                <input 
+                  type="text" 
+                  value={editCompany}
+                  onChange={(e) => setEditCompany(e.target.value)}
+                  className="w-full border border-border-subtle px-4 py-2 rounded-xl text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-text-secondary pl-1">Location</label>
+                <input 
+                  type="text" 
+                  value={editLocation}
+                  onChange={(e) => setEditLocation(e.target.value)}
+                  className="w-full border border-border-subtle px-4 py-2 rounded-xl text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-text-secondary pl-1">Short Bio Statement</label>
+                <textarea 
+                  rows={3}
+                  value={editBio}
+                  onChange={(e) => setEditBio(e.target.value)}
+                  className="w-full border border-border-subtle px-4 py-2 rounded-xl text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-text-secondary pl-1">Personal Portfolio / Website</label>
+                <input 
+                  type="url" 
+                  value={editWebsite}
+                  placeholder="https://yourwebsite.com"
+                  onChange={(e) => setEditWebsite(e.target.value)}
+                  className="w-full border border-border-subtle px-4 py-2 rounded-xl text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4 border-t border-border-subtle/20">
+              <button 
+                onClick={() => setIsEditModalOpen(false)}
+                className="px-4 py-2 bg-surface-container hover:bg-surface-container-high transition-colors font-semibold text-xs rounded-xl cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleEditSave}
+                className="px-5 py-2 bg-primary text-white hover:brightness-105 transition-colors font-bold text-xs rounded-xl cursor-pointer"
+              >
+                Save changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Fullscreen Image Modal */}
+      {fullscreenImage && (
+        <div 
+          className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm cursor-zoom-out animate-fadeIn"
+          onClick={() => setFullscreenImage(null)}
+        >
+          <button 
+            className="absolute top-6 right-6 text-white/70 hover:text-white bg-black/50 hover:bg-black/80 rounded-full p-2 transition-all cursor-pointer"
+            onClick={(e) => { e.stopPropagation(); setFullscreenImage(null); }}
+          >
+            <X className="w-6 h-6" />
+          </button>
+          <img 
+            src={fullscreenImage} 
+            alt="Fullscreen view" 
+            className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl animate-modalSlideUp"
+            onClick={(e) => e.stopPropagation()} 
+          />
+        </div>
+      )}
+
+      {/* Add Portfolio Modal */}
+      <AddPortfolioModal 
+        isOpen={isAddPortfolioModalOpen}
+        onClose={() => setIsAddPortfolioModalOpen(false)}
+        onSuccess={handleAddPortfolio}
+      />
+
+    </div>
+  );
+}
