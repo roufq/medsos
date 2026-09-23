@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { Send, CheckCheck, MessageSquare, ArrowLeft } from 'lucide-react';
 import { messageApi } from '../../api/messageApi';
+import { userApi } from '../../api/userApi';
+import { useSearchParams } from 'react-router-dom';
 import { User } from '../../types';
 
 interface MessagesProps {
@@ -8,10 +10,14 @@ interface MessagesProps {
 }
 
 export default function Messages({ currentUser }: MessagesProps) {
+  const [searchParams] = useSearchParams();
+  const targetUserId = searchParams.get('user_id');
   const [conversations, setConversations] = useState<any[]>([]);
-  const [selectedConvId, setSelectedConvId] = useState<number | null>(null);
+  const [selectedConvId, setSelectedConvId] = useState<number | string | null>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [messageText, setMessageText] = useState('');
+  const [error, setError] = useState('');
+  const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -25,24 +31,39 @@ export default function Messages({ currentUser }: MessagesProps) {
           lastMsg: (c.messages && c.messages.length > 0) ? c.messages[0] : null,
           unread: false
         }));
-        setConversations(mapped);
-        if (mapped.length > 0 && !selectedConvId) {
-          setSelectedConvId(mapped[0].id);
+        const existingTarget = targetUserId ? mapped.find((conversation: any) => String(conversation.otherUser.id) === String(targetUserId)) : null;
+        if (existingTarget) {
+          setConversations(mapped);
+          setSelectedConvId(existingTarget.id);
+        } else if (targetUserId && String(targetUserId) !== String(currentUser.id)) {
+          const target = await userApi.getProfile(targetUserId);
+          const draft = { id: `new-${target.id}`, otherUser: target, lastMsg: null, unread: false };
+          setConversations([draft, ...mapped]);
+          setSelectedConvId(draft.id);
+        } else {
+          setConversations(mapped);
+          if (mapped.length > 0) setSelectedConvId(mapped[0].id);
         }
       } catch (err) {
         console.error(err);
+        setError('Failed to load conversations.');
       }
     };
     fetchConvs();
-  }, []);
+  }, [currentUser.id, targetUserId]);
 
   useEffect(() => {
-    if (!selectedConvId) return;
+    if (!selectedConvId || String(selectedConvId).startsWith('new-')) {
+      setMessages([]);
+      return;
+    }
     const fetchMsgs = async () => {
       try {
         const data = await messageApi.getMessages(selectedConvId);
         setMessages(data || []);
-      } catch (err) {}
+      } catch (err: any) {
+        setError(err.response?.data?.error || 'Failed to load messages.');
+      }
     };
     fetchMsgs();
   }, [selectedConvId]);
@@ -61,17 +82,24 @@ export default function Messages({ currentUser }: MessagesProps) {
     const text = messageText.trim();
     if (!text || !selectedConv) return;
 
-    setMessageText('');
+    setSending(true);
+    setError('');
     try {
       const sentMsg = await messageApi.sendMessage(selectedConv.otherUser.id, text);
       setMessages(prev => [...prev, sentMsg]);
+      setMessageText('');
+      const persistedConversationId = sentMsg.conversation_id;
+      setSelectedConvId(persistedConversationId);
       
       // Update local lastMsg in conversations
       setConversations(prev => prev.map(c => 
-        c.id === selectedConvId ? { ...c, lastMsg: sentMsg } : c
+        c.id === selectedConvId ? { ...c, id: persistedConversationId, lastMsg: sentMsg } : c
       ));
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      setError(err.response?.data?.error || 'Failed to send message.');
+    } finally {
+      setSending(false);
     }
   };
 
@@ -105,7 +133,7 @@ export default function Messages({ currentUser }: MessagesProps) {
                   }`}
                 >
                   <div className="w-11 h-11 rounded-full overflow-hidden flex-shrink-0 relative">
-                    <img src={conv.otherUser.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=100'} alt={conv.otherUser.name} className="w-full h-full object-cover" />
+                    <img src={conv.otherUser.avatar_url || '/favicon.svg'} alt={conv.otherUser.name} className="w-full h-full object-cover" />
                     {conv.unread && (
                       <span className="absolute top-0 right-0 w-3 h-3 bg-primary border-2 border-white rounded-full animate-pulse" />
                     )}
@@ -132,11 +160,11 @@ export default function Messages({ currentUser }: MessagesProps) {
               <div className="p-4 bg-white border-b border-border-subtle/20 flex gap-3 items-center justify-between">
                 <div className="flex gap-3 items-center min-w-0">
                   <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
-                    <img src={selectedConv.otherUser.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=100'} alt={selectedConv.otherUser.name} className="w-full h-full object-cover" />
+                    <img src={selectedConv.otherUser.avatar_url || '/favicon.svg'} alt={selectedConv.otherUser.name} className="w-full h-full object-cover" />
                   </div>
                   <div className="min-w-0">
                     <div className="font-bold text-text-primary text-sm truncate">{selectedConv.otherUser.name}</div>
-                    <div className="text-[11px] text-text-secondary truncate">{selectedConv.otherUser.title || 'Professional'} at {selectedConv.otherUser.company || 'Company'}</div>
+                    <div className="text-[11px] text-text-secondary truncate">{[selectedConv.otherUser.title, selectedConv.otherUser.company].filter(Boolean).join(' · ')}</div>
                   </div>
                 </div>
               </div>
@@ -175,21 +203,24 @@ export default function Messages({ currentUser }: MessagesProps) {
               </div>
 
               {/* Type Message input card */}
+              {error && <div className="bg-error/10 px-4 py-2 text-xs text-error">{error}</div>}
               <div className="p-4 bg-white border-t border-border-subtle/20 flex gap-2 items-center">
                 <input 
                   type="text"
                   placeholder={`Send message to ${selectedConv.otherUser.name}...`}
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
+                  disabled={sending}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleSendMessage();
+                    if (e.key === 'Enter' && !sending) handleSendMessage();
                   }}
                   className="w-full border border-border-subtle/50 px-4 py-2.5 rounded-xl text-xs bg-surface-container-low focus:bg-white focus:border-primary focus:ring-0 outline-none transition-all text-text-primary"
                 />
                 <button 
                   type="button"
                   onClick={handleSendMessage}
-                  className="p-2.5 bg-primary text-white rounded-xl shadow-xs hover:brightness-115 active:scale-95 transition-all text-xs cursor-pointer"
+                  disabled={sending || !messageText.trim()}
+                  className="p-2.5 bg-primary text-white rounded-xl shadow-xs hover:brightness-115 active:scale-95 transition-all text-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Send className="w-4.5 h-4.5" />
                 </button>

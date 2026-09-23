@@ -12,8 +12,7 @@ const LoginPage = () => {
   const handleLogin = async (email, password) => {
     try {
       setError('');
-      // Use standard password if none provided by the SSO mock button
-      await login(email, password || 'password123');
+      await login(email, password);
       navigate('/');
     } catch (err) {
       setError(err.response?.data?.error || 'Invalid email or password');

@@ -1,8 +1,11 @@
 package controllers
 
 import (
+	"errors"
 	"github.com/goravel/framework/contracts/http"
+	"goravel/app/models"
 	"goravel/app/repositories"
+	"goravel/pkg/db"
 	"strconv"
 	"strings"
 )
@@ -47,6 +50,9 @@ func (c *MessageController) GetMessages(ctx http.Context) http.Response {
 
 	msgs, err := c.msgRepo.GetMessages(convID, userID, beforeID)
 	if err != nil {
+		if errors.Is(err, repositories.ErrConversationNotFound) {
+			return ctx.Response().Json(404, http.Json{"error": "Conversation not found"})
+		}
 		return ctx.Response().Json(500, http.Json{"error": "Failed to get messages"})
 	}
 
@@ -68,6 +74,13 @@ func (c *MessageController) SendMessage(ctx http.Context) http.Response {
 	}
 	if content == "" || len(content) > 5000 {
 		return ctx.Response().Json(400, http.Json{"error": "Message content must be between 1 and 5000 bytes"})
+	}
+	var receiver models.User
+	if db.DB.First(&receiver, receiverID).Error != nil || receiver.AccountStatus != "active" {
+		return ctx.Response().Json(404, http.Json{"error": "User not found"})
+	}
+	if blockedBetween(senderID, receiverID) {
+		return ctx.Response().Json(403, http.Json{"error": "Messaging is not allowed"})
 	}
 
 	msg, err := c.msgRepo.SendMessage(senderID, receiverID, content)

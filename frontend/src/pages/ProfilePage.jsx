@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { userApi } from '../api/userApi';
@@ -11,8 +11,13 @@ import { Loader } from 'lucide-react';
 
 const ProfilePage = () => {
   const { id } = useParams();
-  const { user: authUser, logout } = useAuth();
+  const { user: authUser, logout, updateProfileState } = useAuth();
   const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/thanks');
+  };
   
   const [profileUser, setProfileUser] = useState(null);
   const [posts, setPosts] = useState([]);
@@ -23,22 +28,18 @@ const ProfilePage = () => {
 
   // The logged-in user in modern format
   const currentUser = {
-    id: authUser?.id || 'new_user',
-    name: authUser?.name || 'Guest User',
-    title: authUser?.title || 'Professional',
+    id: authUser?.id,
+    name: authUser?.name || '',
+    title: authUser?.title || '',
     company: authUser?.company || '',
-    avatar: authUser?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=100',
-    coverImage: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=1000',
-    bio: authUser?.bio || 'Passionate professional.',
-    location: authUser?.location || 'Global',
+    avatar: authUser?.avatar_url || '/favicon.svg',
+    coverImage: authUser?.cover_url || '',
+    bio: authUser?.bio || '',
+    location: authUser?.location || '',
     email: authUser?.email || '',
-    networkCount: 120,
-    expertise: ['Technology', 'Design']
+    networkCount: authUser?.following_count || 0,
+    expertise: authUser?.interests || []
   };
-
-  useEffect(() => {
-    fetchProfileData();
-  }, [id]);
 
   const formatBackendPost = (post) => {
     return {
@@ -48,7 +49,7 @@ const ProfilePage = () => {
         name: post.user?.name || 'Unknown',
         title: post.user?.title || 'Member',
         company: post.user?.company || '',
-        avatar: post.user?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=100',
+        avatar: post.user?.avatar_url || '/favicon.svg',
       },
       timeAgo: new Date(post.created_at).toLocaleDateString(),
       title: post.title,
@@ -56,18 +57,20 @@ const ProfilePage = () => {
       image: post.media?.length > 0 && post.media[0].media_type === 'image' ? post.media[0].media_url : undefined,
       likesCount: post.likes_count || 0,
       commentsCount: post.comments_count || 0,
-      sharesCount: 0,
+      sharesCount: post.shares_count || 0,
       isLikedByMe: Boolean(post.is_liked_by_me),
       linkPreview: post.post_type === 'link' && post.link ? {
         url: post.link.url,
-        title: post.link.title || post.link.url,
+        title: post.link.title || '',
         description: post.link.description || '',
-        image: post.link.image_url || ''
+        image: post.link.image_url || '',
+        siteName: post.link.site_name || '',
+        status: post.link.preview_status || 'pending'
       } : undefined,
       comments: post.comments ? post.comments.map(c => ({
         id: c.id,
         authorName: c.user?.name || 'Unknown',
-        authorAvatar: c.user?.avatar || '',
+        authorAvatar: c.user?.avatar_url || '',
         content: c.content,
         timeAgo: new Date(c.created_at).toLocaleDateString()
       })) : []
@@ -81,17 +84,21 @@ const ProfilePage = () => {
       
       const formattedUser = {
         id: user.id,
-        name: user.name || 'User',
-        title: user.title || 'Professional',
+        name: user.name || '',
+        title: user.title || '',
         company: user.company || '',
-        avatar: user.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=100',
-        coverImage: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=1000',
-        bio: user.bio || 'Passionate professional.',
-        location: user.location || 'Global',
+        avatar: user.avatar_url || '/favicon.svg',
+        coverImage: user.cover_url || '',
+        bio: user.bio || '',
+        location: user.location || '',
         website: user.website || '',
         email: user.email || '',
-        networkCount: user.following_count || 120,
-        expertise: ['Technology', 'Design']
+        networkCount: user.followers_count || 0,
+        followersCount: user.followers_count || 0,
+        followingCount: user.following_count || 0,
+        expertise: user.interests || [],
+        isFollowing: Boolean(user.is_followed_by_me),
+        joinedDate: user.created_at ? new Date(user.created_at).toLocaleDateString() : ''
       };
       setProfileUser(formattedUser);
 
@@ -103,6 +110,10 @@ const ProfilePage = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchProfileData();
+  }, [id]);
 
   const handleProfileUpdated = async (updatedUser) => {
     try {
@@ -129,6 +140,9 @@ const ProfilePage = () => {
         location: response.location || profileUser.location,
         website: response.website || profileUser.website
       });
+      if (profileUser?.id === currentUser.id) {
+        updateProfileState(response);
+      }
     } catch (error) {
       alert('Failed to update profile: ' + error.message);
     }
@@ -142,7 +156,7 @@ const ProfilePage = () => {
         return { 
           ...post, 
           isLikedByMe: isLiked,
-          likes: isLiked ? post.likes + 1 : post.likes - 1
+          likesCount: Math.max(0, post.likesCount + (isLiked ? 1 : -1))
         };
       }
       return post;
@@ -159,7 +173,7 @@ const ProfilePage = () => {
           return { 
             ...post, 
             isLikedByMe: isLiked,
-            likes: isLiked ? post.likes + 1 : post.likes - 1
+            likesCount: Math.max(0, post.likesCount + (isLiked ? 1 : -1))
           };
         }
         return post;
@@ -167,32 +181,7 @@ const ProfilePage = () => {
     }
   };
 
-  const handleAddComment = async (postId, text) => {
-    try {
-      const newComment = await postApi.addComment(postId, text);
-      
-      setPosts(prev => prev.map(post => {
-        if (post.id === postId) {
-          return {
-            ...post,
-            comments: [...post.comments, {
-              id: newComment.id,
-              authorName: currentUser.name,
-              authorAvatar: currentUser.avatar,
-              content: newComment.content,
-              timeAgo: 'Just now'
-            }]
-          };
-        }
-        return post;
-      }));
-    } catch (e) {
-      console.error('Failed to add comment', e);
-      alert('Failed to add comment: ' + e.message);
-    }
-  };
-
-  const handleCreatePostSubmit = async (title, text, imageUrl, linkUrl) => {
+  const handleCreatePostSubmit = async ({ title, text, imageUrl, linkUrl, hashtags, mentions }) => {
     let pType = 'text';
     if (linkUrl) pType = 'link';
     else if (imageUrl) pType = 'image';
@@ -202,9 +191,11 @@ const ProfilePage = () => {
       content: text,
       post_type: pType,
       media_urls: imageUrl ? [imageUrl] : [],
-      link_url: linkUrl || ''
+      link_url: linkUrl || '',
+      hashtags: hashtags || [],
+      mentions: mentions || [],
     };
-    
+
     const newPost = await postApi.createPost(postData);
     if (profileUser?.id === currentUser.id) {
       setPosts([formatBackendPost(newPost), ...posts]);
@@ -251,6 +242,7 @@ const ProfilePage = () => {
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         onNavigate={handleNavigate}
+        onOpenProfile={(userId) => navigate(`/profile/${userId}`)}
         onToggleMobileSidebar={() => setMobileSidebarOpen(!mobileSidebarOpen)}
       />
 
@@ -259,14 +251,14 @@ const ProfilePage = () => {
           currentTab="profile"
           onNavigate={handleNavigate}
           onRequestCreatePost={() => setIsCreatePostOpen(true)}
-          onLogout={logout}
+          onLogout={handleLogout}
         />
 
         <div className="flex-grow min-w-0">
           <Profile 
             user={profileUser}
             onUpdateUser={handleProfileUpdated}
-            onNavigateToMessages={() => alert('Messaging not fully implemented.')}
+            onNavigateToMessages={() => navigate(`/messages?user_id=${profileUser.id}`)}
             profilePosts={posts}
             onLikePost={handleLikePost}
             onDeletePost={profileUser?.id === currentUser.id ? handleDeletePost : undefined}

@@ -144,6 +144,7 @@ func (h *OAuthController) Callback(c goravelhttp.Context) goravelhttp.Response {
 		return c.Response().Json(500, goravelhttp.Json{"error": "failed to create session"})
 	}
 	refresh, _ := appjwt.GenerateRefreshToken(user)
+	setAuthCookies(c, access, refresh)
 	return c.Response().Json(200, goravelhttp.Json{"access_token": access, "refresh_token": refresh, "user": user})
 }
 
@@ -177,7 +178,20 @@ func (h *OAuthController) exchangeCode(p oauthProvider, code, verifier string) (
 	return payload.AccessToken, payload.IDToken, nil
 }
 
-type oauthIdentityPayload struct{ Subject, Name, Email, Avatar string }
+type oauthIdentityPayload struct {
+	Subject, Name, Email, Avatar string
+	EmailVerified                bool
+}
+
+// flexBool accepts a provider's "email_verified" claim whether it's encoded
+// as a JSON boolean (Google, LinkedIn) or a string (some Apple identity
+// tokens), defaulting to false on anything else.
+type flexBool bool
+
+func (f *flexBool) UnmarshalJSON(data []byte) error {
+	*f = flexBool(strings.Trim(string(data), `"`) == "true")
+	return nil
+}
 
 func (h *OAuthController) fetchIdentity(p oauthProvider, token, idToken string) (oauthIdentityPayload, error) {
 	if p.name == "apple" {
@@ -195,12 +209,13 @@ func (h *OAuthController) fetchIdentity(p oauthProvider, token, idToken string) 
 	}
 	body, _ := io.ReadAll(io.LimitReader(response.Body, 1<<20))
 	var generic struct {
-		Sub     string `json:"sub"`
-		ID      string `json:"id"`
-		Name    string `json:"name"`
-		Email   string `json:"email"`
-		Picture string `json:"picture"`
-		Data    struct {
+		Sub           string   `json:"sub"`
+		ID            string   `json:"id"`
+		Name          string   `json:"name"`
+		Email         string   `json:"email"`
+		EmailVerified flexBool `json:"email_verified"`
+		Picture       string   `json:"picture"`
+		Data          struct {
 			User struct {
 				OpenID      string `json:"open_id"`
 				DisplayName string `json:"display_name"`
@@ -221,7 +236,16 @@ func (h *OAuthController) fetchIdentity(p oauthProvider, token, idToken string) 
 	if subject == "" {
 		return oauthIdentityPayload{}, errors.New("OAuth subject is missing")
 	}
-	return oauthIdentityPayload{Subject: subject, Name: name, Email: generic.Email, Avatar: avatar}, nil
+	// Google and LinkedIn's OIDC userinfo endpoints report email_verified
+	// directly. Facebook's Graph API doesn't return the field at all, but
+	// only ever returns addresses it has already verified, so treat any
+	// Facebook email as verified. TikTok's userinfo scope here never
+	// includes an email, so this is moot for that provider.
+	emailVerified := bool(generic.EmailVerified)
+	if p.name == "facebook" && generic.Email != "" {
+		emailVerified = true
+	}
+	return oauthIdentityPayload{Subject: subject, Name: name, Email: generic.Email, Avatar: avatar, EmailVerified: emailVerified}, nil
 }
 
 func identityFromJWT(token string) (oauthIdentityPayload, error) {
@@ -234,13 +258,14 @@ func identityFromJWT(token string) (oauthIdentityPayload, error) {
 		return oauthIdentityPayload{}, err
 	}
 	var claims struct {
-		Subject string `json:"sub"`
-		Email   string `json:"email"`
+		Subject       string   `json:"sub"`
+		Email         string   `json:"email"`
+		EmailVerified flexBool `json:"email_verified"`
 	}
 	if json.Unmarshal(payload, &claims) != nil || claims.Subject == "" {
 		return oauthIdentityPayload{}, errors.New("Apple identity token is invalid")
 	}
-	return oauthIdentityPayload{Subject: claims.Subject, Email: claims.Email, Name: "Apple User"}, nil
+	return oauthIdentityPayload{Subject: claims.Subject, Email: claims.Email, Name: "Apple User", EmailVerified: bool(claims.EmailVerified)}, nil
 }
 
 func upsertOAuthUser(provider string, identity oauthIdentityPayload) (*models.User, error) {
@@ -250,7 +275,11 @@ func upsertOAuthUser(provider string, identity oauthIdentityPayload) (*models.Us
 		return &user, db.DB.First(&user, linked.UserID).Error
 	}
 	var user models.User
-	if identity.Email != "" {
+	// Only auto-link to an existing account by email when the provider
+	// vouches for it — an unverified email could belong to someone else,
+	// which would otherwise let an attacker take over that account by
+	// signing in through an OAuth provider with a spoofed/unverified address.
+	if identity.Email != "" && identity.EmailVerified {
 		_ = db.DB.Where("LOWER(email) = LOWER(?)", identity.Email).First(&user).Error
 	}
 	if user.ID == 0 {

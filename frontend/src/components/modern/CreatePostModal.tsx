@@ -3,11 +3,36 @@ import { X, ArrowRight, Image as ImageIcon, Link as LinkIcon, Loader2 } from 'lu
 import { User } from '../../types';
 import { postApi } from '../../api/postApi';
 
+export interface CreatePostPayload {
+  title: string;
+  text: string;
+  imageUrl: string;
+  linkUrl: string;
+  hashtags: string[];
+  mentions: string[];
+}
+
 interface CreatePostModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (title: string, text: string, imageUrl: string, linkUrl: string) => Promise<void>;
+  onSubmit: (payload: CreatePostPayload) => Promise<void>;
   currentUser: User;
+}
+
+const MAX_HASHTAGS = 9;
+const MAX_MENTIONS = 10;
+
+function parseTags(raw: string, prefix: string): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const part of raw.split(/[\s,]+/)) {
+    const value = part.trim().replace(new RegExp(`^\\${prefix}`), '').toLowerCase();
+    if (value && !seen.has(value)) {
+      seen.add(value);
+      result.push(value);
+    }
+  }
+  return result;
 }
 
 export default function CreatePostModal({ isOpen, onClose, onSubmit, currentUser }: CreatePostModalProps) {
@@ -15,13 +40,19 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit, currentUser
   const [newPostText, setNewPostText] = useState('');
   const [newPostImage, setNewPostImage] = useState<string>('');
   const [newPostLink, setNewPostLink] = useState('');
+  const [newPostHashtags, setNewPostHashtags] = useState('');
+  const [newPostMentions, setNewPostMentions] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [showLinkInput, setShowLinkInput] = useState(false);
-  
+  const [formError, setFormError] = useState('');
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
+
+  const hashtags = parseTags(newPostHashtags, '#');
+  const mentions = parseTags(newPostMentions, '@');
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -40,17 +71,35 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit, currentUser
 
   const handleSubmit = async () => {
     if (!newPostText.trim() && !newPostTitle.trim()) return;
+    setFormError('');
+    if (hashtags.length > MAX_HASHTAGS) {
+      setFormError(`Use at most ${MAX_HASHTAGS} hashtags (currently ${hashtags.length}).`);
+      return;
+    }
+    if (mentions.length > MAX_MENTIONS) {
+      setFormError(`Mention at most ${MAX_MENTIONS} users (currently ${mentions.length}).`);
+      return;
+    }
     setIsSubmitting(true);
     try {
-      await onSubmit(newPostTitle.trim(), newPostText.trim(), newPostImage, newPostLink.trim());
+      await onSubmit({
+        title: newPostTitle.trim(),
+        text: newPostText.trim(),
+        imageUrl: newPostImage,
+        linkUrl: newPostLink.trim(),
+        hashtags,
+        mentions,
+      });
       setNewPostTitle('');
       setNewPostText('');
       setNewPostImage('');
       setNewPostLink('');
+      setNewPostHashtags('');
+      setNewPostMentions('');
       setShowLinkInput(false);
       onClose();
-    } catch (e) {
-      alert('Failed to post: ' + e);
+    } catch (e: any) {
+      setFormError(e?.response?.data?.error || e?.message || 'Failed to post. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -99,6 +148,39 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit, currentUser
           />
         </div>
 
+        <div className="flex flex-col gap-2">
+          <div>
+            <input
+              type="text"
+              value={newPostHashtags}
+              onChange={(e) => setNewPostHashtags(e.target.value)}
+              placeholder="Hashtags (optional), e.g. #career #tech #hiring"
+              className="w-full text-xs bg-surface-container-low px-3 py-2 rounded-lg border border-border-subtle/50 focus:ring-0 focus:border-primary placeholder:text-outline text-text-primary"
+            />
+            <div className="text-[10px] text-text-secondary mt-1 px-1">
+              {hashtags.length}/{MAX_HASHTAGS} hashtags (optional)
+            </div>
+          </div>
+          <div>
+            <input
+              type="text"
+              value={newPostMentions}
+              onChange={(e) => setNewPostMentions(e.target.value)}
+              placeholder="Mention users (optional), e.g. @jane @john"
+              className="w-full text-xs bg-surface-container-low px-3 py-2 rounded-lg border border-border-subtle/50 focus:ring-0 focus:border-primary placeholder:text-outline text-text-primary"
+            />
+            <div className="text-[10px] text-text-secondary mt-1 px-1">
+              {mentions.length}/{MAX_MENTIONS} mentions (optional)
+            </div>
+          </div>
+        </div>
+
+        {formError && (
+          <div className="text-xs text-error bg-error/10 border border-error/20 rounded-lg px-3 py-2">
+            {formError}
+          </div>
+        )}
+
         {showLinkInput && (
           <div className="flex items-center gap-2 bg-surface-container-low px-3 py-2 rounded-lg border border-border-subtle/50">
             <LinkIcon className="w-4 h-4 text-text-secondary" />
@@ -117,7 +199,7 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit, currentUser
 
         {newPostImage && (
           <div className="h-40 bg-surface-container overflow-hidden rounded-xl border border-border-subtle/20 relative group">
-            <img src={newPostImage.startsWith('http') ? newPostImage : `http://localhost:8080${newPostImage}`} alt="Upload preview" className="w-full h-full object-cover" />
+            <img src={newPostImage} alt="Upload preview" className="w-full h-full object-cover" />
             <button 
               type="button"
               onClick={() => setNewPostImage('')}

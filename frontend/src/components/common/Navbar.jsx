@@ -9,7 +9,7 @@ const Navbar = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate('/thanks');
   };
 
   const avatar = user?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=100';
@@ -51,7 +51,7 @@ const Navbar = () => {
         </Link>
         {user?.role === 'admin' && (
           <a
-            href="http://localhost:8080/web/admin/dashboard"
+            href="/web/admin/dashboard"
             target="_blank"
             rel="noopener noreferrer"
             className="p-2 hover:bg-red-50 rounded-xl text-[#65676B] hover:text-red-600 transition-all flex items-center gap-1.5 text-xs font-bold"

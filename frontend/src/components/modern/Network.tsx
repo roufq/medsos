@@ -4,10 +4,11 @@ import { networkApi } from '../../api/networkApi';
 import { User } from '../../types';
 
 interface NetworkProps {
-  onNavigateToMessages: () => void;
+  onNavigateToMessages: (userId?: string) => void;
+  onOpenProfile?: (userId: string) => void;
 }
 
-export default function Network({ onNavigateToMessages }: NetworkProps) {
+export default function Network({ onNavigateToMessages, onOpenProfile }: NetworkProps) {
   const [connections, setConnections] = useState<User[]>([]);
   const [pendingRequests, setPendingRequests] = useState<User[]>([]);
   const [suggestions, setSuggestions] = useState<User[]>([]);
@@ -93,11 +94,11 @@ export default function Network({ onNavigateToMessages }: NetworkProps) {
                 {pendingRequests.map((req) => (
                   <div key={req.id} className="flex gap-4 items-center justify-between p-3.5 bg-surface-container-low rounded-2xl border border-border-subtle/20">
                     <div className="flex gap-3 items-center min-w-0">
-                      <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
-                        <img src={req.avatar} alt={req.name} className="w-full h-full object-cover" />
-                      </div>
+                      <button type="button" onClick={() => onOpenProfile?.(req.id)} className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
+                        {(req as any).avatar_url ? <img src={(req as any).avatar_url} alt={req.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center bg-secondary-container text-primary font-bold">{req.name?.slice(0, 1).toUpperCase()}</div>}
+                      </button>
                       <div className="min-w-0">
-                        <div className="font-bold text-text-primary text-xs truncate">{req.name}</div>
+                        <button type="button" onClick={() => onOpenProfile?.(req.id)} className="block max-w-full font-bold text-text-primary text-xs truncate hover:underline">{req.name}</button>
                         <div className="text-[11px] text-text-secondary truncate">{req.title} @ {req.company}</div>
                       </div>
                     </div>
@@ -148,18 +149,18 @@ export default function Network({ onNavigateToMessages }: NetworkProps) {
                 {filteredConnections.map((conn) => (
                   <div key={conn.id} className="border border-border-subtle/30 rounded-2xl p-4 flex flex-col gap-3 hover:border-primary hover:shadow-xs transition-all bg-white relative">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-surface-container">
-                        <img src={conn.avatar} alt={conn.name} className="w-full h-full object-cover" />
-                      </div>
+                      <button type="button" onClick={() => onOpenProfile?.(conn.id)} className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-surface-container">
+                        {(conn as any).avatar_url ? <img src={(conn as any).avatar_url} alt={conn.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center bg-secondary-container text-primary font-bold">{conn.name?.slice(0, 1).toUpperCase()}</div>}
+                      </button>
                       <div className="min-w-0">
-                        <div className="font-bold text-text-primary text-xs truncate">{conn.name}</div>
+                        <button type="button" onClick={() => onOpenProfile?.(conn.id)} className="block max-w-full font-bold text-text-primary text-xs truncate hover:underline">{conn.name}</button>
                         <div className="text-[10px] text-text-secondary truncate">{conn.title}</div>
                         <div className="text-[10px] text-outline truncate">{conn.company}</div>
                       </div>
                     </div>
                     <div className="flex gap-2 mt-2 pt-2 border-t border-border-subtle/10">
                       <button 
-                        onClick={onNavigateToMessages}
+                        onClick={() => onNavigateToMessages(conn.id)}
                         className="w-full py-1.5 bg-secondary-container hover:bg-secondary-container/80 text-primary transition-colors font-bold text-xs rounded-xl flex items-center justify-center gap-1 cursor-pointer"
                       >
                         <MessageSquare className="w-3.5 h-3.5" />

@@ -40,7 +40,14 @@ func (receiver *FetchLinkPreview) Handle(args ...any) error {
 
 	preview, err := fetchPreview(link.URL)
 	if err != nil {
+		// The source site blocked direct scraping (bot protection, paywall, ...).
+		// Fall back to a readable title + the site's public favicon so the
+		// card still shows something instead of an empty placeholder.
+		fallback := linkpreview.FallbackPreview(link.URL)
 		_ = db.DB.Model(&link).Updates(map[string]any{
+			"title":          fallback.Title,
+			"image_url":      fallback.ImageURL,
+			"site_name":      fallback.SiteName,
 			"preview_status": models.LinkPreviewFailed,
 			"preview_error":  "preview temporarily unavailable",
 		}).Error

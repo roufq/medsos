@@ -26,7 +26,7 @@ func init() {
 		"paths":                []string{"api/*"},
 		"allowed_methods":      []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		"allowed_origins":      allowedOrigins,
-		"allowed_headers":      []string{"Authorization", "Content-Type", "Accept"},
+		"allowed_headers":      []string{"Authorization", "Content-Type", "Accept", "X-CSRF-Token"},
 		"exposed_headers":      []string{},
 		"max_age":              0,
 		"supports_credentials": false,

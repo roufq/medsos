@@ -1,5 +1,6 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import { createContext, useState, useEffect, useContext } from 'react';
 import { authApi } from '../api/authApi';
+import { userApi } from '../api/userApi';
 
 const AuthContext = createContext(null);
 
@@ -8,26 +9,26 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
-    if (token && storedUser) {
+    // Tokens live in httpOnly cookies now, so JS can't check for their
+    // presence up front - just ask the API who's logged in and treat a
+    // failure (401) as "not authenticated".
+    const loadCurrentUser = async () => {
       try {
-        setUser(JSON.parse(storedUser));
-      } catch (e) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        const currentUser = await userApi.getProfile('me');
+        setUser(currentUser);
+      } catch {
+        setUser(null);
+      } finally {
+        setLoading(false);
       }
-    }
-    setLoading(false);
+    };
+    loadCurrentUser();
   }, []);
 
   const login = async (email, password) => {
     setLoading(true);
     try {
       const data = await authApi.login(email, password);
-      localStorage.setItem('token', data.access_token);
-      localStorage.setItem('refresh_token', data.refresh_token);
-      localStorage.setItem('user', JSON.stringify(data.user));
       setUser(data.user);
       return data.user;
     } finally {
@@ -39,9 +40,6 @@ export const AuthProvider = ({ children }) => {
     setLoading(true);
     try {
       const data = await authApi.register(name, email, password);
-      localStorage.setItem('token', data.access_token);
-      localStorage.setItem('refresh_token', data.refresh_token);
-      localStorage.setItem('user', JSON.stringify(data.user));
       setUser(data.user);
       return data.user;
     } finally {
@@ -55,14 +53,10 @@ export const AuthProvider = ({ children }) => {
     } catch (e) {
       console.error('Logout API failed:', e);
     }
-    localStorage.removeItem('token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('user');
     setUser(null);
   };
 
   const updateProfileState = (updatedUser) => {
-    localStorage.setItem('user', JSON.stringify(updatedUser));
     setUser(updatedUser);
   };
 

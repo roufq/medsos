@@ -12,8 +12,7 @@ const RegisterPage = () => {
   const handleRegister = async (email, fullName, password) => {
     try {
       setError('');
-      // Use standard password if none provided by the SSO mock button
-      await register(fullName, email, password || 'password123');
+      await register(fullName, email, password);
       navigate('/');
     } catch (err) {
       setError(err.response?.data?.error || 'Registration failed. Try again.');

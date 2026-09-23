@@ -18,7 +18,7 @@ export default function Signup({ onRegister, onNavigateToLogin, onOAuth }: Signu
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!email) return;
-    const fullName = `${firstName} ${lastName}`.trim() || 'Guest professional';
+    const fullName = `${firstName} ${lastName}`.trim();
     onRegister(email, fullName, password);
   };
 
@@ -77,24 +77,10 @@ export default function Signup({ onRegister, onNavigateToLogin, onOAuth }: Signu
           </div>
         </div>
 
-        {/* Testimonial Quote wrapper */}
+        {/* Product statement */}
         <div className="relative z-10 mt-auto max-w-md">
           <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-6">
-            <p className="text-sm italic mb-4 leading-relaxed text-white/90">
-              "The efficiency of Connect Modern is unparalleled. I found my current lead architectural role through a connection made within two weeks of joining."
-            </p>
-            <div className="flex items-center gap-3">
-              <img 
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAn4yY9AHfgHf5xSDNmE2A_L8DgJV3uWazYrzWuZumv1lrZwSzNTy_txsCyzyjHJwa_RCAMj3-jpkiZDeAQejuQH9-SfGrYGVO20mpRl9bH2mMrmj1j1KJLx1lePrt_iaSi4pehX40r--N232fR7mpquvoZPcdW3BdBpeOcPekx3tLOUzgfyNN9gqcMYpExpiZ5hm73m_hcAslYaQYwfuIKQNchDQ9O-Uor4rYDfKDlVewLOW3KacaJhso7-C43V3Jjrt76AqC1I8" 
-                alt="Elena Rodriguez Testimonial portrait" 
-                className="w-10 h-10 rounded-full object-cover ring-2 ring-white/30"
-                referrerPolicy="no-referrer"
-              />
-              <div>
-                <p className="font-bold text-xs">Elena Rodriguez</p>
-                <p className="text-white/60 text-[10px]">Director of Innovation @ TechStream</p>
-              </div>
-            </div>
+            <p className="text-sm leading-relaxed text-white/90">Create an account to connect with real users, publish posts, manage portfolios, and discover opportunities stored in this application's database.</p>
           </div>
         </div>
       </aside>

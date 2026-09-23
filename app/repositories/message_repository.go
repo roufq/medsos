@@ -7,6 +7,8 @@ import (
 	"gorm.io/gorm"
 )
 
+var ErrConversationNotFound = errors.New("conversation not found")
+
 type MessageRepository interface {
 	GetConversations(userID int64) ([]models.Conversation, error)
 	GetMessages(convID, userID, beforeID int64) ([]models.Message, error)
@@ -22,11 +24,46 @@ func NewMessageRepository() MessageRepository {
 
 func (r *MessageRepositoryImpl) GetConversations(userID int64) ([]models.Conversation, error) {
 	var convs []models.Conversation
-	err := db.DB.Preload("User1").Preload("User2").Preload("Messages", "id = (SELECT MAX(id) FROM messages WHERE conversation_id = conversations.id)").
+	err := db.DB.Preload("User1").Preload("User2").
 		Where("user1_id = ? OR user2_id = ?", userID, userID).
 		Order("updated_at desc").
 		Limit(100).
 		Find(&convs).Error
+	if err != nil {
+		return nil, err
+	}
+	if len(convs) > 0 {
+		conversationIDs := make([]int64, 0, len(convs))
+		for i := range convs {
+			conversationIDs = append(conversationIDs, convs[i].ID)
+		}
+		lastMessages := make([]models.Message, 0, len(convs))
+		latestIDs := db.DB.Model(&models.Message{}).
+			Select("MAX(id)").
+			Where("conversation_id IN ?", conversationIDs).
+			Group("conversation_id")
+		if err := db.DB.Preload("Sender").Where("id IN (?)", latestIDs).Find(&lastMessages).Error; err != nil {
+			return nil, err
+		}
+		lastByConversation := make(map[int64]models.Message, len(lastMessages))
+		for _, message := range lastMessages {
+			lastByConversation[message.ConversationID] = message
+		}
+		for i := range convs {
+			if message, ok := lastByConversation[convs[i].ID]; ok {
+				convs[i].Messages = []models.Message{message}
+			} else {
+				convs[i].Messages = []models.Message{}
+			}
+		}
+	}
+	for i := range convs {
+		convs[i].User1.HidePrivateData()
+		convs[i].User2.HidePrivateData()
+		for j := range convs[i].Messages {
+			convs[i].Messages[j].Sender.HidePrivateData()
+		}
+	}
 	return convs, err
 }
 
@@ -38,7 +75,7 @@ func (r *MessageRepositoryImpl) GetMessages(convID, userID, beforeID int64) ([]m
 		return nil, err
 	}
 	if count == 0 {
-		return nil, errors.New("conversation not found")
+		return nil, ErrConversationNotFound
 	}
 
 	var msgs []models.Message
@@ -49,6 +86,9 @@ func (r *MessageRepositoryImpl) GetMessages(convID, userID, beforeID int64) ([]m
 	err := query.Order("id desc").Limit(100).Find(&msgs).Error
 	for left, right := 0, len(msgs)-1; left < right; left, right = left+1, right-1 {
 		msgs[left], msgs[right] = msgs[right], msgs[left]
+	}
+	for i := range msgs {
+		msgs[i].Sender.HidePrivateData()
 	}
 	return msgs, err
 }
@@ -87,6 +127,7 @@ func (r *MessageRepositoryImpl) SendMessage(senderID, receiverID int64, content 
 	if err := db.DB.Preload("Sender").First(&msg, msg.ID).Error; err != nil {
 		return models.Message{}, err
 	}
+	msg.Sender.HidePrivateData()
 	return msg, nil
 }
 

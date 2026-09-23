@@ -7,16 +7,13 @@ import {
   Calendar as CalendarIcon, 
   FileText, 
   MoreHorizontal, 
-  Info, 
-  UserPlus, 
-  UserCheck, 
   Send,
   Trash2,
   X,
   Globe
 } from 'lucide-react';
 import { Post, User } from '../types';
-import { mockUsers } from '../data';
+import { postApi } from '../../api/postApi';
 
 interface FeedProps {
   posts: Post[];
@@ -26,8 +23,7 @@ interface FeedProps {
   onAddComment: (postId: string, commentText: string) => void;
   onRequestCreatePost: () => void;
   onNavigate: (tab: 'home' | 'network' | 'jobs' | 'messages' | 'profile' | 'admin' | 'analytics') => void;
-  onFollowSuggestion: (userId: string) => void;
-  followedUsers: string[];
+  onOpenProfile: (userId: string | number) => void;
   onDeletePost?: (postId: string) => void;
 }
 
@@ -39,40 +35,83 @@ export default function Feed({
   onAddComment,
   onRequestCreatePost,
   onNavigate,
-  onFollowSuggestion,
-  followedUsers,
+  onOpenProfile,
   onDeletePost
 }: FeedProps) {
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
   const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({});
+  const [loadedComments, setLoadedComments] = useState<Record<string, any[]>>({});
+  const [commentsLoading, setCommentsLoading] = useState<Record<string, boolean>>({});
+  const [commentsHasMore, setCommentsHasMore] = useState<Record<string, boolean>>({});
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
 
-  const handleCommentSubmit = (postId: string) => {
+  const mapComment = (comment: any) => ({ id: comment.id, authorName: comment.user?.name || 'Unknown', authorAvatar: comment.user?.avatar_url || '/favicon.svg', content: comment.content, timeAgo: new Date(comment.created_at).toLocaleString() });
+
+  const refreshComments = async (postId: string) => {
+    setCommentsLoading((state) => ({ ...state, [postId]: true }));
+    try {
+      const { comments, has_more } = await postApi.getComments(postId);
+      setLoadedComments((state) => ({ ...state, [postId]: (comments || []).map(mapComment) }));
+      setCommentsHasMore((state) => ({ ...state, [postId]: Boolean(has_more) }));
+    } catch (error: any) {
+      alert(error.response?.data?.error || 'Failed to load comments');
+    } finally {
+      setCommentsLoading((state) => ({ ...state, [postId]: false }));
+    }
+  };
+
+  const loadEarlierComments = async (postId: string) => {
+    const oldest = loadedComments[postId]?.[0];
+    if (!oldest) return;
+    setCommentsLoading((state) => ({ ...state, [postId]: true }));
+    try {
+      const { comments, has_more } = await postApi.getComments(postId, oldest.id);
+      setLoadedComments((state) => ({ ...state, [postId]: [...(comments || []).map(mapComment), ...(state[postId] || [])] }));
+      setCommentsHasMore((state) => ({ ...state, [postId]: Boolean(has_more) }));
+    } catch (error: any) {
+      alert(error.response?.data?.error || 'Failed to load comments');
+    } finally {
+      setCommentsLoading((state) => ({ ...state, [postId]: false }));
+    }
+  };
+
+  const handleCommentSubmit = async (postId: string) => {
     const text = commentInputs[postId]?.trim();
     if (!text) return;
-    onAddComment(postId, text);
-    setCommentInputs(prev => ({ ...prev, [postId]: '' }));
+    try {
+      await onAddComment(postId, text);
+      setCommentInputs(prev => ({ ...prev, [postId]: '' }));
+      await refreshComments(postId);
+    } catch (error) {
+      // The page handler displays the request error and keeps the text available.
+    }
   };
 
-  const toggleComments = (postId: string) => {
-    setExpandedComments(prev => ({ ...prev, [postId]: !prev[postId] }));
+  const toggleComments = async (postId: string) => {
+    const willOpen = !expandedComments[postId];
+    setExpandedComments(prev => ({ ...prev, [postId]: willOpen }));
+    if (willOpen && !loadedComments[postId]) await refreshComments(postId);
   };
 
-  const handleShare = (postId: string) => {
+  const handleShare = async (postId: string) => {
     const postUrl = `${window.location.origin}/post/${postId}`;
-    navigator.clipboard.writeText(postUrl)
-      .then(() => alert('Link copied to clipboard!'))
-      .catch(() => alert('Failed to copy link.'));
+    try {
+      await postApi.share(postId, 'copy');
+      await navigator.clipboard.writeText(postUrl);
+      alert('Link copied to clipboard!');
+    } catch (error: any) {
+      alert(error.response?.data?.error || 'Failed to share post.');
+    }
   };
 
   // Filter posts based on search query
   const filteredPosts = posts.filter(post => {
     const term = searchQuery.toLowerCase();
     return (
-      post.content.toLowerCase().includes(term) ||
-      post.author.name.toLowerCase().includes(term) ||
-      post.author.title.toLowerCase().includes(term) ||
-      (post.linkPreview?.title.toLowerCase().includes(term))
+      (post.content || '').toLowerCase().includes(term) ||
+      (post.author.name || '').toLowerCase().includes(term) ||
+      (post.author.title || '').toLowerCase().includes(term) ||
+      Boolean(post.linkPreview?.title?.toLowerCase().includes(term))
     );
   });
 
@@ -136,7 +175,7 @@ export default function Feed({
         {filteredPosts.length === 0 ? (
           <div className="bg-white rounded-2xl p-8 border border-border-subtle/30 text-center shadow-sm">
             <p className="text-text-secondary font-medium mb-1">No matching insights found.</p>
-            <p className="text-xs text-outline">Try searching for keywords like design, distributed, layout, or Sarah.</p>
+            <p className="text-xs text-outline">Try another keyword or clear the search field.</p>
           </div>
         ) : (
           filteredPosts.map((post) => {
@@ -152,7 +191,7 @@ export default function Feed({
                     <div className="flex gap-3">
                       <div 
                         onClick={() => {
-                          if (post.author.id === 'adrian') onNavigate('profile');
+                          onOpenProfile(post.author.id);
                         }}
                         className="w-10 h-10 rounded-full overflow-hidden cursor-pointer flex-shrink-0"
                       >
@@ -166,14 +205,14 @@ export default function Feed({
                       <div>
                         <div 
                           onClick={() => {
-                            if (post.author.id === 'adrian') onNavigate('profile');
+                            onOpenProfile(post.author.id);
                           }}
-                          className={`${post.author.id === 'adrian' ? 'hover:underline cursor-pointer' : ''} font-bold text-text-primary text-sm`}
+                          className="hover:underline cursor-pointer font-bold text-text-primary text-sm"
                         >
                           {post.author.name}
                         </div>
                         <div className="flex items-center text-xs text-text-secondary gap-1 mt-0.5">
-                          <span>{post.author.title || 'Professional'} at {post.author.company || 'Company'}</span>
+                          {[post.author.title, post.author.company].filter(Boolean).length > 0 && <span>{[post.author.title, post.author.company].filter(Boolean).join(' · ')}</span>}
                           <span>•</span>
                           <span>{post.timeAgo}</span>
                           <span>•</span>
@@ -212,10 +251,10 @@ export default function Feed({
                   {post.image && (
                     <div 
                       className="rounded-xl overflow-hidden border border-border-subtle/30 mb-4 bg-surface-container-low max-h-[360px] flex items-center justify-center cursor-pointer hover:opacity-90 transition-opacity"
-                      onClick={() => setFullscreenImage(post.image.startsWith('http') ? post.image : `http://localhost:8080${post.image}`)}
+                      onClick={() => setFullscreenImage(post.image)}
                     >
                       <img 
-                        src={post.image.startsWith('http') ? post.image : `http://localhost:8080${post.image}`} 
+                        src={post.image}
                         alt="Post illustration" 
                         className="w-full h-full object-cover max-h-[360px]"
                         referrerPolicy="no-referrer"
@@ -223,34 +262,101 @@ export default function Feed({
                     </div>
                   )}
 
-                  {/* Link Preview box if exists */}
-                  {post.linkPreview && (
-                    <div className="border border-border-subtle/60 rounded-xl overflow-hidden cursor-pointer group mb-4">
-                      {post.linkPreview.image && (
-                        <div className="h-44 bg-surface-container-low overflow-hidden">
-                          <img 
-                            src={post.linkPreview.image} 
-                            alt={post.linkPreview.title} 
-                            className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-300"
-                            referrerPolicy="no-referrer"
-                          />
-                        </div>
-                      )}
-                      <div className="p-4 bg-surface-container-low border-t border-border-subtle/50">
-                        <div className="text-[11px] font-bold text-primary uppercase tracking-widest mb-1 select-none">
-                          {post.linkPreview.url}
-                        </div>
-                        <h4 className="font-bold text-sm text-text-primary group-hover:text-primary transition-colors">
-                          {post.linkPreview.title}
-                        </h4>
-                        {post.linkPreview.description && (
-                          <p className="text-xs text-text-secondary mt-1 line-clamp-1">
-                            {post.linkPreview.description}
-                          </p>
+                  {/* Link Preview — URL line above a preview card, like FB/WhatsApp rich link previews */}
+                  {post.linkPreview && (() => {
+                    const lp = post.linkPreview;
+                    let hostname = lp.url;
+                    try { hostname = new URL(lp.url).hostname.replace(/^www\./, ''); } catch { /* keep raw url */ }
+                    const hasTitle = Boolean(lp.title && lp.title !== lp.url);
+                    const isPending = lp.status === 'pending' || lp.status === 'processing';
+                    // A real article photo (fetched from the page itself) can fill a big
+                    // banner. A fallback site logo is small/square — stretching it into a
+                    // wide banner makes it look broken, so it gets a compact, contained slot.
+                    const hasRealImage = Boolean(lp.image) && lp.status === 'ready';
+                    const hasFallbackLogo = Boolean(lp.image) && !hasRealImage;
+
+                    const titleNode = hasTitle ? (
+                      <h4 className="font-bold text-base leading-snug text-text-primary group-hover:text-primary transition-colors">
+                        {lp.title}
+                      </h4>
+                    ) : (
+                      <h4 className="font-medium text-sm text-text-secondary italic group-hover:text-primary transition-colors">
+                        {isPending ? 'Fetching article preview…' : lp.url}
+                      </h4>
+                    );
+                    const siteBadge = (
+                      <div className="text-[11px] font-bold text-text-secondary uppercase tracking-widest mb-1.5 select-none">
+                        {lp.siteName || hostname}
+                      </div>
+                    );
+
+                    return (
+                      <div className="mb-4">
+                        <a
+                          href={lp.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block text-xs text-primary hover:underline break-all mb-2"
+                        >
+                          {lp.url}
+                        </a>
+
+                        {hasRealImage ? (
+                          <a
+                            href={lp.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block border border-border-subtle/60 rounded-xl overflow-hidden cursor-pointer group bg-surface-container-low"
+                          >
+                            <div className="w-full aspect-[1.91/1] bg-surface-container overflow-hidden">
+                              <img
+                                src={lp.image}
+                                alt={lp.title || hostname}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                referrerPolicy="no-referrer"
+                              />
+                            </div>
+                            <div className="p-4 border-t border-border-subtle/50">
+                              {siteBadge}
+                              {titleNode}
+                              {lp.description && (
+                                <p className="text-xs text-text-secondary mt-1.5 line-clamp-2">
+                                  {lp.description}
+                                </p>
+                              )}
+                            </div>
+                          </a>
+                        ) : (
+                          // No real photo available from the source (blocked, still pending, or
+                          // the page has none) — compact card with just the site logo, not a
+                          // stretched banner.
+                          <a
+                            href={lp.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-3 p-3 border border-border-subtle/60 rounded-xl cursor-pointer group bg-surface-container-low"
+                          >
+                            <div className="w-14 h-14 shrink-0 rounded-lg bg-surface-container flex items-center justify-center overflow-hidden">
+                              {hasFallbackLogo ? (
+                                <img
+                                  src={lp.image}
+                                  alt={lp.siteName || hostname}
+                                  className="w-8 h-8 object-contain"
+                                  referrerPolicy="no-referrer"
+                                />
+                              ) : (
+                                <Globe className="w-6 h-6 text-outline" />
+                              )}
+                            </div>
+                            <div className="min-w-0">
+                              {siteBadge}
+                              {titleNode}
+                            </div>
+                          </a>
                         )}
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
 
                   {/* Quick stats bottom */}
                   <div className="flex justify-between items-center text-xs text-text-secondary pb-4 border-b border-border-subtle/20 select-none">
@@ -258,10 +364,10 @@ export default function Feed({
                       <div className="w-4.5 h-4.5 bg-primary/10 text-primary rounded-full flex items-center justify-center">
                         <ThumbsUp className="w-2.5 h-2.5 fill-current" />
                       </div>
-                      <span>{post.likesCount + (post.isLikedByMe ? 1 : 0)} likes</span>
+                      <span>{post.likesCount} likes</span>
                     </div>
                     <div className="font-medium hover:underline cursor-pointer" onClick={() => toggleComments(post.id)}>
-                      {post.comments?.length || 0} comments • {post.sharesCount} shares
+                      {post.commentsCount} comments • {post.sharesCount} shares
                     </div>
                   </div>
 
@@ -302,7 +408,18 @@ export default function Feed({
                     <div className="mt-4 pt-4 border-t border-border-subtle/20 flex flex-col gap-4 animate-fadeIn">
                       {/* Comments list */}
                       <div className="flex flex-col gap-3">
-                        {post.comments?.map((comment) => (
+                        {commentsHasMore[post.id] && (
+                          <button
+                            type="button"
+                            onClick={() => loadEarlierComments(post.id)}
+                            disabled={commentsLoading[post.id]}
+                            className="text-xs font-semibold text-primary hover:underline self-start disabled:opacity-50"
+                          >
+                            {commentsLoading[post.id] ? 'Loading...' : 'Load earlier comments'}
+                          </button>
+                        )}
+                        {commentsLoading[post.id] && <p className="text-xs text-text-secondary">Loading comments...</p>}
+                        {(loadedComments[post.id] || post.comments || []).map((comment) => (
                           <div key={comment.id} className="flex gap-3 items-start text-sm">
                             <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
                               <img src={comment.authorAvatar} alt={comment.authorName} className="w-full h-full object-cover" />
@@ -316,6 +433,7 @@ export default function Feed({
                             </div>
                           </div>
                         ))}
+                        {!commentsLoading[post.id] && (loadedComments[post.id] || post.comments || []).length === 0 && <p className="text-xs text-text-secondary">No comments yet.</p>}
                       </div>
 
                       {/* Comment Input frame */}

@@ -51,3 +51,16 @@ type User struct {
 	Followers []Follow      `gorm:"foreignKey:FollowedID;constraint:OnDelete:CASCADE" json:"followers,omitempty"`
 	Following []Follow      `gorm:"foreignKey:FollowerID;constraint:OnDelete:CASCADE" json:"following,omitempty"`
 }
+
+// HidePrivateData keeps public user payloads limited to profile information.
+// Authentication and account endpoints can still return the complete owner record.
+func (u *User) HidePrivateData() {
+	u.Email = ""
+	u.Phone = nil
+	u.BirthDate = nil
+	u.Gender = nil
+	u.EmailVerifiedAt = nil
+	u.PhoneVerifiedAt = nil
+	u.PasswordChangedAt = nil
+	u.DeletionRequestedAt = nil
+}

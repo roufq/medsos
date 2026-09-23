@@ -125,7 +125,7 @@ export default function Jobs() {
                       {/* Logo, title, company header */}
                       <div className="flex gap-4 items-start pb-4 border-b border-border-subtle/10 mb-4">
                         <div className="w-12 h-12 rounded-xl bg-surface-container overflow-hidden flex-shrink-0 border border-border-subtle/20 flex items-center justify-center">
-                          <img src={job.logo} alt={job.company} className="w-10 h-10 object-cover rounded-md" />
+                          {(job as any).employer?.avatar_url ? <img src={(job as any).employer.avatar_url} alt={job.company} className="w-10 h-10 object-cover rounded-md" /> : <span className="font-bold text-primary">{job.company?.slice(0, 1).toUpperCase()}</span>}
                         </div>
                         <div className="min-w-0">
                           <h4 className="font-bold text-text-primary text-base leading-tight truncate">{job.title}</h4>
@@ -154,7 +154,7 @@ export default function Jobs() {
                     <div className="flex justify-between items-center pt-3 border-t border-border-subtle/10 mt-auto select-none">
                       <span className="text-[11px] text-outline flex items-center gap-1">
                         <Calendar className="w-3.5 h-3.5" />
-                        Posted {job.postedTime}
+                        Posted {new Date((job as any).created_at).toLocaleDateString()}
                       </span>
                       {hasApplied ? (
                         <div className="bg-success text-white px-5 py-2 rounded-xl font-bold text-xs flex items-center gap-1.5 animate-fadeIn">

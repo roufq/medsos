@@ -5,8 +5,8 @@ import (
 )
 
 type PostComment struct {
-	ID        int64     `gorm:"primaryKey;autoIncrement" json:"id"`
-	PostID    int64     `gorm:"not null;index" json:"post_id"`
+	ID        int64     `gorm:"primaryKey;autoIncrement;index:idx_comments_post_id,priority:2" json:"id"`
+	PostID    int64     `gorm:"not null;index;index:idx_comments_post_id,priority:1" json:"post_id"`
 	UserID    int64     `gorm:"not null;index" json:"user_id"`
 	ParentID  *int64    `gorm:"index" json:"parent_id,omitempty"`
 	Content   string    `gorm:"type:text;not null" json:"content"`

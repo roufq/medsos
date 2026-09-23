@@ -36,14 +36,18 @@ func sendEmail(target, code, purpose string) error {
 	if host == "" || port == "" || from == "" {
 		return errors.New("SMTP is not configured")
 	}
-	auth := smtp.PlainAuth("", username, password, host)
 	subject := "Verification code"
 	body := fmt.Sprintf("Your verification code for %s is %s. This code expires in 10 minutes.", purpose, code)
 	message := []byte("To: " + target + "\r\n" +
 		"From: " + from + "\r\n" +
 		"Subject: " + subject + "\r\n" +
 		"MIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n" + body)
-	return smtp.SendMail(host+":"+port, auth, from, []string{target}, message)
+	address := host + ":" + port
+	if username == "" {
+		return smtp.SendMail(address, nil, from, []string{target}, message)
+	}
+	auth := smtp.PlainAuth("", username, password, host)
+	return smtp.SendMail(address, auth, from, []string{target}, message)
 }
 
 func sendWebhook(urlEnv, tokenEnv, channel, target, code, purpose string) error {

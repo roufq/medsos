@@ -32,6 +32,7 @@ func (r *postRepo) GetByID(id int64) (*models.Post, error) {
 	if err := postPreloads(db.DB).First(&post, id).Error; err != nil {
 		return nil, err
 	}
+	sanitizePostUsers(&post)
 	return &post, nil
 }
 
@@ -58,6 +59,9 @@ func (r *postRepo) ListAll(viewerID int64, limit, offset int, beforeID int64) ([
 	if err != nil {
 		return nil, err
 	}
+	for i := range posts {
+		sanitizePostUsers(&posts[i])
+	}
 	return posts, nil
 }
 
@@ -83,7 +87,23 @@ func (r *postRepo) ListByUserID(viewerID, userID int64) ([]models.Post, error) {
 	if err != nil {
 		return nil, err
 	}
+	for i := range posts {
+		sanitizePostUsers(&posts[i])
+	}
 	return posts, nil
+}
+
+func sanitizePostUsers(post *models.Post) {
+	post.User.HidePrivateData()
+	for i := range post.Comments {
+		post.Comments[i].User.HidePrivateData()
+	}
+	for i := range post.Mentions {
+		post.Mentions[i].User.HidePrivateData()
+	}
+	if post.OriginalPost != nil {
+		post.OriginalPost.User.HidePrivateData()
+	}
 }
 
 func postPreloads(query *gorm.DB) *gorm.DB {
@@ -131,6 +151,7 @@ func (r *postRepo) AddComment(postID, userID int64, content string) (*models.Pos
 
 	// Preload the user data before returning
 	db.DB.Preload("User").First(&comment, comment.ID)
+	comment.User.HidePrivateData()
 
 	return &comment, nil
 }

@@ -11,6 +11,7 @@ import (
 	"goravel/app/dto"
 	"goravel/app/models"
 	"goravel/app/services"
+	"goravel/pkg/db"
 	"goravel/pkg/storage"
 	"goravel/resources/views/backend"
 
@@ -55,17 +56,55 @@ func (h *PostController) CreatePostAPI(c goravelhttp.Context) goravelhttp.Respon
 		req.Hashtags = splitListInput(c.Request().Input("hashtags"))
 		req.Mentions = splitListInput(c.Request().Input("mentions"))
 		files, filesErr := c.Request().Files("media")
-		if filesErr != nil { if file, err := c.Request().File("media"); err == nil && file != nil { files = append(files, file) } }
+		if filesErr != nil {
+			if file, err := c.Request().File("media"); err == nil && file != nil {
+				files = append(files, file)
+			}
+		}
 		for _, file := range files {
-			info, inspectErr := storage.InspectFile(file); if inspectErr != nil { return c.Response().Json(http.StatusBadRequest, goravelhttp.Json{"error": inspectErr.Error()}) }
-			urlStr, uploadErr := h.storageService.UploadFile(file); if uploadErr != nil { return c.Response().Json(http.StatusBadRequest, goravelhttp.Json{"error": uploadErr.Error()}) }
-			if req.PostType == models.PostTypeShop { if info.Type == "image" { req.ImageURLs = append(req.ImageURLs, urlStr) } else { if req.VideoURL != "" { return c.Response().Json(400, goravelhttp.Json{"error": "shop posts allow one video"}) }; req.VideoURL = urlStr; if req.Shop == nil { req.Shop = &dto.ShopPostRequest{} }; req.Shop.VideoDurationSeconds = info.DurationSeconds } } else { req.MediaURLs = append(req.MediaURLs, urlStr); req.MediaDurations = append(req.MediaDurations, info.DurationSeconds) }
+			info, inspectErr := storage.InspectFile(file)
+			if inspectErr != nil {
+				return c.Response().Json(http.StatusBadRequest, goravelhttp.Json{"error": inspectErr.Error()})
+			}
+			urlStr, uploadErr := h.storageService.UploadFile(file)
+			if uploadErr != nil {
+				return c.Response().Json(http.StatusBadRequest, goravelhttp.Json{"error": uploadErr.Error()})
+			}
+			if req.PostType == models.PostTypeShop {
+				if info.Type == "image" {
+					req.ImageURLs = append(req.ImageURLs, urlStr)
+				} else {
+					if req.VideoURL != "" {
+						return c.Response().Json(400, goravelhttp.Json{"error": "shop posts allow one video"})
+					}
+					req.VideoURL = urlStr
+					if req.Shop == nil {
+						req.Shop = &dto.ShopPostRequest{}
+					}
+					req.Shop.VideoDurationSeconds = info.DurationSeconds
+				}
+			} else {
+				req.MediaURLs = append(req.MediaURLs, urlStr)
+				req.MediaDurations = append(req.MediaDurations, info.DurationSeconds)
+			}
 		}
 		if req.PostType == models.PostTypeShop {
-			if req.Shop == nil { req.Shop = &dto.ShopPostRequest{} }
+			if req.Shop == nil {
+				req.Shop = &dto.ShopPostRequest{}
+			}
 			req.Shop.PriceMinor, _ = strconv.ParseInt(c.Request().Input("price_minor"), 10, 64)
-			req.Shop.Currency = c.Request().Input("currency"); req.Shop.Category = c.Request().Input("category"); req.Shop.Condition = c.Request().Input("condition"); req.Shop.Brand = c.Request().Input("brand"); req.Shop.Fulfillment = c.Request().Input("fulfillment"); req.Shop.PaymentMethod = c.Request().Input("payment_method"); req.Shop.SellerAccountID = c.Request().Input("seller_account_id")
-			if stock := strings.TrimSpace(c.Request().Input("stock")); stock != "" { if parsed, err := strconv.ParseInt(stock, 10, 64); err == nil { req.Shop.Stock = &parsed } }
+			req.Shop.Currency = c.Request().Input("currency")
+			req.Shop.Category = c.Request().Input("category")
+			req.Shop.Condition = c.Request().Input("condition")
+			req.Shop.Brand = c.Request().Input("brand")
+			req.Shop.Fulfillment = c.Request().Input("fulfillment")
+			req.Shop.PaymentMethod = c.Request().Input("payment_method")
+			req.Shop.SellerAccountID = c.Request().Input("seller_account_id")
+			if stock := strings.TrimSpace(c.Request().Input("stock")); stock != "" {
+				if parsed, err := strconv.ParseInt(stock, 10, 64); err == nil {
+					req.Shop.Stock = &parsed
+				}
+			}
 		}
 	} else {
 		if err := c.Request().Bind(&req); err != nil {
@@ -157,7 +196,9 @@ func (h *PostController) UploadMediaAPI(c goravelhttp.Context) goravelhttp.Respo
 	}
 
 	info, err := storage.InspectFile(file)
-	if err != nil { return c.Response().Json(http.StatusBadRequest, goravelhttp.Json{"error": err.Error()}) }
+	if err != nil {
+		return c.Response().Json(http.StatusBadRequest, goravelhttp.Json{"error": err.Error()})
+	}
 	urlStr, err := h.storageService.UploadFile(file)
 	if err != nil {
 		return c.Response().Json(http.StatusInternalServerError, goravelhttp.Json{"error": fmt.Sprintf("Failed to store file: %s", err.Error())})
@@ -167,8 +208,14 @@ func (h *PostController) UploadMediaAPI(c goravelhttp.Context) goravelhttp.Respo
 }
 
 func splitListInput(value string) []string {
-	value = strings.TrimSpace(value); if value == "" { return nil }
-	var decoded []string; if strings.HasPrefix(value, "[") && json.Unmarshal([]byte(value), &decoded) == nil { return decoded }
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return nil
+	}
+	var decoded []string
+	if strings.HasPrefix(value, "[") && json.Unmarshal([]byte(value), &decoded) == nil {
+		return decoded
+	}
 	return strings.FieldsFunc(value, func(r rune) bool { return r == ',' || r == ' ' || r == '\n' })
 }
 
@@ -182,6 +229,10 @@ func (h *PostController) LikePostAPI(c goravelhttp.Context) goravelhttp.Response
 	postID, err := strconv.ParseInt(c.Request().Route("id"), 10, 64)
 	if err != nil {
 		return c.Response().Json(http.StatusBadRequest, goravelhttp.Json{"error": "Invalid post ID"})
+	}
+	var post models.Post
+	if db.DB.First(&post, postID).Error != nil || !canViewPost(userID, &post) {
+		return c.Response().Json(http.StatusNotFound, goravelhttp.Json{"error": "Post not found"})
 	}
 
 	liked, err := h.postService.ToggleLikePost(postID, userID)
@@ -213,6 +264,10 @@ func (h *PostController) CommentPostAPI(c goravelhttp.Context) goravelhttp.Respo
 		return c.Response().Json(http.StatusBadRequest, goravelhttp.Json{"error": "Content cannot be empty"})
 	}
 	content := req.Content
+	var post models.Post
+	if db.DB.First(&post, postID).Error != nil || !canViewPost(userID, &post) {
+		return c.Response().Json(http.StatusNotFound, goravelhttp.Json{"error": "Post not found"})
+	}
 
 	comment, err := h.postService.AddCommentToPost(postID, userID, content)
 	if err != nil {

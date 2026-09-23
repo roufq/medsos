@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/modern/Header';
 import Sidebar from '../components/modern/Sidebar';
@@ -7,6 +7,7 @@ import Feed from '../components/modern/Feed';
 import CreatePostModal from '../components/modern/CreatePostModal';
 import { useAuth } from '../context/AuthContext';
 import { postApi } from '../api/postApi';
+import { userApi } from '../api/userApi';
 import { Loader } from 'lucide-react';
 
 const HomePage = () => {
@@ -20,23 +21,24 @@ const HomePage = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  const currentUser = {
-    id: user?.id || 'new_user',
-    name: user?.name || 'Guest User',
-    title: user?.title || 'Professional',
-    company: user?.company || '',
-    avatar: user?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=100',
-    coverImage: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=1000',
-    bio: user?.bio || 'Passionate professional.',
-    location: user?.location || 'Global',
-    email: user?.email || '',
-    networkCount: 120,
-    expertise: ['Technology', 'Design']
+  const handleLogout = () => {
+    logout();
+    navigate('/thanks');
   };
 
-  useEffect(() => {
-    fetchFeed();
-  }, []);
+  const currentUser = {
+    id: user?.id,
+    name: user?.name || '',
+    title: user?.title || '',
+    company: user?.company || '',
+    avatar: user?.avatar_url || '/favicon.svg',
+    coverImage: user?.cover_url || '',
+    bio: user?.bio || '',
+    location: user?.location || '',
+    email: user?.email || '',
+    networkCount: user?.following_count || 0,
+    expertise: user?.interests || []
+  };
 
   const formatBackendPost = (post) => {
     return {
@@ -46,7 +48,7 @@ const HomePage = () => {
         name: post.user?.name || 'Unknown',
         title: post.user?.title || 'Member',
         company: post.user?.company || '',
-        avatar: post.user?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=100',
+        avatar: post.user?.avatar_url || '/favicon.svg',
       },
       timeAgo: new Date(post.created_at).toLocaleDateString(),
       title: post.title,
@@ -54,18 +56,20 @@ const HomePage = () => {
       image: post.media?.length > 0 && post.media[0].media_type === 'image' ? post.media[0].media_url : undefined,
       likesCount: post.likes_count || 0,
       commentsCount: post.comments_count || 0,
-      sharesCount: 0,
+      sharesCount: post.shares_count || 0,
       isLikedByMe: Boolean(post.is_liked_by_me),
       linkPreview: post.post_type === 'link' && post.link ? {
         url: post.link.url,
-        title: post.link.title || post.link.url,
+        title: post.link.title || '',
         description: post.link.description || '',
-        image: post.link.image_url || ''
+        image: post.link.image_url || '',
+        siteName: post.link.site_name || '',
+        status: post.link.preview_status || 'pending'
       } : undefined,
       comments: post.comments ? post.comments.map(c => ({
         id: c.id,
         authorName: c.user?.name || 'Unknown',
-        authorAvatar: c.user?.avatar || '',
+        authorAvatar: c.user?.avatar_url || '',
         content: c.content,
         timeAgo: new Date(c.created_at).toLocaleDateString()
       })) : []
@@ -84,7 +88,7 @@ const HomePage = () => {
     }
   };
 
-  const handleCreatePostSubmit = async (title, text, imageUrl, linkUrl) => {
+  const handleCreatePostSubmit = async ({ title, text, imageUrl, linkUrl, hashtags, mentions }) => {
     let pType = 'text';
     if (linkUrl) pType = 'link';
     else if (imageUrl) pType = 'image';
@@ -94,9 +98,11 @@ const HomePage = () => {
       content: text,
       post_type: pType,
       media_urls: imageUrl ? [imageUrl] : [],
-      link_url: linkUrl || ''
+      link_url: linkUrl || '',
+      hashtags: hashtags || [],
+      mentions: mentions || [],
     };
-    
+
     const newPost = await postApi.createPost(postData);
     setPosts([formatBackendPost(newPost), ...posts]);
   };
@@ -120,7 +126,7 @@ const HomePage = () => {
         return { 
           ...post, 
           isLikedByMe: isLiked,
-          likes: isLiked ? post.likes + 1 : post.likes - 1
+          likesCount: Math.max(0, post.likesCount + (isLiked ? 1 : -1))
         };
       }
       return post;
@@ -137,7 +143,7 @@ const HomePage = () => {
           return { 
             ...post, 
             isLikedByMe: isLiked,
-            likes: isLiked ? post.likes + 1 : post.likes - 1
+            likesCount: Math.max(0, post.likesCount + (isLiked ? 1 : -1))
           };
         }
         return post;
@@ -153,6 +159,7 @@ const HomePage = () => {
         if (post.id === postId) {
           return {
             ...post,
+            commentsCount: post.commentsCount + 1,
             comments: [...post.comments, {
               id: newComment.id,
               authorName: currentUser.name,
@@ -167,6 +174,7 @@ const HomePage = () => {
     } catch (e) {
       console.error('Failed to add comment', e);
       alert('Failed to add comment: ' + e.message);
+      throw e;
     }
   };
 
@@ -176,13 +184,20 @@ const HomePage = () => {
     else navigate(`/${tab}`);
   };
 
-  const handleFollowSuggestion = (userId) => {
-    if (followedUsers.includes(userId)) {
-      setFollowedUsers(prev => prev.filter(id => id !== userId));
-    } else {
-      setFollowedUsers(prev => [...prev, userId]);
+  const handleFollowSuggestion = async (userId) => {
+    if (!followedUsers.includes(userId)) {
+      try {
+        await userApi.follow(userId);
+        setFollowedUsers(prev => [...prev, userId]);
+      } catch (error) {
+        alert(error.response?.data?.error || 'Failed to follow user');
+      }
     }
   };
+
+  useEffect(() => {
+    fetchFeed();
+  }, []);
 
   if (loading && posts.length === 0) {
     return (
@@ -199,6 +214,7 @@ const HomePage = () => {
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         onNavigate={handleNavigate}
+        onOpenProfile={(userId) => navigate(`/profile/${userId}`)}
         onToggleMobileSidebar={() => setMobileSidebarOpen(!mobileSidebarOpen)}
       />
 
@@ -207,7 +223,7 @@ const HomePage = () => {
           currentTab="home"
           onNavigate={handleNavigate}
           onRequestCreatePost={() => setIsCreatePostOpen(true)}
-          onLogout={logout}
+          onLogout={handleLogout}
         />
 
         <div className="flex-grow min-w-0">
@@ -220,14 +236,15 @@ const HomePage = () => {
               onAddComment={handleAddComment}
               onRequestCreatePost={() => setIsCreatePostOpen(true)}
               onNavigate={handleNavigate}
-              onFollowSuggestion={handleFollowSuggestion}
-              followedUsers={followedUsers}
+              onOpenProfile={(userId) => navigate(`/profile/${userId}`)}
               onDeletePost={handleDeletePost}
             />
             <RightSidebar 
+              posts={posts}
               followedUsers={followedUsers}
               onFollowSuggestion={handleFollowSuggestion}
               onNavigate={handleNavigate}
+              onOpenProfile={(userId) => navigate(`/profile/${userId}`)}
             />
           </div>
         </div>

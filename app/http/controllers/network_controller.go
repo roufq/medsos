@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"errors"
 	"strconv"
 
 	"github.com/goravel/framework/contracts/http"
@@ -28,7 +29,7 @@ func (c *NetworkController) GetConnections(ctx http.Context) http.Response {
 		return ctx.Response().Json(500, http.Json{"error": "Failed to get connections"})
 	}
 
-	return ctx.Response().Json(200, users)
+	return ctx.Response().Json(200, publicUsers(users))
 }
 
 func (c *NetworkController) GetPendingRequests(ctx http.Context) http.Response {
@@ -42,7 +43,7 @@ func (c *NetworkController) GetPendingRequests(ctx http.Context) http.Response {
 		return ctx.Response().Json(500, http.Json{"error": "Failed to get pending requests"})
 	}
 
-	return ctx.Response().Json(200, users)
+	return ctx.Response().Json(200, publicUsers(users))
 }
 
 func (c *NetworkController) GetSuggestions(ctx http.Context) http.Response {
@@ -56,7 +57,7 @@ func (c *NetworkController) GetSuggestions(ctx http.Context) http.Response {
 		return ctx.Response().Json(500, http.Json{"error": "Failed to get suggestions"})
 	}
 
-	return ctx.Response().Json(200, users)
+	return ctx.Response().Json(200, publicUsers(users))
 }
 
 func (c *NetworkController) SendRequest(ctx http.Context) http.Response {
@@ -69,11 +70,19 @@ func (c *NetworkController) SendRequest(ctx http.Context) http.Response {
 		return ctx.Response().Json(400, http.Json{"error": "Invalid user_id"})
 	}
 
-	if err := c.networkRepo.SendRequest(followerID, followedID); err != nil {
+	status, isNew, err := followUser(followerID, followedID)
+	switch {
+	case errors.Is(err, errFollowBlocked):
+		return ctx.Response().Json(403, http.Json{"error": "Follow is not allowed"})
+	case errors.Is(err, errFollowNotFound):
+		return ctx.Response().Json(404, http.Json{"error": "User not found"})
+	case err != nil:
 		return ctx.Response().Json(500, http.Json{"error": "Failed to send request"})
 	}
-
-	return ctx.Response().Json(200, http.Json{"message": "Request sent successfully"})
+	if isNew {
+		notifyFollow(followedID, followerID, status)
+	}
+	return ctx.Response().Json(200, http.Json{"message": "Follow updated successfully", "status": status})
 }
 
 func (c *NetworkController) AcceptRequest(ctx http.Context) http.Response {
@@ -89,6 +98,7 @@ func (c *NetworkController) AcceptRequest(ctx http.Context) http.Response {
 	if err := c.networkRepo.AcceptRequest(followerID, followedID); err != nil {
 		return ctx.Response().Json(500, http.Json{"error": "Failed to accept request"})
 	}
+	notifyUser(followerID, followedID, "follow_accepted", "user", followedID, "Your follow request was accepted")
 
 	return ctx.Response().Json(200, http.Json{"message": "Request accepted"})
 }

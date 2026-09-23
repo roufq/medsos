@@ -19,7 +19,10 @@ func NewJobRepository() JobRepository {
 
 func (r *JobRepositoryImpl) GetAllJobs() ([]models.JobPosting, error) {
 	var jobs []models.JobPosting
-	err := db.DB.Preload("Employer").Order("created_at desc").Limit(100).Find(&jobs).Error
+	err := db.DB.Preload("Employer").Where("EXISTS (SELECT 1 FROM users WHERE users.id = job_postings.employer_id AND users.account_status = 'active')").Order("created_at desc").Limit(100).Find(&jobs).Error
+	for i := range jobs {
+		jobs[i].Employer.HidePrivateData()
+	}
 	return jobs, err
 }
 

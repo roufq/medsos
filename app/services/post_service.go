@@ -50,8 +50,8 @@ func (s *postService) CreatePost(userID int64, req *dto.CreatePostRequest) (*mod
 	if titleLength < 5 || titleLength > 100 {
 		return nil, errors.New("title must contain 5-100 characters")
 	}
-	if wordCount < 160 || wordCount > 6000 {
-		return nil, errors.New("description must contain 160-6000 words")
+	if wordCount > 6000 {
+		return nil, errors.New("description must contain at most 6000 words")
 	}
 	if len(req.LinkURL) > 500 || len(req.Location) > 255 {
 		return nil, errors.New("post exceeds the allowed size")
@@ -68,16 +68,16 @@ func (s *postService) CreatePost(userID int64, req *dto.CreatePostRequest) (*mod
 		}
 	}
 	tags := normalizeHashtags(req.Hashtags, req.Content)
-	minimumTags, maximumTags := 3, 9
+	maximumTags := 9
 	if req.PostType == models.PostTypeShop {
 		maximumTags = 30
 	}
-	if len(tags) < minimumTags || len(tags) > maximumTags {
-		return nil, fmt.Errorf("post requires %d-%d unique hashtags", minimumTags, maximumTags)
+	if len(tags) > maximumTags {
+		return nil, fmt.Errorf("post allows at most %d unique hashtags", maximumTags)
 	}
 	mentions := normalizeMentions(req.Mentions, req.Content)
-	if len(mentions) < 1 || len(mentions) > 10 {
-		return nil, errors.New("post requires 1-10 unique mentions")
+	if len(mentions) > 10 {
+		return nil, errors.New("post allows at most 10 unique mentions")
 	}
 	mentionedUsers := make([]models.User, 0, len(mentions))
 	for _, username := range mentions {

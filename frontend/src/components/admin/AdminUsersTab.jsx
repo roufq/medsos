@@ -1,6 +1,28 @@
-import React from 'react';
+import { useState } from 'react';
 
-const AdminUsersTab = ({ users, stats }) => {
+const AdminUsersTab = ({ users, stats, searchQuery = '', onToggleBlock, onOpenProfile }) => {
+  const [roleFilter, setRoleFilter] = useState('all');
+  const normalizedSearch = searchQuery.trim().toLowerCase();
+  const filteredUsers = (users || []).filter((user) => {
+    const roleMatches = roleFilter === 'all' || user.role === roleFilter;
+    const searchMatches = !normalizedSearch || [user.name, user.email, user.username, user.role, user.account_status]
+      .filter(Boolean)
+      .some((value) => String(value).toLowerCase().includes(normalizedSearch));
+    return roleMatches && searchMatches;
+  });
+
+  const exportUsers = () => {
+    const escape = (value) => `"${String(value ?? '').replaceAll('"', '""')}"`;
+    const rows = [['ID', 'Name', 'Email', 'Role', 'Status', 'Created At'], ...filteredUsers.map((user) => [user.id, user.name, user.email, user.role, user.account_status, user.created_at])];
+    const blob = new Blob([rows.map((row) => row.map(escape).join(',')).join('\n')], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'users.csv';
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="w-full">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
@@ -9,13 +31,9 @@ const AdminUsersTab = ({ users, stats }) => {
           <p className="font-body-md text-body-md text-text-secondary mt-1">Manage platform access, roles, and monitoring active user sessions.</p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-4 py-2.5 bg-secondary-container text-on-secondary-container rounded-xl font-label-md text-label-md hover:bg-secondary-fixed transition-colors active:scale-95">
+          <button onClick={exportUsers} className="flex items-center gap-2 px-4 py-2.5 bg-secondary-container text-on-secondary-container rounded-xl font-label-md text-label-md hover:bg-secondary-fixed transition-colors active:scale-95">
             <span className="material-symbols-outlined text-[20px]">download</span>
             Export CSV
-          </button>
-          <button className="flex items-center gap-2 px-6 py-2.5 bg-primary-container text-on-primary rounded-xl font-label-md text-label-md shadow-lg shadow-primary/10 hover:opacity-90 transition-all active:scale-95">
-            <span className="material-symbols-outlined text-[20px]">person_add</span>
-            Add New User
           </button>
         </div>
       </div>
@@ -29,23 +47,22 @@ const AdminUsersTab = ({ users, stats }) => {
           </div>
         </div>
         <div className="bg-surface-container-lowest p-6 rounded-2xl border border-border-subtle shadow-sm flex flex-col gap-2">
-          <span className="text-text-secondary font-label-md text-label-md">Active Now</span>
+          <span className="text-text-secondary font-label-md text-label-md">Active Accounts</span>
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-success animate-pulse"></div>
-            <span className="font-display-lg text-display-lg text-text-primary">{stats?.active_now || 0}</span>
+            <span className="font-display-lg text-display-lg text-text-primary">{stats?.active_users || 0}</span>
           </div>
         </div>
         <div className="bg-surface-container-lowest p-6 rounded-2xl border border-border-subtle shadow-sm flex flex-col gap-2">
-          <span className="text-text-secondary font-label-md text-label-md">Reported Accounts</span>
+          <span className="text-text-secondary font-label-md text-label-md">Pending Reports</span>
           <div className="flex items-baseline gap-2">
-            <span className="font-display-lg text-display-lg text-text-primary">{stats?.reported_accounts || 0}</span>
+            <span className="font-display-lg text-display-lg text-text-primary">{stats?.pending_reports || 0}</span>
           </div>
         </div>
         <div className="bg-surface-container-lowest p-6 rounded-2xl border border-border-subtle shadow-sm flex flex-col gap-2">
-          <span className="text-text-secondary font-label-md text-label-md">Avg. Activity</span>
+          <span className="text-text-secondary font-label-md text-label-md">Blocked Accounts</span>
           <div className="flex items-baseline gap-2">
-            <span className="font-display-lg text-display-lg text-text-primary">84%</span>
-            <span className="text-error text-[12px] font-bold">-2%</span>
+            <span className="font-display-lg text-display-lg text-text-primary">{stats?.blocked_users || 0}</span>
           </div>
         </div>
       </div>
@@ -55,18 +72,14 @@ const AdminUsersTab = ({ users, stats }) => {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 bg-surface-container-low px-3 py-1.5 rounded-lg border border-border-subtle">
               <span className="material-symbols-outlined text-[18px] text-text-secondary">filter_alt</span>
-              <select className="bg-transparent border-none p-0 pr-6 focus:ring-0 font-label-md text-label-md text-text-primary cursor-pointer outline-none">
-                <option>All Roles</option>
-                <option>Admin</option>
-                <option>User</option>
+              <select value={roleFilter} onChange={(event) => setRoleFilter(event.target.value)} className="bg-transparent border-none p-0 pr-6 focus:ring-0 font-label-md text-label-md text-text-primary cursor-pointer outline-none">
+                <option value="all">All Roles</option>
+                <option value="admin">Admin</option>
+                <option value="user">User</option>
               </select>
             </div>
-            <div className="flex items-center gap-2 bg-surface-container-low px-3 py-1.5 rounded-lg border border-border-subtle">
-              <span className="material-symbols-outlined text-[18px] text-text-secondary">event</span>
-              <span className="font-label-md text-label-md text-text-primary">Last 30 Days</span>
-            </div>
           </div>
-          <span className="text-text-secondary font-label-md text-label-md">Showing {users?.length || 0} users</span>
+          <span className="text-text-secondary font-label-md text-label-md">Showing {filteredUsers.length} users</span>
         </div>
         
         <div className="overflow-x-auto custom-scrollbar">
@@ -84,22 +97,22 @@ const AdminUsersTab = ({ users, stats }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-border-subtle">
-              {users?.map(u => (
+              {filteredUsers.map(u => (
                 <tr key={u.id} className="hover:bg-surface-container-low/50 transition-colors group">
                   <td className="px-6 py-4">
                     <input type="checkbox" className="rounded border-border-subtle text-primary focus:ring-primary" />
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full overflow-hidden bg-surface-container-high border border-border-subtle flex-shrink-0">
+                      <button type="button" onClick={() => onOpenProfile(u.id)} className="w-10 h-10 rounded-full overflow-hidden bg-surface-container-high border border-border-subtle flex-shrink-0">
                         <img 
-                          src={u.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=100'} 
+                          src={u.avatar_url || '/favicon.svg'}
                           alt={u.name} 
                           className="w-full h-full object-cover"
                         />
-                      </div>
+                      </button>
                       <div className="flex flex-col">
-                        <span className="font-label-md text-label-md text-text-primary">{u.name}</span>
+                        <button type="button" onClick={() => onOpenProfile(u.id)} className="text-left font-label-md text-label-md text-text-primary hover:underline">{u.name}</button>
                         <span className="text-[12px] text-text-secondary">{u.email}</span>
                       </div>
                     </div>
@@ -110,22 +123,24 @@ const AdminUsersTab = ({ users, stats }) => {
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-2 px-2 py-1 bg-success/10 rounded-full w-fit">
-                      <div className="w-1.5 h-1.5 rounded-full bg-success"></div>
-                      <span className="font-label-sm text-label-sm text-success">Active</span>
+                    <div className={`flex items-center gap-2 px-2 py-1 rounded-full w-fit ${u.account_status === 'blocked' ? 'bg-error/10' : 'bg-success/10'}`}>
+                      <div className={`w-1.5 h-1.5 rounded-full ${u.account_status === 'blocked' ? 'bg-error' : 'bg-success'}`}></div>
+                      <span className={`font-label-sm text-label-sm ${u.account_status === 'blocked' ? 'text-error' : 'text-success'}`}>{u.account_status || 'active'}</span>
                     </div>
                   </td>
                   <td className="px-6 py-4 font-body-md text-body-md text-text-secondary">
                     {new Date(u.created_at).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <button className="p-2 text-text-secondary hover:text-primary transition-colors">
-                      <span className="material-symbols-outlined">more_vert</span>
-                    </button>
+                    {u.role !== 'admin' && (
+                      <button onClick={() => onToggleBlock(u)} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${u.account_status === 'blocked' ? 'bg-success/10 text-success' : 'bg-error/10 text-error'}`}>
+                        {u.account_status === 'blocked' ? 'Unblock' : 'Block'}
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
-              {(!users || users.length === 0) && (
+              {filteredUsers.length === 0 && (
                 <tr>
                   <td colSpan="6" className="px-6 py-8 text-center text-text-secondary font-body-md">
                     No users found

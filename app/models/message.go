@@ -3,8 +3,8 @@ package models
 import "time"
 
 type Message struct {
-	ID             int64     `gorm:"primaryKey;autoIncrement" json:"id"`
-	ConversationID int64     `gorm:"not null;index:idx_messages_conversation_created,priority:1" json:"conversation_id"`
+	ID             int64     `gorm:"primaryKey;autoIncrement;index:idx_messages_conversation_id,priority:2" json:"id"`
+	ConversationID int64     `gorm:"not null;index:idx_messages_conversation_created,priority:1;index:idx_messages_conversation_id,priority:1" json:"conversation_id"`
 	SenderID       int64     `gorm:"not null;index" json:"sender_id"`
 	Content        string    `gorm:"type:text;not null" json:"content"`
 	IsRead         bool      `gorm:"default:false" json:"is_read"`

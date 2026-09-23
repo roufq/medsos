@@ -10,14 +10,13 @@ import (
 	"goravel/app/http/middleware"
 	"goravel/app/repositories"
 	"goravel/app/services"
-	"goravel/pkg/db"
 )
 
 func Api() {
 	// 1. Initialize Repositories
 	userRepo := repositories.NewUserRepository()
 	postRepo := repositories.NewPostRepository()
-	portfolioRepo := repositories.NewPortfolioRepository(db.DB)
+	portfolioRepo := repositories.NewPortfolioRepository()
 	networkRepo := repositories.NewNetworkRepository()
 	jobRepo := repositories.NewJobRepository()
 	msgRepo := repositories.NewMessageRepository()

@@ -7,6 +7,9 @@ import HomePage from '../pages/HomePage';
 import ProfilePage from '../pages/ProfilePage';
 import AdminDashboardPage from '../pages/admin/AdminDashboardPage';
 import FeaturePage from '../pages/FeaturePage';
+import ForgotPasswordPage from '../pages/ForgotPasswordPage';
+import ThanksPage from '../pages/ThanksPage';
+import SettingsPage from '../pages/SettingsPage';
 
 const PrivateRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -67,6 +70,8 @@ const AppRouter = () => {
             </PublicRoute>
           }
         />
+        <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
+        <Route path="/thanks" element={<PublicRoute><ThanksPage /></PublicRoute>} />
         <Route
           path="/"
           element={
@@ -83,6 +88,7 @@ const AppRouter = () => {
             </PrivateRoute>
           }
         />
+        <Route path="/settings" element={<PrivateRoute><SettingsPage /></PrivateRoute>} />
         <Route path="/network" element={<PrivateRoute><FeaturePage title="Network" /></PrivateRoute>} />
         <Route path="/jobs" element={<PrivateRoute><FeaturePage title="Jobs" /></PrivateRoute>} />
         <Route path="/messages" element={<PrivateRoute><FeaturePage title="Messages" /></PrivateRoute>} />

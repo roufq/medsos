@@ -1,6 +1,0 @@
-{
-  "name": "Connect Modern",
-  "description": "A refined, responsive professional suite and networking workspace.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}

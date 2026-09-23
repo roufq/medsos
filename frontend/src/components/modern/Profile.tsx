@@ -13,7 +13,8 @@ import {
   Globe,
   Settings as SettingsIcon,
   Trash2,
-  X
+  X,
+  Send
 } from 'lucide-react';
 import { User, Post } from '../types';
 import { postApi } from '../../api/postApi';
@@ -39,13 +40,21 @@ export default function Profile({
   onDeletePost,
   isCurrentUser
 }: ProfileProps) {
-  const [isFollowing, setIsFollowing] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(Boolean(user.isFollowing));
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [activeLayout, setActiveLayout] = useState<'grid' | 'list'>('grid');
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [portfolios, setPortfolios] = useState<any[]>([]);
   const [isAddPortfolioModalOpen, setIsAddPortfolioModalOpen] = useState(false);
+  const [followStatus, setFollowStatus] = useState(user.isFollowing ? 'accepted' : 'none');
+  const [followersCount, setFollowersCount] = useState(user.followersCount || 0);
+  const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({});
+  const [commentsByPost, setCommentsByPost] = useState<Record<string, any[]>>({});
+  const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
+  const [commentsLoading, setCommentsLoading] = useState<Record<string, boolean>>({});
+  const [commentsHasMore, setCommentsHasMore] = useState<Record<string, boolean>>({});
+  const [commentCountDeltas, setCommentCountDeltas] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (user?.id) {
@@ -54,6 +63,12 @@ export default function Profile({
       }).catch(console.error);
     }
   }, [user.id]);
+
+  useEffect(() => {
+    setIsFollowing(Boolean(user.isFollowing));
+    setFollowStatus(user.isFollowing ? 'accepted' : 'none');
+    setFollowersCount(user.followersCount || 0);
+  }, [user.id, user.isFollowing, user.followersCount]);
 
   const handleAddPortfolio = (newPortfolio: any) => {
     userApi.createPortfolio(newPortfolio).then(saved => {
@@ -80,13 +95,6 @@ export default function Profile({
   const [editBio, setEditBio] = useState(user.bio || '');
   const [editWebsite, setEditWebsite] = useState(user.website || '');
 
-  // Cover photo options list
-  const coverUrls = [
-    'https://lh3.googleusercontent.com/aida-public/AB6AXuBNRe7599PvPWjme4G1AfCuqcb7I6UtEfFvUtdGPnRFJECAdNMFPb1kcrd9KwQ_87mYgQbHbQ2ctj_ZHqmtJb_doWqfMrutKHzE7NQNjLUInqnZIHZ4XTX8S7sOChktBxP-tn-PkdoXLSH-k4ukJZ4jLc_2aqQjsALi4S_HCg7wMsqDjgVxO13OFWIvo9OuSY2Qsru3E1aCOcXRmRjxobRIn1NFEHlFaK23OQ43zvup3-6gZZfNtg6PyGcHnDft9Db2izkVaYVWIaQ',
-    'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?q=80&w=1200&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=1200&auto=format&fit=crop'
-  ];
-
   const handleEditSave = () => {
     if (editWebsite && !editWebsite.startsWith('http')) {
       alert('Website URL must start with http:// or https://');
@@ -105,11 +113,75 @@ export default function Profile({
     setIsEditModalOpen(false);
   };
 
-  const handleCoverChange = (url: string) => {
-    onUpdateUser({
-      ...user,
-      coverImage: url
-    });
+  const handleFollow = async () => {
+    try {
+      if (isFollowing || followStatus === 'pending') {
+        await userApi.unfollow(user.id);
+        if (isFollowing) setFollowersCount((count) => Math.max(0, count - 1));
+        setIsFollowing(false);
+        setFollowStatus('none');
+      } else {
+        const result = await userApi.follow(user.id);
+        const status = result?.status || 'accepted';
+        setFollowStatus(status);
+        setIsFollowing(status === 'accepted');
+        if (status === 'accepted') setFollowersCount((count) => count + 1);
+      }
+    } catch (error: any) {
+      alert(error.response?.data?.error || 'Failed to update follow status');
+    }
+  };
+
+  const mapComment = (comment: any) => ({
+    id: comment.id,
+    authorName: comment.user?.name || 'Unknown',
+    authorAvatar: comment.user?.avatar_url || '/favicon.svg',
+    content: comment.content,
+    timeAgo: new Date(comment.created_at).toLocaleString()
+  });
+
+  const togglePostComments = async (postId: string) => {
+    const willOpen = !expandedComments[postId];
+    setExpandedComments((state) => ({ ...state, [postId]: willOpen }));
+    if (!willOpen || commentsByPost[postId]) return;
+    setCommentsLoading((state) => ({ ...state, [postId]: true }));
+    try {
+      const { comments, has_more } = await postApi.getComments(postId);
+      setCommentsByPost((state) => ({ ...state, [postId]: (comments || []).map(mapComment) }));
+      setCommentsHasMore((state) => ({ ...state, [postId]: Boolean(has_more) }));
+    } catch (error: any) {
+      alert(error.response?.data?.error || 'Failed to load comments');
+    } finally {
+      setCommentsLoading((state) => ({ ...state, [postId]: false }));
+    }
+  };
+
+  const loadEarlierPostComments = async (postId: string) => {
+    const oldest = commentsByPost[postId]?.[0];
+    if (!oldest) return;
+    setCommentsLoading((state) => ({ ...state, [postId]: true }));
+    try {
+      const { comments, has_more } = await postApi.getComments(postId, oldest.id);
+      setCommentsByPost((state) => ({ ...state, [postId]: [...(comments || []).map(mapComment), ...(state[postId] || [])] }));
+      setCommentsHasMore((state) => ({ ...state, [postId]: Boolean(has_more) }));
+    } catch (error: any) {
+      alert(error.response?.data?.error || 'Failed to load comments');
+    } finally {
+      setCommentsLoading((state) => ({ ...state, [postId]: false }));
+    }
+  };
+
+  const submitPostComment = async (postId: string) => {
+    const content = commentInputs[postId]?.trim();
+    if (!content) return;
+    try {
+      const comment = await postApi.addComment(postId, content);
+      setCommentsByPost((state) => ({ ...state, [postId]: [...(state[postId] || []), mapComment(comment)] }));
+      setCommentCountDeltas((state) => ({ ...state, [postId]: (state[postId] || 0) + 1 }));
+      setCommentInputs((state) => ({ ...state, [postId]: '' }));
+    } catch (error: any) {
+      alert(error.response?.data?.error || 'Failed to send comment');
+    }
   };
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -117,7 +189,7 @@ export default function Profile({
       try {
         setIsUploading(true);
         const res = await postApi.uploadMedia(e.target.files[0]);
-        const avatarUrl = res.url.startsWith('http') ? res.url : `http://localhost:8080${res.url}`;
+        const avatarUrl = res.url;
         onUpdateUser({ ...user, avatar: avatarUrl });
       } catch (err) {
         alert('Failed to upload avatar');
@@ -132,7 +204,7 @@ export default function Profile({
       try {
         setIsUploading(true);
         const res = await postApi.uploadMedia(e.target.files[0]);
-        const coverUrl = res.url.startsWith('http') ? res.url : `http://localhost:8080${res.url}`;
+        const coverUrl = res.url;
         onUpdateUser({ ...user, coverImage: coverUrl });
       } catch (err) {
         alert('Failed to upload cover');
@@ -148,14 +220,9 @@ export default function Profile({
       <div className="relative mb-8">
         {/* Cover image wrap */}
         <div className="h-64 md:h-80 w-full rounded-2xl overflow-hidden relative shadow-sm border border-border-subtle/50 bg-surface-container">
-          <img 
-            src={user.coverImage} 
-            alt="Cover background" 
-            className="w-full h-full object-cover"
-            referrerPolicy="no-referrer"
-          />
+          {user.coverImage && <img src={user.coverImage} alt="Cover background" className="w-full h-full object-cover" referrerPolicy="no-referrer" />}
           {/* Cover editor selector */}
-          <div className="absolute bottom-4 right-4 flex gap-2">
+          {isCurrentUser && <div className="absolute bottom-4 right-4 flex gap-2">
             <button
               onClick={() => coverInputRef.current?.click()}
               className="w-8 h-8 rounded-full border-2 border-white overflow-hidden shadow-md bg-white text-text-primary flex items-center justify-center cursor-pointer hover:scale-110 active:scale-95 transition-all"
@@ -163,16 +230,7 @@ export default function Profile({
             >
               <Camera className="w-4 h-4" />
             </button>
-            {coverUrls.map((url, idx) => (
-              <button
-                key={idx}
-                onClick={() => handleCoverChange(url)}
-                className="w-8 h-8 rounded-full border-2 border-white overflow-hidden shadow-md bg-cover bg-center cursor-pointer hover:scale-110 active:scale-95 transition-all"
-                style={{ backgroundImage: `url(${url})` }}
-                title={`Change color cover theme ${idx + 1}`}
-              />
-            ))}
-          </div>
+          </div>}
           <input 
             type="file" 
             ref={coverInputRef} 
@@ -186,19 +244,14 @@ export default function Profile({
         <div className="px-8 -mt-16 flex flex-col md:flex-row md:items-end justify-between gap-6 relative z-10 select-none">
           <div className="flex flex-col md:flex-row items-center md:items-end gap-6">
             <div className="w-32 h-32 md:w-36 md:h-36 rounded-full border-4 border-background bg-background shadow-md overflow-hidden flex-shrink-0 relative group">
-              <img 
-                src={user.avatar} 
-                alt={user.name} 
-                className="w-full h-full object-cover"
-                referrerPolicy="no-referrer"
-              />
-              <div 
+              {user.avatar ? <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" /> : <div className="w-full h-full flex items-center justify-center text-4xl font-bold text-primary bg-secondary-container">{user.name?.slice(0, 1).toUpperCase()}</div>}
+              {isCurrentUser && <div
                 onClick={() => avatarInputRef.current?.click()}
                 className="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer duration-200"
                 title="Change Avatar"
               >
                 <Camera className="w-6 h-6" />
-              </div>
+              </div>}
               <input 
                 type="file" 
                 ref={avatarInputRef} 
@@ -211,13 +264,13 @@ export default function Profile({
             <div className="text-center md:text-left pb-2">
               <div className="flex items-center justify-center md:justify-start gap-2">
                 <h2 className="font-bold text-2xl md:text-3xl text-text-primary tracking-tight">{user.name}</h2>
-                <button
+                {isCurrentUser && <button
                   onClick={() => setIsEditModalOpen(true)}
                   className="text-text-secondary hover:text-primary p-1 rounded-full cursor-pointer transition-colors"
                   title="Edit profile information"
                 >
                   <Edit3 className="w-4 h-4" />
-                </button>
+                </button>}
               </div>
               <p className="font-semibold text-sm text-text-secondary mb-1">
                 {user.title} @ <span className="text-primary font-bold">{user.company}</span>
@@ -232,16 +285,16 @@ export default function Profile({
           </div>
 
           {/* Social connections actions button panel */}
-          <div className="flex gap-3 pb-2 justify-center">
+          {!isCurrentUser && <div className="flex gap-3 pb-2 justify-center">
             <button 
-              onClick={() => setIsFollowing(!isFollowing)}
+              onClick={handleFollow}
               className={`px-6 py-2.5 rounded-full font-bold shadow-sm transition-all text-xs cursor-pointer select-none ${
                 isFollowing 
                   ? 'bg-success text-white hover:brightness-105' 
                   : 'bg-primary text-white hover:brightness-110 active:scale-95'
               }`}
             >
-              {isFollowing ? 'Following' : 'Follow'}
+              {followStatus === 'pending' ? 'Requested' : isFollowing ? 'Following' : 'Follow'}
             </button>
             <button 
               onClick={onNavigateToMessages}
@@ -249,7 +302,7 @@ export default function Profile({
             >
               Message
             </button>
-          </div>
+          </div>}
         </div>
       </div>
 
@@ -268,7 +321,7 @@ export default function Profile({
               {user.website && (
                 <div className="flex items-center gap-3 text-text-secondary">
                   <LinkIcon className="w-4 h-4 text-primary" />
-                  <a className="text-xs font-semibold text-primary hover:underline" href={`https://${user.website}`} target="_blank" rel="noreferrer">
+                  <a className="text-xs font-semibold text-primary hover:underline" href={user.website} target="_blank" rel="noreferrer">
                     {user.website}
                   </a>
                 </div>
@@ -294,30 +347,16 @@ export default function Profile({
                   {tag}
                 </span>
               ))}
+              {!user.expertise?.length && <span className="text-xs text-text-secondary">No expertise added.</span>}
             </div>
           </div>
 
           {/* Network fast connections preview */}
           <div className="bg-white rounded-2xl p-6 border border-border-subtle/50 shadow-sm animate-fadeIn">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-bold text-text-primary text-base">Network</h3>
-              <span className="text-primary font-bold text-xs hover:underline cursor-pointer">
-                {user.networkCount} connections
-              </span>
-            </div>
-            
-            {/* 4 network grid cells */}
-            <div className="grid grid-cols-4 gap-3">
-              {[
-                { name: 'Marcus Holloway', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAvcd5bGYnbFUZ7YtQ3FLVHDwGTj5Cy8kaSNDRHNysfmKbWcl-zEJxBZ73mhLhs-VehP5q5ZORZXzjw9r1zuIeZijsqbMM6SDOniOb7zHleG4VYC0qmEXSl91l8EwVg0023YkUzIBRxVTo3CT0Cal4TjAYmpmadytlltDZOwobBrIZQJXST6nzrXDdB1z_ErFrG39oH_D3k40UsEIaKDHNKe7HhVvy0A-zvhEAhxYn-SstPZpvOZYi05-Wkj63tSFyyrFYui0YnqwI' },
-                { name: 'Sarah Chen', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDnwasLonkl65aqS1BSliBHMmL7bL-QV8V3Klns2NtVzCi9N2uTVdK-qMvslBLu82IL6vkXb95sh3GY8zddzVHlVAY4_aKMa-ZeSKC7mIIBV2Wqo__tWRHf9h_-SR9EJccTob9dQXsPOuVxQIGtN8BC3kbgX5NtNmEFsMVTiDg-AuamUgtq86WNxmcrgtf83HOmrGtiGd_2X3oU2ZLkGgIQ95QH65bPslsgi5eryTsko87R-hSo2N_Xz7VxPhvA_hPuZHlZAaXKW8c' },
-                { name: 'Elena Rodriguez', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAAn4yY9AHfgHf5xSDNmE2A_L8DgJV3uWazYrzWuZumv1lrZwSzNTy_txsCyzyjHJwa_RCAMj3-jpkiZDeAQejuQH9-SfGrYGVO20mpRl9bH2mMrmj1j1KJLx1lePrt_iaSi4pehX40r--N232fR7mpquvoZPcdW3BdBpeOcPekx3tLOUzgfyNN9gqcMYpExpiZ5hm73m_hcAslYaQYwfuIKQNchDQ9O-Uor4rYDfKDlVewLOW3KacaJhso7-C43V3Jjrt76AqC1I8' },
-                { name: 'David Kim', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCedLssi65pkFtXaIA57YXi66Ok0ZGTRYJd7g98hae6DomlVgcljphZ0b_E0rgP2rTJgvEwD6wLrbFO2TiTN7zvI2H027q3GyneqDLexQlHDddxmqrtJG5sknAbg-ZR4zvrdXMcehkDHSekt5HsDLsoYJ3-kYn7qdA7cIVsExv6B7PxdG0NakMRJZO91vjo1zSzOTUowZWgC-y-_jYPVqYlNNI-J6J3J-7jvoGXGgBJti14Nbdp-fxGbxN1lxFuExwFDoQOCV2IICA' }
-              ].map((conn, idx) => (
-                <div key={idx} className="aspect-square rounded-xl overflow-hidden bg-surface-container relative group cursor-pointer" title={conn.name}>
-                  <img src={conn.img} alt={conn.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
-                </div>
-              ))}
+            <h3 className="font-bold text-text-primary text-base mb-4">Network</h3>
+            <div className="grid grid-cols-2 gap-3 text-center">
+              <div className="rounded-xl bg-surface-container-low p-3"><div className="text-lg font-black text-primary">{followersCount}</div><div className="text-xs text-text-secondary">Followers</div></div>
+              <div className="rounded-xl bg-surface-container-low p-3"><div className="text-lg font-black text-primary">{user.followingCount || 0}</div><div className="text-xs text-text-secondary">Following</div></div>
             </div>
           </div>
         </div>
@@ -379,7 +418,7 @@ export default function Profile({
                   >
                     {item.image_url ? (
                       <img 
-                        src={item.image_url.startsWith('http') ? item.image_url : `http://localhost:8080${item.image_url}`} 
+                        src={item.image_url}
                         alt={item.title} 
                         className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105`}
                         referrerPolicy="no-referrer"
@@ -467,10 +506,10 @@ export default function Profile({
                 {post.image && (
                   <div 
                     className="rounded-xl overflow-hidden border border-border-subtle/30 mt-3 bg-surface-container-low max-h-[360px] flex items-center justify-center cursor-pointer hover:opacity-90 transition-opacity"
-                    onClick={() => setFullscreenImage(post.image.startsWith('http') ? post.image : `http://localhost:8080${post.image}`)}
+                    onClick={() => setFullscreenImage(post.image)}
                   >
                     <img 
-                      src={post.image.startsWith('http') ? post.image : `http://localhost:8080${post.image}`} 
+                      src={post.image}
                       alt="Post attachment" 
                       className="w-full h-full object-cover max-h-[360px]"
                       referrerPolicy="no-referrer"
@@ -505,12 +544,12 @@ export default function Profile({
                     }`}
                   >
                     <ThumbsUp className={`w-4.5 h-4.5 ${post.isLikedByMe ? 'fill-current' : ''}`} />
-                    <span>{post.likesCount + (post.isLikedByMe ? 1 : 0)} Likes</span>
+                    <span>{post.likesCount} Likes</span>
                   </button>
-                  <div className="flex items-center gap-1.5 text-xs text-text-secondary font-semibold">
+                  <button type="button" onClick={() => togglePostComments(post.id)} className="flex items-center gap-1.5 text-xs text-text-secondary hover:text-primary font-semibold cursor-pointer">
                     <MessageCircle className="w-4.5 h-4.5" />
-                    <span>{post.comments?.length || 0} Comments</span>
-                  </div>
+                    <span>{(post.commentsCount || 0) + (commentCountDeltas[post.id] || 0)} Comments</span>
+                  </button>
                   
                   {post.author.id === user.id && onDeletePost && (
                     <button 
@@ -522,6 +561,26 @@ export default function Profile({
                     </button>
                   )}
                 </div>
+                {expandedComments[post.id] && (
+                  <div className="border-t border-border-subtle/20 pt-4 flex flex-col gap-3">
+                    {commentsHasMore[post.id] && (
+                      <button
+                        type="button"
+                        onClick={() => loadEarlierPostComments(post.id)}
+                        disabled={commentsLoading[post.id]}
+                        className="text-xs font-semibold text-primary hover:underline self-start disabled:opacity-50"
+                      >
+                        {commentsLoading[post.id] ? 'Loading...' : 'Load earlier comments'}
+                      </button>
+                    )}
+                    {commentsLoading[post.id] && <p className="text-xs text-text-secondary">Loading comments...</p>}
+                    {!commentsLoading[post.id] && (commentsByPost[post.id] || []).map((comment) => (
+                      <div key={comment.id} className="flex gap-2 items-start"><img src={comment.authorAvatar} alt="" className="w-8 h-8 rounded-full object-cover" /><div className="bg-surface-container-low rounded-2xl px-3 py-2 flex-1"><div className="text-xs font-bold">{comment.authorName}</div><p className="text-xs text-text-primary">{comment.content}</p><div className="text-[10px] text-outline mt-1">{comment.timeAgo}</div></div></div>
+                    ))}
+                    {!commentsLoading[post.id] && (commentsByPost[post.id] || []).length === 0 && <p className="text-xs text-text-secondary">No comments yet.</p>}
+                    <div className="flex gap-2"><input type="text" value={commentInputs[post.id] || ''} onChange={(event) => setCommentInputs((state) => ({ ...state, [post.id]: event.target.value }))} onKeyDown={(event) => { if (event.key === 'Enter') submitPostComment(post.id); }} placeholder="Write a comment..." className="flex-1 rounded-full border border-border-subtle bg-surface-container-low px-4 py-2 text-xs outline-none focus:border-primary" /><button type="button" onClick={() => submitPostComment(post.id)} className="rounded-full bg-primary p-2 text-white" aria-label="Send comment"><Send className="w-4 h-4" /></button></div>
+                  </div>
+                )}
               </div>
             ))}
           </div>

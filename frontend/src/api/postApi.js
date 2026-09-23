@@ -34,7 +34,13 @@ export const postApi = {
     const res = await api.post(`/posts/${id}/comment`, { content });
     return res.data;
   },
-	getComments: async (id) => (await api.get(`/posts/${id}/comments`)).data,
+	getComments: async (id, beforeId = null) => {
+		let url = `/posts/${id}/comments`;
+		if (beforeId) {
+			url += `?before_id=${beforeId}`;
+		}
+		return (await api.get(url)).data;
+	},
 	replyComment: async (id, parentId, content) => (await api.post(`/posts/${id}/comments/reply`, { parent_id: parentId, content })).data,
 	editComment: async (id, content) => (await api.put(`/comments/${id}`, { content })).data,
 	deleteComment: async (id) => (await api.delete(`/comments/${id}`)).data,

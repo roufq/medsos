@@ -12,10 +12,13 @@ import (
 	"strings"
 	"time"
 
+	"goravel/app/facades"
+	"goravel/app/jobs"
 	"goravel/app/models"
 	"goravel/pkg/db"
 	"goravel/pkg/hash"
-	"goravel/pkg/notify"
+
+	"github.com/goravel/framework/contracts/queue"
 
 	goravelhttp "github.com/goravel/framework/contracts/http"
 	"gorm.io/gorm"
@@ -227,7 +230,14 @@ func issueCode(user *models.User, target, channel, purpose string) (string, erro
 	if err := db.DB.Create(&record).Error; err != nil {
 		return "", err
 	}
-	if err := notify.SendVerification(channel, target, code, purpose); err != nil {
+	// Delivery (SMTP/webhook) can block for several seconds, so it runs on the
+	// queue instead of inline in the request handler.
+	if err := facades.Queue().Job(&jobs.SendVerificationCode{}, []queue.Arg{
+		{Value: channel, Type: "string"},
+		{Value: target, Type: "string"},
+		{Value: code, Type: "string"},
+		{Value: purpose, Type: "string"},
+	}).Dispatch(); err != nil {
 		if strings.EqualFold(os.Getenv("APP_ENV"), "local") && strings.EqualFold(os.Getenv("VERIFICATION_DEV_MODE"), "true") {
 			return code, nil
 		}
@@ -266,20 +276,18 @@ func (h *AccountController) ForgotPassword(c goravelhttp.Context) goravelhttp.Re
 	if input.Channel != "email" && input.Channel != "sms" && input.Channel != "whatsapp" {
 		return c.Response().Json(400, goravelhttp.Json{"error": "channel must be email, sms, or whatsapp"})
 	}
+	// The response is identical whether the account exists, the requested
+	// channel has no phone on file, or delivery dispatch fails - any
+	// difference here (status code, message, or timing-sensitive branching)
+	// would let an attacker enumerate which accounts/channels exist.
 	user, err := findUserByTarget(input.Target)
-	if err == nil {
+	if err == nil && (input.Channel == "email" || user.Phone != nil) {
 		target := user.Email
 		if input.Channel != "email" {
-			if user.Phone == nil {
-				return c.Response().Json(400, goravelhttp.Json{"error": "account has no phone number"})
-			}
 			target = *user.Phone
 		}
 		code, deliveryErr := issueCode(user, target, input.Channel, "password_reset")
-		if deliveryErr != nil {
-			return c.Response().Json(503, goravelhttp.Json{"error": deliveryErr.Error()})
-		}
-		if strings.EqualFold(os.Getenv("APP_ENV"), "local") && strings.EqualFold(os.Getenv("VERIFICATION_DEV_MODE"), "true") {
+		if deliveryErr == nil && strings.EqualFold(os.Getenv("APP_ENV"), "local") && strings.EqualFold(os.Getenv("VERIFICATION_DEV_MODE"), "true") {
 			return c.Response().Json(200, goravelhttp.Json{"message": "verification code sent", "dev_code": code})
 		}
 	}
@@ -438,7 +446,7 @@ func (h *AccountController) BlockedUsers(c goravelhttp.Context) goravelhttp.Resp
 	}
 	var users []models.User
 	db.DB.Table("users").Joins("JOIN user_blocks ON user_blocks.blocked_id = users.id").Where("user_blocks.blocker_id = ?", userID).Limit(200).Scan(&users)
-	return c.Response().Json(200, users)
+	return c.Response().Json(200, publicUsers(users))
 }
 
 func routeID(c goravelhttp.Context, name string) (int64, error) {

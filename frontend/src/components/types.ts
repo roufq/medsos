@@ -12,6 +12,8 @@ export interface User {
   expertise?: string[];
   isFollowing?: boolean;
   networkCount?: number;
+  followersCount?: number;
+  followingCount?: number;
   email?: string;
 }
 
@@ -20,6 +22,8 @@ export interface LinkPreview {
   title: string;
   description?: string;
   image?: string;
+  siteName?: string;
+  status?: 'pending' | 'processing' | 'ready' | 'failed';
 }
 
 export interface Comment {

@@ -2,7 +2,9 @@ package controllers
 
 import (
 	"goravel/app/dto"
+	"goravel/app/models"
 	"goravel/app/services"
+	"goravel/pkg/db"
 	"net/http"
 	"strconv"
 
@@ -48,10 +50,21 @@ func (h *PortfolioController) CreatePortfolio(c goravelhttp.Context) goravelhttp
 }
 
 func (h *PortfolioController) GetPortfolios(c goravelhttp.Context) goravelhttp.Response {
+	viewerID, authErr := authenticatedUserID(c)
+	if authErr != nil {
+		return c.Response().Json(http.StatusUnauthorized, goravelhttp.Json{"error": "Unauthorized"})
+	}
 	userIDStr := c.Request().Route("id")
 	userID, err := strconv.ParseInt(userIDStr, 10, 64)
 	if err != nil {
 		return c.Response().Json(http.StatusBadRequest, goravelhttp.Json{"error": "Invalid user ID"})
+	}
+	var target models.User
+	if db.DB.First(&target, userID).Error != nil || target.AccountStatus != "active" || blockedBetween(viewerID, userID) {
+		return c.Response().Json(http.StatusNotFound, goravelhttp.Json{"error": "User not found"})
+	}
+	if target.IsPrivate && viewerID != userID && !acceptedFollower(viewerID, userID) {
+		return c.Response().Json(http.StatusForbidden, goravelhttp.Json{"error": "Profile is private"})
 	}
 
 	portfolios, err := h.portfolioService.GetPortfolios(userID)

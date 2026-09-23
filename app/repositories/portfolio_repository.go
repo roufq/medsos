@@ -2,8 +2,7 @@ package repositories
 
 import (
 	"goravel/app/models"
-
-	"gorm.io/gorm"
+	"goravel/pkg/db"
 )
 
 type PortfolioRepository interface {
@@ -13,30 +12,28 @@ type PortfolioRepository interface {
 	Delete(id int64) error
 }
 
-type portfolioRepository struct {
-	db *gorm.DB
-}
+type portfolioRepository struct{}
 
-func NewPortfolioRepository(db *gorm.DB) PortfolioRepository {
-	return &portfolioRepository{db}
+func NewPortfolioRepository() PortfolioRepository {
+	return &portfolioRepository{}
 }
 
 func (r *portfolioRepository) Create(portfolio *models.Portfolio) error {
-	return r.db.Create(portfolio).Error
+	return db.DB.Create(portfolio).Error
 }
 
 func (r *portfolioRepository) GetByUserID(userID int64) ([]models.Portfolio, error) {
 	var portfolios []models.Portfolio
-	err := r.db.Where("user_id = ?", userID).Order("created_at desc").Limit(100).Find(&portfolios).Error
+	err := db.DB.Where("user_id = ?", userID).Order("created_at desc").Limit(100).Find(&portfolios).Error
 	return portfolios, err
 }
 
 func (r *portfolioRepository) GetByID(id int64) (*models.Portfolio, error) {
 	var portfolio models.Portfolio
-	err := r.db.Where("id = ?", id).First(&portfolio).Error
+	err := db.DB.Where("id = ?", id).First(&portfolio).Error
 	return &portfolio, err
 }
 
 func (r *portfolioRepository) Delete(id int64) error {
-	return r.db.Delete(&models.Portfolio{}, "id = ?", id).Error
+	return db.DB.Delete(&models.Portfolio{}, "id = ?", id).Error
 }

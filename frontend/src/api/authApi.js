@@ -1,6 +1,8 @@
 import api from './axios';
 
 export const authApi = {
+	forgotPassword: async (target, channel = 'email') => (await api.post('/auth/password/forgot', { target, channel })).data,
+	resetPassword: async (target, code, newPassword) => (await api.post('/auth/password/reset', { target, code, new_password: newPassword })).data,
 	login: async (identifier, password) => {
     const formData = new FormData();
 		formData.append('identifier', identifier);
@@ -23,8 +25,6 @@ export const authApi = {
     const res = await api.post('/auth/logout');
     return res.data;
 	},
-	forgotPassword: async (target, channel = 'email') => (await api.post('/auth/password/forgot', { target, channel })).data,
-	resetPassword: async (target, code, newPassword) => (await api.post('/auth/password/reset', { target, code, new_password: newPassword })).data,
 	changePassword: async (currentPassword, newPassword) => (await api.put('/auth/password', { current_password: currentPassword, new_password: newPassword })).data,
 	requestVerification: async (channel) => (await api.post('/auth/verification/request', { channel })).data,
 	confirmVerification: async (purpose, code) => (await api.post('/auth/verification/confirm', { purpose, code })).data,

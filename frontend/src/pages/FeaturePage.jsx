@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Construction, ArrowLeft } from 'lucide-react';
 import Header from '../components/modern/Header';
@@ -13,15 +13,20 @@ import { postApi } from '../api/postApi';
 const FeaturePage = ({ title }) => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/thanks');
+  };
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
   const currentUser = {
-    id: user?.id || 'new_user',
-    name: user?.name || 'Guest User',
-    title: user?.title || 'Professional',
-    avatar: user?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=100',
+    id: user?.id,
+    name: user?.name || '',
+    title: user?.title || '',
+    avatar: user?.avatar_url || '/favicon.svg',
   };
 
   const handleNavigate = (tab) => {
@@ -30,7 +35,7 @@ const FeaturePage = ({ title }) => {
     else navigate(`/${tab}`);
   };
 
-  const handleCreatePostSubmit = async (title, text, imageUrl, linkUrl) => {
+  const handleCreatePostSubmit = async ({ title, text, imageUrl, linkUrl, hashtags, mentions }) => {
     let pType = 'text';
     if (linkUrl) pType = 'link';
     else if (imageUrl) pType = 'image';
@@ -40,9 +45,11 @@ const FeaturePage = ({ title }) => {
       content: text,
       post_type: pType,
       media_urls: imageUrl ? [imageUrl] : [],
-      link_url: linkUrl || ''
+      link_url: linkUrl || '',
+      hashtags: hashtags || [],
+      mentions: mentions || [],
     };
-    
+
     await postApi.createPost(postData);
     setIsCreatePostOpen(false);
     navigate('/');
@@ -55,6 +62,7 @@ const FeaturePage = ({ title }) => {
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         onNavigate={handleNavigate}
+        onOpenProfile={(userId) => navigate(`/profile/${userId}`)}
         onToggleMobileSidebar={() => setMobileSidebarOpen(!mobileSidebarOpen)}
       />
 
@@ -63,11 +71,11 @@ const FeaturePage = ({ title }) => {
           currentTab={title.toLowerCase()}
           onNavigate={handleNavigate}
           onRequestCreatePost={() => setIsCreatePostOpen(true)}
-          onLogout={logout}
+          onLogout={handleLogout}
         />
 
         <div className="flex-grow min-w-0">
-          {title === 'Network' && <Network onNavigateToMessages={() => navigate('/messages')} />}
+          {title === 'Network' && <Network onNavigateToMessages={(userId) => navigate(userId ? `/messages?user_id=${userId}` : '/messages')} onOpenProfile={(userId) => navigate(`/profile/${userId}`)} />}
           {title === 'Jobs' && <Jobs />}
           {title === 'Messages' && <Messages currentUser={currentUser} />}
           {title === 'Analytics' && (

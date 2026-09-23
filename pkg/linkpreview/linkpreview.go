@@ -8,6 +8,8 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
@@ -50,8 +52,11 @@ func FetchPreview(targetURL string) (*Preview, error) {
 	if err != nil {
 		return nil, err
 	}
-	// Set generic browser User-Agent to prevent bots blocking
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+	// Look like a regular browser request to reduce bot-blocking (401/403) from sites
+	// that reject requests missing typical browser headers.
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
+	req.Header.Set("Accept-Language", "en-US,en;q=0.9")
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -97,6 +102,64 @@ func FetchPreview(targetURL string) (*Preview, error) {
 	}
 
 	return preview, nil
+}
+
+// slugWordPattern splits a URL path's last segment into words for a readable
+// fallback title, e.g. "indonesia-president-replaces-minister" -> "Indonesia
+// president replaces minister".
+var slugWordPattern = regexp.MustCompile(`[a-zA-Z0-9']+`)
+
+// FallbackPreview builds a best-effort preview without fetching the target
+// page, for sites whose bot protection blocks direct scraping (e.g. Reuters'
+// DataDome). It derives a readable title from the URL slug and uses a public
+// favicon service (Google's) so the card still shows a real site logo
+// instead of an empty placeholder — this only calls google.com, never the
+// blocked site itself.
+func FallbackPreview(targetURL string) *Preview {
+	parsed, err := url.Parse(targetURL)
+	if err != nil {
+		return &Preview{URL: targetURL}
+	}
+	hostname := strings.TrimPrefix(parsed.Hostname(), "www.")
+
+	title := hostname
+	segments := strings.Split(strings.Trim(parsed.Path, "/"), "/")
+	for i := len(segments) - 1; i >= 0; i-- {
+		words := slugWordPattern.FindAllString(segments[i], -1)
+		// Drop a trailing date/id stamp (e.g. "...-2026-09-14") so the
+		// derived title reads like a headline, not a URL slug.
+		for len(words) > 3 {
+			last := words[len(words)-1]
+			if isNumericToken(last) {
+				words = words[:len(words)-1]
+				continue
+			}
+			break
+		}
+		if len(words) >= 3 {
+			title = strings.Join(words, " ")
+			if len(title) > 0 {
+				title = strings.ToUpper(title[:1]) + title[1:]
+			}
+			break
+		}
+	}
+
+	return &Preview{
+		URL:      targetURL,
+		Title:    title,
+		SiteName: hostname,
+		ImageURL: "https://www.google.com/s2/favicons?sz=128&domain=" + hostname,
+	}
+}
+
+func isNumericToken(word string) bool {
+	for _, r := range word {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+	return word != ""
 }
 
 func safeDialContext(ctx context.Context, network, address string) (net.Conn, error) {
