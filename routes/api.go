@@ -84,8 +84,9 @@ func Api() {
 		// Posts
 		router.Post("posts", postController.CreatePostAPI)
 		router.Get("posts", postController.GetFeedAPI)
+		router.Get("posts/{id}", postController.GetPostAPI)
 		router.Delete("posts/{id}", postController.DeletePostAPI)
-		router.Put("posts/{id}", socialController.EditPost)
+		router.Put("posts/{id}", postController.UpdatePostAPI)
 		router.Middleware(middleware.ConcurrentLimit(20), middleware.RateLimit("link-preview", 30, time.Minute)).Get("posts/link-preview", postController.GetLinkPreviewAPI)
 		router.Post("posts/{id}/like", postController.LikePostAPI)
 		router.Post("posts/{id}/comment", postController.CommentPostAPI)

@@ -1,6 +1,8 @@
 package jwt
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"strings"
@@ -28,92 +30,97 @@ func ValidateConfiguration() error {
 	return err
 }
 
-// Claims defines custom claims for our JWT tokens
+const (
+	TypeAccess  = "access"
+	TypeRefresh = "refresh"
+
+	AccessTTL  = 15 * time.Minute
+	RefreshTTL = 7 * 24 * time.Hour
+)
+
+// Claims defines custom claims for our JWT tokens. Type keeps a refresh token
+// from being accepted as an access token, TokenVersion lets the server revoke
+// every outstanding token of a user, and the registered ID (jti) identifies a
+// single refresh token so logout/rotation can revoke just that session.
 type Claims struct {
-	UserID int64           `json:"user_id"`
-	Email  string          `json:"email"`
-	Role   models.UserRole `json:"role"`
+	UserID       int64           `json:"user_id"`
+	Email        string          `json:"email"`
+	Role         models.UserRole `json:"role"`
+	Type         string          `json:"typ"`
+	TokenVersion int64           `json:"tv"`
 	jwt.RegisteredClaims
 }
 
-// GenerateAccessToken creates a short-lived access token (15 mins)
+func newTokenID() (string, error) {
+	var b [16]byte
+	if _, err := rand.Read(b[:]); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(b[:]), nil
+}
+
+func generate(user *models.User, tokenType string, ttl time.Duration) (string, error) {
+	secret, err := signingSecret()
+	if err != nil {
+		return "", err
+	}
+	id, err := newTokenID()
+	if err != nil {
+		return "", err
+	}
+	now := time.Now()
+	claims := &Claims{
+		UserID:       user.ID,
+		Email:        user.Email,
+		Role:         user.Role,
+		Type:         tokenType,
+		TokenVersion: user.TokenVersion,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ID:        id,
+			ExpiresAt: jwt.NewNumericDate(now.Add(ttl)),
+			IssuedAt:  jwt.NewNumericDate(now),
+		},
+	}
+	return jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString(secret)
+}
+
+// GenerateAccessToken creates a short-lived access token.
 func GenerateAccessToken(user *models.User) (string, error) {
-	claims := &Claims{
-		UserID: user.ID,
-		Email:  user.Email,
-		Role:   user.Role,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(15 * time.Minute)),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
-		},
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	secret, err := signingSecret()
-	if err != nil {
-		return "", err
-	}
-	return token.SignedString(secret)
+	return generate(user, TypeAccess, AccessTTL)
 }
 
-// GenerateRefreshToken creates a long-lived refresh token (7 days)
+// GenerateRefreshToken creates a long-lived refresh token.
 func GenerateRefreshToken(user *models.User) (string, error) {
-	claims := &Claims{
-		UserID: user.ID,
-		Email:  user.Email,
-		Role:   user.Role,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(7 * 24 * time.Hour)),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
-		},
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	secret, err := signingSecret()
-	if err != nil {
-		return "", err
-	}
-	return token.SignedString(secret)
+	return generate(user, TypeRefresh, RefreshTTL)
 }
 
-// ValidateAccessToken parses and validates an access token
+func parse(tokenStr, expectedType string) (*Claims, error) {
+	token, err := jwt.ParseWithClaims(tokenStr, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+		if token.Method.Alg() != jwt.SigningMethodHS256.Alg() {
+			return nil, errors.New("unexpected signing method")
+		}
+		secret, secretErr := signingSecret()
+		if secretErr != nil {
+			return nil, fmt.Errorf("JWT configuration error: %w", secretErr)
+		}
+		return secret, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	claims, ok := token.Claims.(*Claims)
+	if !ok || !token.Valid || claims.UserID <= 0 || claims.Type != expectedType {
+		return nil, errors.New("invalid token")
+	}
+	return claims, nil
+}
+
+// ValidateAccessToken parses and validates an access token.
 func ValidateAccessToken(tokenStr string) (*Claims, error) {
-	token, err := jwt.ParseWithClaims(tokenStr, &Claims{}, func(token *jwt.Token) (interface{}, error) {
-		if token.Method.Alg() != jwt.SigningMethodHS256.Alg() {
-			return nil, errors.New("unexpected signing method")
-		}
-		secret, secretErr := signingSecret()
-		if secretErr != nil {
-			return nil, fmt.Errorf("JWT configuration error: %w", secretErr)
-		}
-		return secret, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	claims, ok := token.Claims.(*Claims)
-	if !ok || !token.Valid {
-		return nil, errors.New("invalid token")
-	}
-	return claims, nil
+	return parse(tokenStr, TypeAccess)
 }
 
-// ValidateRefreshToken parses and validates a refresh token
+// ValidateRefreshToken parses and validates a refresh token.
 func ValidateRefreshToken(tokenStr string) (*Claims, error) {
-	token, err := jwt.ParseWithClaims(tokenStr, &Claims{}, func(token *jwt.Token) (interface{}, error) {
-		if token.Method.Alg() != jwt.SigningMethodHS256.Alg() {
-			return nil, errors.New("unexpected signing method")
-		}
-		secret, secretErr := signingSecret()
-		if secretErr != nil {
-			return nil, fmt.Errorf("JWT configuration error: %w", secretErr)
-		}
-		return secret, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	claims, ok := token.Claims.(*Claims)
-	if !ok || !token.Valid {
-		return nil, errors.New("invalid token")
-	}
-	return claims, nil
+	return parse(tokenStr, TypeRefresh)
 }

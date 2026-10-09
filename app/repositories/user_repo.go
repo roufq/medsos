@@ -10,6 +10,7 @@ type UserRepository interface {
 	GetByEmail(email string) (*models.User, error)
 	GetByUsername(username string) (*models.User, error)
 	GetByIdentifier(identifier string) (*models.User, error)
+	GetByPhone(phone string) (*models.User, error)
 	Create(user *models.User) error
 	Update(user *models.User) error
 	ListAll() ([]models.User, error)
@@ -48,6 +49,14 @@ func (r *userRepo) GetByUsername(username string) (*models.User, error) {
 func (r *userRepo) GetByIdentifier(identifier string) (*models.User, error) {
 	var user models.User
 	if err := db.DB.Where("LOWER(email) = LOWER(?) OR LOWER(username) = LOWER(?)", identifier, identifier).First(&user).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+func (r *userRepo) GetByPhone(phone string) (*models.User, error) {
+	var user models.User
+	if err := db.DB.Where("phone = ?", phone).First(&user).Error; err != nil {
 		return nil, err
 	}
 	return &user, nil

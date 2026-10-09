@@ -114,3 +114,12 @@ type OAuthLoginState struct {
 	ExpiresAt    time.Time `gorm:"not null;index" json:"-"`
 	CreatedAt    time.Time `gorm:"autoCreateTime" json:"-"`
 }
+
+// RevokedToken records refresh tokens that were logged out or rotated so they
+// cannot be replayed before their natural expiry.
+type RevokedToken struct {
+	ID        int64     `gorm:"primaryKey;autoIncrement" json:"-"`
+	JTI       string    `gorm:"type:varchar(64);not null;uniqueIndex" json:"-"`
+	ExpiresAt time.Time `gorm:"not null;index" json:"-"`
+	CreatedAt time.Time `gorm:"autoCreateTime" json:"-"`
+}

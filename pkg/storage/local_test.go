@@ -21,7 +21,7 @@ type uploadedFile struct {
 
 func (f uploadedFile) File() string { return f.path }
 
-func TestUploadUsesDetectedTypeAndPreservesContent(t *testing.T) {
+func TestUploadUsesDetectedTypeAndKeepsImageIntact(t *testing.T) {
 	directory := t.TempDir()
 	source := filepath.Join(directory, "misleading.html")
 	var content bytes.Buffer
@@ -43,8 +43,10 @@ func TestUploadUsesDetectedTypeAndPreservesContent(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !bytes.Equal(saved, content.Bytes()) {
-		t.Fatal("uploaded content changed")
+	// PNGs may be losslessly recompressed, so compare pixels, not bytes.
+	config, err := png.DecodeConfig(bytes.NewReader(saved))
+	if err != nil || config.Width != 2 || config.Height != 2 || len(saved) > content.Len() {
+		t.Fatalf("stored image is not the same PNG: %+v %v", config, err)
 	}
 }
 
@@ -65,11 +67,18 @@ func TestUploadRejectsHTMLDisguisedAsImage(t *testing.T) {
 
 func TestInspectRejectsOversizedFile(t *testing.T) {
 	source := filepath.Join(t.TempDir(), "large.png")
-	file, err := os.Create(source)
+	var header bytes.Buffer
+	if err := png.Encode(&header, image.NewRGBA(image.Rect(0, 0, 1, 1))); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(source, header.Bytes(), 0600); err != nil {
+		t.Fatal(err)
+	}
+	file, err := os.OpenFile(source, os.O_RDWR, 0600)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := file.Truncate(maxUploadSize() + 1); err != nil {
+	if err := file.Truncate(maxImageSize() + 1); err != nil {
 		file.Close()
 		t.Fatal(err)
 	}

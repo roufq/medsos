@@ -2,21 +2,24 @@ package controllers
 
 import (
 	"crypto/rand"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"net/mail"
-	"net/url"
 	"os"
 	"regexp"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"goravel/app/facades"
 	"goravel/app/jobs"
 	"goravel/app/models"
+	"goravel/app/services"
 	"goravel/pkg/db"
 	"goravel/pkg/hash"
+	"goravel/pkg/session"
 
 	"github.com/goravel/framework/contracts/queue"
 
@@ -29,7 +32,6 @@ type AccountController struct{}
 func NewAccountController() *AccountController { return &AccountController{} }
 
 var validUsername = regexp.MustCompile(`^[a-z0-9_]{3,40}$`)
-var validPhone = regexp.MustCompile(`^\+[1-9][0-9]{7,14}$`)
 
 func (h *AccountController) UpdateSettings(c goravelhttp.Context) goravelhttp.Response {
 	userID, err := authenticatedUserID(c)
@@ -51,9 +53,19 @@ func (h *AccountController) UpdateSettings(c goravelhttp.Context) goravelhttp.Re
 		IsPrivate     *bool    `json:"is_private"`
 		ProfileLayout *string  `json:"profile_layout"`
 		Website       *string  `json:"website"`
+		Bio           *string  `json:"bio"`
+		Title         *string  `json:"title"`
+		Company       *string  `json:"company"`
+		Location      *string  `json:"location"`
+		BirthPlace    *string  `json:"birth_place"`
+		PhoneCountry  *string  `json:"phone_country"`
 	}
 	if err := c.Request().Bind(&input); err != nil {
 		return c.Response().Json(http.StatusBadRequest, goravelhttp.Json{"error": err.Error()})
+	}
+	var current models.User
+	if err := db.DB.First(&current, userID).Error; err != nil {
+		return c.Response().Json(http.StatusNotFound, goravelhttp.Json{"error": "user not found"})
 	}
 	updates := map[string]any{}
 	if input.Username != nil {
@@ -70,28 +82,40 @@ func (h *AccountController) UpdateSettings(c goravelhttp.Context) goravelhttp.Re
 		}
 		updates["name"] = name
 	}
+	if input.PhoneCountry != nil {
+		country := strings.ToUpper(strings.TrimSpace(*input.PhoneCountry))
+		if country != "" && !services.ValidCountryCode.MatchString(country) {
+			return c.Response().Json(400, goravelhttp.Json{"error": "phone_country must be an ISO 3166-1 alpha-2 code"})
+		}
+		updates["phone_country"] = nullableString(country)
+	}
 	if input.Phone != nil {
 		phone := strings.TrimSpace(*input.Phone)
-		if phone != "" && !validPhone.MatchString(phone) {
+		if phone != "" && !services.ValidPhone.MatchString(phone) {
 			return c.Response().Json(400, goravelhttp.Json{"error": "phone must use E.164 format, for example +628123456789"})
 		}
-		updates["phone"] = nullableString(phone)
-		updates["phone_verified_at"] = nil
+		// Only a different number needs to be verified again.
+		if phone != valueOf(current.Phone) {
+			updates["phone"] = nullableString(phone)
+			updates["phone_verified_at"] = nil
+		}
 	}
 	if input.Email != nil {
 		email := strings.ToLower(strings.TrimSpace(*input.Email))
 		if _, err := mail.ParseAddress(email); err != nil || !strings.Contains(email, "@") {
 			return c.Response().Json(400, goravelhttp.Json{"error": "invalid email"})
 		}
-		updates["email"] = email
-		updates["email_verified_at"] = nil
+		if email != strings.ToLower(current.Email) {
+			updates["email"] = email
+			updates["email_verified_at"] = nil
+		}
 	}
 	copyText := func(column string, value *string, maximum int) error {
 		if value == nil {
 			return nil
 		}
 		trimmed := strings.TrimSpace(*value)
-		if len(trimmed) > maximum {
+		if utf8.RuneCountInString(trimmed) > maximum {
 			return fmt.Errorf("%s is too long", column)
 		}
 		updates[column] = nullableString(trimmed)
@@ -106,13 +130,19 @@ func (h *AccountController) UpdateSettings(c goravelhttp.Context) goravelhttp.Re
 	if err := copyText("shop_category", input.ShopCategory, 100); err != nil {
 		return c.Response().Json(400, goravelhttp.Json{"error": err.Error()})
 	}
+	for _, field := range []struct {
+		column string
+		value  *string
+		max    int
+	}{{"bio", input.Bio, services.ProfileBioMaxChars}, {"title", input.Title, 100}, {"company", input.Company, 100}, {"location", input.Location, 100}, {"birth_place", input.BirthPlace, 100}} {
+		if err := copyText(field.column, field.value, field.max); err != nil {
+			return c.Response().Json(400, goravelhttp.Json{"error": err.Error()})
+		}
+	}
 	if input.Website != nil {
 		website := strings.TrimSpace(*input.Website)
-		if website != "" {
-			parsed, err := url.ParseRequestURI(website)
-			if err != nil || (parsed.Scheme != "http" && parsed.Scheme != "https") {
-				return c.Response().Json(400, goravelhttp.Json{"error": "website must be a valid HTTP/HTTPS URL"})
-			}
+		if err := services.ValidateWebsite(website); err != nil {
+			return c.Response().Json(400, goravelhttp.Json{"error": err.Error()})
 		}
 		updates["website"] = nullableString(website)
 	}
@@ -142,10 +172,26 @@ func (h *AccountController) UpdateSettings(c goravelhttp.Context) goravelhttp.Re
 		updates["account_type"] = kind
 	}
 	if input.Interests != nil {
-		if len(input.Interests) > 30 {
+		interests := make([]string, 0, len(input.Interests))
+		seen := map[string]bool{}
+		for _, interest := range input.Interests {
+			interest = strings.TrimSpace(interest)
+			key := strings.ToLower(interest)
+			if interest == "" || seen[key] {
+				continue
+			}
+			if utf8.RuneCountInString(interest) > 50 {
+				return c.Response().Json(400, goravelhttp.Json{"error": "each interest must be at most 50 characters"})
+			}
+			seen[key] = true
+			interests = append(interests, interest)
+		}
+		if len(interests) > 30 {
 			return c.Response().Json(400, goravelhttp.Json{"error": "a maximum of 30 interests is allowed"})
 		}
-		updates["interests"] = input.Interests
+		// Map updates bypass the model's JSON serializer, so encode explicitly.
+		encoded, _ := json.Marshal(interests)
+		updates["interests"] = string(encoded)
 	}
 	if input.IsPrivate != nil {
 		updates["is_private"] = *input.IsPrivate
@@ -168,6 +214,13 @@ func (h *AccountController) UpdateSettings(c goravelhttp.Context) goravelhttp.Re
 	return c.Response().Json(200, user)
 }
 
+func valueOf(value *string) string {
+	if value == nil {
+		return ""
+	}
+	return *value
+}
+
 func nullableString(value string) any {
 	if value == "" {
 		return nil
@@ -175,6 +228,9 @@ func nullableString(value string) any {
 	return value
 }
 
+// ChangePassword updates the password, or sets the first local password for an
+// OAuth-created account (needs_password), which has no current password to
+// confirm. Every other session is revoked; the caller receives fresh tokens.
 func (h *AccountController) ChangePassword(c goravelhttp.Context) goravelhttp.Response {
 	userID, err := authenticatedUserID(c)
 	if err != nil {
@@ -184,20 +240,51 @@ func (h *AccountController) ChangePassword(c goravelhttp.Context) goravelhttp.Re
 		CurrentPassword string `json:"current_password"`
 		NewPassword     string `json:"new_password"`
 	}
-	if err := c.Request().Bind(&input); err != nil || len(input.NewPassword) < 8 {
-		return c.Response().Json(400, goravelhttp.Json{"error": "new_password must contain at least 8 characters"})
+	if err := c.Request().Bind(&input); err != nil || !validPassword(input.NewPassword) {
+		return c.Response().Json(400, goravelhttp.Json{"error": "new_password must contain 8-72 characters"})
 	}
 	var user models.User
-	if err := db.DB.First(&user, userID).Error; err != nil || !hash.CheckPasswordHash(input.CurrentPassword, user.Password) {
+	if err := db.DB.First(&user, userID).Error; err != nil {
+		return c.Response().Json(404, goravelhttp.Json{"error": "user not found"})
+	}
+	if !user.NeedsPassword && !hash.CheckPasswordHash(input.CurrentPassword, user.Password) {
 		return c.Response().Json(401, goravelhttp.Json{"error": "current password is incorrect"})
 	}
 	encoded, err := hash.HashPassword(input.NewPassword)
 	if err != nil {
 		return c.Response().Json(500, goravelhttp.Json{"error": "failed to secure password"})
 	}
-	now := time.Now()
-	db.DB.Model(&user).Updates(map[string]any{"password": encoded, "password_changed_at": now})
-	return c.Response().Json(200, goravelhttp.Json{"message": "password updated"})
+	if err := setPasswordAndRevoke(&user, encoded); err != nil {
+		return c.Response().Json(500, goravelhttp.Json{"error": "failed to update password"})
+	}
+	tokens, err := services.IssueTokens(&user)
+	if err != nil {
+		return c.Response().Json(500, goravelhttp.Json{"error": "password updated; please sign in again"})
+	}
+	setAuthCookies(c, tokens.AccessToken, tokens.RefreshToken)
+	return c.Response().Json(200, goravelhttp.Json{"message": "password updated", "access_token": tokens.AccessToken, "refresh_token": tokens.RefreshToken})
+}
+
+// validPassword enforces the bcrypt input limit (72 bytes) alongside a minimum.
+func validPassword(password string) bool {
+	return len(password) >= 8 && len(password) <= 72
+}
+
+// setPasswordAndRevoke stores the new hash and revokes all existing tokens in
+// one transaction, then refreshes user so newly issued tokens carry the new
+// token_version.
+func setPasswordAndRevoke(user *models.User, encoded string) error {
+	err := db.DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Model(user).Updates(map[string]any{"password": encoded, "password_changed_at": time.Now(), "needs_password": false}).Error; err != nil {
+			return err
+		}
+		return session.RevokeAll(tx, user.ID)
+	})
+	if err != nil {
+		return err
+	}
+	session.Invalidate(user.ID)
+	return db.DB.First(user, user.ID).Error
 }
 
 func randomCode() (string, error) {
@@ -300,16 +387,21 @@ func (h *AccountController) ResetPassword(c goravelhttp.Context) goravelhttp.Res
 		Code        string `json:"code"`
 		NewPassword string `json:"new_password"`
 	}
-	if err := c.Request().Bind(&input); err != nil || len(input.NewPassword) < 8 {
-		return c.Response().Json(400, goravelhttp.Json{"error": "target, code, and a new password of at least 8 characters are required"})
+	if err := c.Request().Bind(&input); err != nil || !validPassword(input.NewPassword) {
+		return c.Response().Json(400, goravelhttp.Json{"error": "target, code, and a new password of 8-72 characters are required"})
 	}
 	user, err := findUserByTarget(input.Target)
 	if err != nil || verifyCode(user.ID, "password_reset", input.Code) != nil {
 		return c.Response().Json(400, goravelhttp.Json{"error": "invalid or expired verification code"})
 	}
-	encoded, _ := hash.HashPassword(input.NewPassword)
-	now := time.Now()
-	db.DB.Model(user).Updates(map[string]any{"password": encoded, "password_changed_at": now})
+	encoded, err := hash.HashPassword(input.NewPassword)
+	if err != nil {
+		return c.Response().Json(500, goravelhttp.Json{"error": "failed to secure password"})
+	}
+	// A reset typically follows a suspected compromise: log out everywhere.
+	if err := setPasswordAndRevoke(user, encoded); err != nil {
+		return c.Response().Json(500, goravelhttp.Json{"error": "failed to reset password"})
+	}
 	return c.Response().Json(200, goravelhttp.Json{"message": "password reset successfully"})
 }
 
@@ -376,14 +468,33 @@ func (h *AccountController) DeleteAccount(c goravelhttp.Context) goravelhttp.Res
 	}
 	var input struct {
 		Password string `json:"password"`
+		// Confirm must be "DELETE" for OAuth accounts that have no password.
+		Confirm string `json:"confirm"`
 	}
 	_ = c.Request().Bind(&input)
 	var user models.User
-	if db.DB.First(&user, userID).Error != nil || !hash.CheckPasswordHash(input.Password, user.Password) {
+	if db.DB.First(&user, userID).Error != nil {
+		return c.Response().Json(404, goravelhttp.Json{"error": "user not found"})
+	}
+	if user.NeedsPassword {
+		if input.Confirm != "DELETE" {
+			return c.Response().Json(400, goravelhttp.Json{"error": "type DELETE to confirm account deletion"})
+		}
+	} else if !hash.CheckPasswordHash(input.Password, user.Password) {
 		return c.Response().Json(401, goravelhttp.Json{"error": "password is incorrect"})
 	}
 	now := time.Now()
-	db.DB.Model(&user).Updates(map[string]any{"account_status": "pending_deletion", "deletion_requested_at": now})
+	err = db.DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Model(&user).Updates(map[string]any{"account_status": "pending_deletion", "deletion_requested_at": now}).Error; err != nil {
+			return err
+		}
+		return session.RevokeAll(tx, user.ID)
+	})
+	if err != nil {
+		return c.Response().Json(500, goravelhttp.Json{"error": "failed to delete account"})
+	}
+	session.Invalidate(user.ID)
+	clearAuthCookies(c)
 	return c.Response().Json(200, goravelhttp.Json{"message": "account scheduled for deletion", "recoverable_until": now.Add(30 * 24 * time.Hour)})
 }
 
@@ -399,10 +510,11 @@ func (h *AccountController) ReactivateAccount(c goravelhttp.Context) goravelhttp
 	if err != nil || !hash.CheckPasswordHash(input.Password, user.Password) {
 		return c.Response().Json(401, goravelhttp.Json{"error": "invalid credentials"})
 	}
-	if user.DeletionRequestedAt == nil || user.DeletionRequestedAt.Before(time.Now().Add(-30*24*time.Hour)) {
+	if user.AccountStatus != "pending_deletion" || user.DeletionRequestedAt == nil || user.DeletionRequestedAt.Before(time.Now().Add(-30*24*time.Hour)) {
 		return c.Response().Json(400, goravelhttp.Json{"error": "account cannot be reactivated"})
 	}
 	db.DB.Model(user).Updates(map[string]any{"account_status": "active", "deletion_requested_at": nil})
+	session.Invalidate(user.ID)
 	return c.Response().Json(200, goravelhttp.Json{"message": "account reactivated; you can sign in"})
 }
 

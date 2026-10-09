@@ -7,7 +7,7 @@ import (
 	"io"
 )
 
-func RenderDashboardAdminPosts(w io.Writer, posts []models.Post) error {
+func RenderDashboardAdminPosts(w io.Writer, posts []models.Post, user *models.User) error {
 	var postRows []dom.Node
 	for _, p := range posts {
 		authorName := "Unknown User"
@@ -68,7 +68,7 @@ func RenderDashboardAdminPosts(w io.Writer, posts []models.Post) error {
 		))
 	}
 
-	page := LayoutAdmin("Connect Modern - Posts Management", "Posts",
+	page := LayoutAdmin("Connect Modern - Posts Management", "Posts", user,
 		dom.Div(
 			[]dom.Attr{
 				dom.Class("max-w-max-width-container mx-auto"),

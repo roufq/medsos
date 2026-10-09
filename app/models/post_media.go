@@ -21,3 +21,16 @@ type PostMedia struct {
 	ProcessingStatus string `gorm:"type:varchar(20);not null;default:'ready';index" json:"processing_status"`
 	CreatedAt time.Time `gorm:"autoCreateTime" json:"created_at"`
 }
+
+// MediaUpload records every file a user uploaded, with the type and duration
+// measured by the server. Posts may only reference uploads owned by their
+// author, so clients cannot attach foreign URLs or lie about video length.
+type MediaUpload struct {
+	ID              int64     `gorm:"primaryKey;autoIncrement" json:"id"`
+	UserID          int64     `gorm:"not null;index" json:"user_id"`
+	URL             string    `gorm:"type:varchar(255);not null;uniqueIndex" json:"url"`
+	MediaType       MediaType `gorm:"type:varchar(10);not null" json:"media_type"`
+	DurationSeconds int       `gorm:"not null;default:0" json:"duration_seconds"`
+	SizeBytes       int64     `gorm:"not null;default:0" json:"size_bytes"`
+	CreatedAt       time.Time `gorm:"autoCreateTime" json:"created_at"`
+}

@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func RenderDashboardAdminManajemenPenggunaV2(w io.Writer, users []models.User) error {
+func RenderDashboardAdminManajemenPenggunaV2(w io.Writer, users []models.User, user *models.User) error {
 	var userRows []dom.Node
 	for _, u := range users {
 		initials := ""
@@ -99,7 +99,7 @@ func RenderDashboardAdminManajemenPenggunaV2(w io.Writer, users []models.User) e
 		))
 	}
 
-	page := LayoutAdmin("Connect Modern - Admin Dashboard", "Users",
+	page := LayoutAdmin("Connect Modern - Admin Dashboard", "Users", user,
 		dom.Div(
 					[]dom.Attr{
 						dom.Class("max-w-max-width-container mx-auto"),

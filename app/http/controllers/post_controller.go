@@ -3,6 +3,7 @@ package controllers
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -16,6 +17,7 @@ import (
 	"goravel/resources/views/backend"
 
 	goravelhttp "github.com/goravel/framework/contracts/http"
+	"gorm.io/gorm"
 )
 
 type PostController struct {
@@ -37,16 +39,15 @@ func NewPostController(postService services.PostService, userController *UserCon
 // ==========================================
 
 func (h *PostController) CreatePostAPI(c goravelhttp.Context) goravelhttp.Response {
-	ctxID := c.Value("userID")
-	if ctxID == nil {
-		return c.Response().Json(http.StatusUnauthorized, goravelhttp.Json{"error": "Unauthorized context"})
+	userID, err := authenticatedUserID(c)
+	if err != nil {
+		return c.Response().Json(http.StatusUnauthorized, goravelhttp.Json{"error": "Unauthorized"})
 	}
-	userID := ctxID.(int64)
 
 	contentType := c.Request().Header("Content-Type", "")
 	var req dto.CreatePostRequest
 
-	if len(contentType) >= 19 && contentType[:19] == "multipart/form-data" {
+	if strings.HasPrefix(contentType, "multipart/form-data") {
 		req.Title = c.Request().Input("title")
 		req.Content = c.Request().Input("content")
 		req.PostType = models.PostType(c.Request().Input("post_type"))
@@ -61,37 +62,21 @@ func (h *PostController) CreatePostAPI(c goravelhttp.Context) goravelhttp.Respon
 				files = append(files, file)
 			}
 		}
+		if len(files) > services.ImagesMax+1 {
+			return c.Response().Json(http.StatusBadRequest, goravelhttp.Json{"error": "too many media files"})
+		}
 		for _, file := range files {
-			info, inspectErr := storage.InspectFile(file)
-			if inspectErr != nil {
-				return c.Response().Json(http.StatusBadRequest, goravelhttp.Json{"error": inspectErr.Error()})
-			}
-			urlStr, uploadErr := h.storageService.UploadFile(file)
+			stored, uploadErr := h.storageService.Upload(file)
 			if uploadErr != nil {
 				return c.Response().Json(http.StatusBadRequest, goravelhttp.Json{"error": uploadErr.Error()})
 			}
-			if req.PostType == models.PostTypeShop {
-				if info.Type == "image" {
-					req.ImageURLs = append(req.ImageURLs, urlStr)
-				} else {
-					if req.VideoURL != "" {
-						return c.Response().Json(400, goravelhttp.Json{"error": "shop posts allow one video"})
-					}
-					req.VideoURL = urlStr
-					if req.Shop == nil {
-						req.Shop = &dto.ShopPostRequest{}
-					}
-					req.Shop.VideoDurationSeconds = info.DurationSeconds
-				}
-			} else {
-				req.MediaURLs = append(req.MediaURLs, urlStr)
-				req.MediaDurations = append(req.MediaDurations, info.DurationSeconds)
+			if err := h.postService.RecordUpload(userID, stored); err != nil {
+				return c.Response().Json(http.StatusInternalServerError, goravelhttp.Json{"error": "failed to record upload"})
 			}
+			req.Media = append(req.Media, dto.MediaItem{URL: stored.URL, Type: models.MediaType(stored.Type), DurationSeconds: stored.DurationSeconds})
 		}
 		if req.PostType == models.PostTypeShop {
-			if req.Shop == nil {
-				req.Shop = &dto.ShopPostRequest{}
-			}
+			req.Shop = &dto.ShopPostRequest{}
 			req.Shop.PriceMinor, _ = strconv.ParseInt(c.Request().Input("price_minor"), 10, 64)
 			req.Shop.Currency = c.Request().Input("currency")
 			req.Shop.Category = c.Request().Input("category")
@@ -101,15 +86,25 @@ func (h *PostController) CreatePostAPI(c goravelhttp.Context) goravelhttp.Respon
 			req.Shop.PaymentMethod = c.Request().Input("payment_method")
 			req.Shop.SellerAccountID = c.Request().Input("seller_account_id")
 			if stock := strings.TrimSpace(c.Request().Input("stock")); stock != "" {
-				if parsed, err := strconv.ParseInt(stock, 10, 64); err == nil {
-					req.Shop.Stock = &parsed
+				parsed, err := strconv.ParseInt(stock, 10, 64)
+				if err != nil {
+					return c.Response().Json(http.StatusBadRequest, goravelhttp.Json{"error": "stock must be a whole number"})
 				}
+				req.Shop.Stock = &parsed
 			}
 		}
 	} else {
 		if err := c.Request().Bind(&req); err != nil {
 			return c.Response().Json(http.StatusBadRequest, goravelhttp.Json{"error": err.Error()})
 		}
+		// Media URLs must point at this user's own uploads; type and duration
+		// come from the server-side upload record, never from the client.
+		urls := append(append(append([]string{}, req.MediaURLs...), req.ImageURLs...), strings.TrimSpace(req.VideoURL))
+		media, err := h.postService.ResolveMedia(userID, 0, compactStrings(urls))
+		if err != nil {
+			return c.Response().Json(http.StatusBadRequest, goravelhttp.Json{"error": err.Error()})
+		}
+		req.Media = media
 	}
 
 	post, err := h.postService.CreatePost(userID, &req)
@@ -118,6 +113,50 @@ func (h *PostController) CreatePostAPI(c goravelhttp.Context) goravelhttp.Respon
 	}
 
 	return c.Response().Json(http.StatusCreated, post)
+}
+
+// UpdatePostAPI edits title, description, location, visibility, hashtags,
+// mentions, link, media (images/video), and shop details of the caller's post.
+func (h *PostController) UpdatePostAPI(c goravelhttp.Context) goravelhttp.Response {
+	userID, err := authenticatedUserID(c)
+	if err != nil {
+		return c.Response().Json(http.StatusUnauthorized, goravelhttp.Json{"error": "Unauthorized"})
+	}
+	postID, err := routeID(c, "id")
+	if err != nil {
+		return c.Response().Json(http.StatusBadRequest, goravelhttp.Json{"error": "Invalid post ID"})
+	}
+	var req dto.UpdatePostRequest
+	if err := c.Request().Bind(&req); err != nil {
+		return c.Response().Json(http.StatusBadRequest, goravelhttp.Json{"error": "invalid request"})
+	}
+	if req.MediaURLs != nil {
+		media, err := h.postService.ResolveMedia(userID, postID, compactStrings(req.MediaURLs))
+		if err != nil {
+			return c.Response().Json(http.StatusBadRequest, goravelhttp.Json{"error": err.Error()})
+		}
+		req.Media = media
+	}
+	post, err := h.postService.UpdatePost(userID, postID, &req)
+	switch {
+	case errors.Is(err, gorm.ErrRecordNotFound):
+		return c.Response().Json(http.StatusNotFound, goravelhttp.Json{"error": "Post not found"})
+	case errors.Is(err, services.ErrForbidden):
+		return c.Response().Json(http.StatusForbidden, goravelhttp.Json{"error": err.Error()})
+	case err != nil:
+		return c.Response().Json(http.StatusBadRequest, goravelhttp.Json{"error": err.Error()})
+	}
+	return c.Response().Json(http.StatusOK, post)
+}
+
+func compactStrings(values []string) []string {
+	result := make([]string, 0, len(values))
+	for _, value := range values {
+		if value = strings.TrimSpace(value); value != "" {
+			result = append(result, value)
+		}
+	}
+	return result
 }
 
 func (h *PostController) GetFeedAPI(c goravelhttp.Context) goravelhttp.Response {
@@ -148,12 +187,29 @@ func (h *PostController) GetFeedAPI(c goravelhttp.Context) goravelhttp.Response 
 		return c.Response().Json(http.StatusBadRequest, goravelhttp.Json{"error": "limit must be 1-50, offset 0-10000, and before_id must be a positive ID"})
 	}
 
-	posts, err := h.postService.GetFeed(viewerID, limit, offset, beforeID)
+	shortsOnly := c.Request().Query("kind", "") == "shorts"
+	posts, err := h.postService.GetFeed(viewerID, limit, offset, beforeID, shortsOnly)
 	if err != nil {
 		return c.Response().Json(http.StatusInternalServerError, goravelhttp.Json{"error": err.Error()})
 	}
 
 	return c.Response().Json(http.StatusOK, posts)
+}
+
+func (h *PostController) GetPostAPI(c goravelhttp.Context) goravelhttp.Response {
+	viewerID, err := authenticatedUserID(c)
+	if err != nil {
+		return c.Response().Json(http.StatusUnauthorized, goravelhttp.Json{"error": "Unauthorized"})
+	}
+	postID, err := routeID(c, "id")
+	if err != nil {
+		return c.Response().Json(http.StatusBadRequest, goravelhttp.Json{"error": "Invalid post ID"})
+	}
+	post, err := h.postService.GetPost(viewerID, postID)
+	if err != nil || !canViewPost(viewerID, post) {
+		return c.Response().Json(http.StatusNotFound, goravelhttp.Json{"error": "Post not found"})
+	}
+	return c.Response().Json(http.StatusOK, post)
 }
 
 func (h *PostController) DeletePostAPI(c goravelhttp.Context) goravelhttp.Response {
@@ -190,21 +246,27 @@ func (h *PostController) GetLinkPreviewAPI(c goravelhttp.Context) goravelhttp.Re
 }
 
 func (h *PostController) UploadMediaAPI(c goravelhttp.Context) goravelhttp.Response {
+	userID, err := authenticatedUserID(c)
+	if err != nil {
+		return c.Response().Json(http.StatusUnauthorized, goravelhttp.Json{"error": "Unauthorized"})
+	}
 	file, err := c.Request().File("file")
 	if err != nil {
 		return c.Response().Json(http.StatusBadRequest, goravelhttp.Json{"error": "File payload is required under key 'file'"})
 	}
 
-	info, err := storage.InspectFile(file)
+	stored, err := h.storageService.Upload(file)
 	if err != nil {
 		return c.Response().Json(http.StatusBadRequest, goravelhttp.Json{"error": err.Error()})
 	}
-	urlStr, err := h.storageService.UploadFile(file)
-	if err != nil {
-		return c.Response().Json(http.StatusInternalServerError, goravelhttp.Json{"error": fmt.Sprintf("Failed to store file: %s", err.Error())})
+	if err := h.postService.RecordUpload(userID, stored); err != nil {
+		return c.Response().Json(http.StatusInternalServerError, goravelhttp.Json{"error": fmt.Sprintf("Failed to record file: %s", err.Error())})
 	}
 
-	return c.Response().Json(http.StatusOK, goravelhttp.Json{"url": urlStr, "media_type": info.Type, "duration_seconds": info.DurationSeconds, "is_short": info.Type == "video" && info.DurationSeconds >= 60 && info.DurationSeconds <= 90})
+	return c.Response().Json(http.StatusOK, goravelhttp.Json{
+		"url": stored.URL, "media_type": stored.Type, "duration_seconds": stored.DurationSeconds, "size_bytes": stored.SizeBytes,
+		"is_short": stored.Type == "video" && stored.DurationSeconds >= services.ShortMinSeconds && stored.DurationSeconds <= services.ShortMaxSeconds,
+	})
 }
 
 func splitListInput(value string) []string {
@@ -287,7 +349,7 @@ func (h *PostController) ShowBerandaWeb(c goravelhttp.Context) goravelhttp.Respo
 		return resp
 	}
 
-	posts, _ := h.postService.GetFeed(user.ID, 30, 0, 0)
+	posts, _ := h.postService.GetFeed(user.ID, 30, 0, 0, false)
 
 	var buf bytes.Buffer
 	data := backend.BerandaData{
@@ -311,16 +373,22 @@ func (h *PostController) HandleCreatePostWeb(c goravelhttp.Context) goravelhttp.
 	}
 
 	req := dto.CreatePostRequest{
+		Title:    c.Request().Input("title"),
 		Content:  content,
 		PostType: models.PostType(pType),
+		Hashtags: splitListInput(c.Request().Input("hashtags")),
+		Mentions: splitListInput(c.Request().Input("mentions")),
 	}
 
 	file, err := c.Request().File("media")
 	if err == nil && file != nil {
-		urlStr, uploadErr := h.storageService.UploadFile(file)
-		if uploadErr == nil {
-			req.MediaURLs = append(req.MediaURLs, urlStr)
+		stored, uploadErr := h.storageService.Upload(file)
+		if uploadErr == nil && h.postService.RecordUpload(user.ID, stored) == nil {
+			req.Media = append(req.Media, dto.MediaItem{URL: stored.URL, Type: models.MediaType(stored.Type), DurationSeconds: stored.DurationSeconds})
 			req.PostType = models.PostTypeImage
+			if stored.Type == "video" {
+				req.PostType = models.PostTypeVideo
+			}
 		}
 	}
 

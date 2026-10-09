@@ -1,80 +1,18 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Construction, ArrowLeft } from 'lucide-react';
-import Header from '../components/modern/Header';
-import Sidebar from '../components/modern/Sidebar';
-import CreatePostModal from '../components/modern/CreatePostModal';
+import AppLayout from '../components/modern/AppLayout';
 import Network from '../components/modern/Network';
 import Jobs from '../components/modern/Jobs';
 import Messages from '../components/modern/Messages';
 import { useAuth } from '../context/AuthContext';
-import { postApi } from '../api/postApi';
 
 const FeaturePage = ({ title }) => {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
-
-  const handleLogout = () => {
-    logout();
-    navigate('/thanks');
-  };
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-
-  const currentUser = {
-    id: user?.id,
-    name: user?.name || '',
-    title: user?.title || '',
-    avatar: user?.avatar_url || '/favicon.svg',
-  };
-
-  const handleNavigate = (tab) => {
-    if (tab === 'profile') navigate(`/profile/${currentUser.id}`);
-    else if (tab === 'home') navigate(`/`);
-    else navigate(`/${tab}`);
-  };
-
-  const handleCreatePostSubmit = async ({ title, text, imageUrl, linkUrl, hashtags, mentions }) => {
-    let pType = 'text';
-    if (linkUrl) pType = 'link';
-    else if (imageUrl) pType = 'image';
-
-    const postData = {
-      title: title,
-      content: text,
-      post_type: pType,
-      media_urls: imageUrl ? [imageUrl] : [],
-      link_url: linkUrl || '',
-      hashtags: hashtags || [],
-      mentions: mentions || [],
-    };
-
-    await postApi.createPost(postData);
-    setIsCreatePostOpen(false);
-    navigate('/');
-  };
+  const { user } = useAuth();
+  const currentUser = { id: user?.id, name: user?.name || '', title: user?.title || '', avatar: user?.avatar_url || '/favicon.svg' };
 
   return (
-    <div className="bg-background text-on-background min-h-screen font-sans flex flex-col">
-      <Header 
-        currentUser={currentUser}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        onNavigate={handleNavigate}
-        onOpenProfile={(userId) => navigate(`/profile/${userId}`)}
-        onToggleMobileSidebar={() => setMobileSidebarOpen(!mobileSidebarOpen)}
-      />
-
-      <main className="max-w-7xl mx-auto flex gap-6 px-6 py-6 flex-grow w-full">
-        <Sidebar 
-          currentTab={title.toLowerCase()}
-          onNavigate={handleNavigate}
-          onRequestCreatePost={() => setIsCreatePostOpen(true)}
-          onLogout={handleLogout}
-        />
-
-        <div className="flex-grow min-w-0">
+    <AppLayout currentTab={title.toLowerCase()}>
           {title === 'Network' && <Network onNavigateToMessages={(userId) => navigate(userId ? `/messages?user_id=${userId}` : '/messages')} onOpenProfile={(userId) => navigate(`/profile/${userId}`)} />}
           {title === 'Jobs' && <Jobs />}
           {title === 'Messages' && <Messages currentUser={currentUser} />}
@@ -98,16 +36,7 @@ const FeaturePage = ({ title }) => {
               </button>
             </div>
           )}
-        </div>
-      </main>
-
-      <CreatePostModal 
-        isOpen={isCreatePostOpen}
-        onClose={() => setIsCreatePostOpen(false)}
-        onSubmit={handleCreatePostSubmit}
-        currentUser={currentUser}
-      />
-    </div>
+    </AppLayout>
   );
 };
 

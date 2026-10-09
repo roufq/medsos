@@ -8,14 +8,21 @@ import {
   BarChart3, 
   HelpCircle, 
   Shield, 
-  Plus 
+  Plus,
+  Clapperboard,
+  Bookmark,
+  Settings,
+  X
 } from 'lucide-react';
 
 interface SidebarProps {
-  currentTab: 'home' | 'network' | 'jobs' | 'messages' | 'profile' | 'admin' | 'analytics';
-  onNavigate: (tab: 'home' | 'network' | 'jobs' | 'messages' | 'profile' | 'admin' | 'analytics') => void;
+  currentTab: string;
+  onNavigate: (tab: any) => void;
   onRequestCreatePost: () => void;
   onLogout: () => void;
+  /** Render as a slide-in drawer for small screens. */
+  mobileOpen?: boolean;
+  onCloseMobile?: () => void;
 }
 
 import { useAuth } from '../../context/AuthContext';
@@ -24,25 +31,38 @@ export default function Sidebar({
   currentTab,
   onNavigate,
   onRequestCreatePost,
-  onLogout
+  onLogout,
+  mobileOpen,
+  onCloseMobile
 }: SidebarProps) {
   const { user } = useAuth();
 
-  const menuItems = [
-    { id: 'home' as const, label: 'Home', icon: Home },
-    { id: 'network' as const, label: 'Network', icon: Users },
-    { id: 'jobs' as const, label: 'Jobs', icon: Briefcase },
-    { id: 'messages' as const, label: 'Messages', icon: MessageSquare },
-    { id: 'profile' as const, label: 'Profile', icon: User },
+  const menuItems: { id: string; label: string; icon: any }[] = [
+    { id: 'home', label: 'Beranda', icon: Home },
+    { id: 'shorts', label: 'Shorts', icon: Clapperboard },
+    { id: 'network', label: 'Network', icon: Users },
+    { id: 'jobs', label: 'Jobs', icon: Briefcase },
+    { id: 'messages', label: 'Pesan', icon: MessageSquare },
+    { id: 'saved', label: 'Tersimpan', icon: Bookmark },
+    { id: 'profile', label: 'Profil', icon: User },
+    { id: 'settings', label: 'Pengaturan', icon: Settings },
   ];
 
   if (user?.role === 'admin') {
-    menuItems.push({ id: 'admin' as const, label: 'Admin Dashboard', icon: LayoutGrid });
-    menuItems.push({ id: 'analytics' as const, label: 'Analytics', icon: BarChart3 });
+    menuItems.push({ id: 'admin', label: 'Admin Dashboard', icon: LayoutGrid });
+    menuItems.push({ id: 'analytics', label: 'Analytics', icon: BarChart3 });
   }
 
+  const go = (tab: string) => { onCloseMobile?.(); onNavigate(tab); };
+  const asideClass = mobileOpen
+    ? 'fixed inset-y-0 left-0 z-[60] flex flex-col w-72 max-w-[85vw] gap-2 p-4 bg-white shadow-xl overflow-y-auto md:hidden'
+    : 'hidden md:flex flex-col h-[calc(100vh-80px)] w-64 sticky top-20 gap-2 p-4 bg-white rounded-2xl border border-border-subtle/40 shadow-sm overflow-y-auto';
+
   return (
-    <aside className="hidden md:flex flex-col h-[calc(100vh-80px)] w-64 sticky top-20 gap-2 p-4 bg-white rounded-2xl border border-border-subtle/40 shadow-sm">
+    <>
+    {mobileOpen && <div className="fixed inset-0 z-[55] bg-black/40 md:hidden" onClick={onCloseMobile} />}
+    <aside className={asideClass}>
+      {mobileOpen && <button type="button" onClick={onCloseMobile} className="self-end p-1" aria-label="Tutup menu"><X className="w-5 h-5" /></button>}
       <div className="mb-6 px-2">
         <div className="font-headline-md text-headline-md font-black text-primary">Connect Modern</div>
         <div className="font-label-sm text-label-sm text-text-secondary">Professional Suite</div>
@@ -55,7 +75,7 @@ export default function Sidebar({
           return (
             <button
               key={item.id}
-              onClick={() => onNavigate(item.id)}
+              onClick={() => go(item.id)}
               className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl font-bold transition-all text-left group scale-98 active:scale-95 cursor-pointer ${
                 isActive 
                   ? 'bg-secondary-container text-primary font-bold' 
@@ -72,7 +92,7 @@ export default function Sidebar({
 
         <div className="mt-4 px-2">
           <button
-            onClick={onRequestCreatePost}
+            onClick={() => { onCloseMobile?.(); onRequestCreatePost(); }}
             className="w-full py-3 bg-primary text-white font-bold rounded-full shadow-sm hover:brightness-110 active:scale-95 transition-all text-sm flex items-center justify-center gap-2 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
@@ -95,9 +115,10 @@ export default function Sidebar({
           className="flex items-center gap-3 text-text-secondary hover:text-error transition-colors text-sm text-left select-none cursor-pointer"
         >
           <Shield className="w-4 h-4 text-outline" />
-          <span className="text-xs font-semibold">Logout & Switch Accounts</span>
+          <span className="text-xs font-semibold">Keluar</span>
         </button>
       </div>
     </aside>
+    </>
   );
 }

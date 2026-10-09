@@ -1,8 +1,9 @@
 import { useState, FormEvent } from 'react';
 import { Eye, EyeOff, ArrowRight, Shield, Zap, Users, BarChart3, HelpCircle, CheckCircle } from 'lucide-react';
+import OAuthButtons from './OAuthButtons';
 
 interface SignupProps {
-	onRegister: (email: string, fullName: string, password?: string) => void;
+	onRegister: (email: string, fullName: string, password?: string, extra?: Record<string, string>) => void;
 	onNavigateToLogin: () => void;
 	onOAuth: (provider: string) => void;
 }
@@ -11,7 +12,8 @@ export default function Signup({ onRegister, onNavigateToLogin, onOAuth }: Signu
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
-  const [industry, setIndustry] = useState('');
+  const [username, setUsername] = useState('');
+  const [accountType, setAccountType] = useState('personal');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
@@ -19,7 +21,7 @@ export default function Signup({ onRegister, onNavigateToLogin, onOAuth }: Signu
     e.preventDefault();
     if (!email) return;
     const fullName = `${firstName} ${lastName}`.trim();
-    onRegister(email, fullName, password);
+    onRegister(email, fullName, password, { username, account_type: accountType });
   };
 
   return (
@@ -115,25 +117,7 @@ export default function Signup({ onRegister, onNavigateToLogin, onOAuth }: Signu
           </div>
 
           {/* Social signup quick routes */}
-          <div className="grid grid-cols-2 gap-4 mb-8">
-            <button 
-              type="button"
-			  onClick={() => onOAuth('google')}
-              className="flex items-center justify-center gap-2 h-11 border border-outline-variant bg-white rounded-xl hover:bg-surface-container-low transition-colors font-semibold text-xs text-text-primary cursor-pointer select-none"
-            >
-              <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDXwueVzJRy4Y6lfOUTvn4Jxq0_-FaKLjiuuCQPsCrFoqF48qrHnINMhfIW35TOFo3tA6yMnmSLOw-35WmD5P_qB5p8Jpafd0kpSF3KGTKiEQ0I4MKvb73cDMGOhouaZukEzM4B2rlKwb8n8SPTG0kZXqG2RWHwgtg3sFAIvu8Vq36mY1D7oNgVVkbwWLcq3VrPEPOTv_doODBv8LZh-QEnvMexAMYkRsH42prT5aOCiJsvrV6W9G3AN55jNE-jzSTakmrcYVGo7Kg" alt="Google" className="w-4 h-4 object-contain" />
-              <span>Google</span>
-            </button>
-            <button 
-              type="button"
-			  onClick={() => onOAuth('linkedin')}
-              className="flex items-center justify-center gap-2 h-11 border border-outline-variant bg-white rounded-xl hover:bg-surface-container-low transition-colors font-semibold text-xs text-text-primary cursor-pointer select-none"
-            >
-              {/* Simple inline linkedin styled block */}
-              <div className="w-4 h-4 bg-[#0A66C2] text-white flex items-center justify-center rounded-xs text-[10px] font-bold select-none">in</div>
-              <span>LinkedIn</span>
-            </button>
-          </div>
+          <div className="mb-8"><OAuthButtons onOAuth={onOAuth} verb="Daftar" /></div>
 
           <div className="relative flex items-center mb-8 select-none">
             <div className="flex-grow border-t border-outline-variant/60" />
@@ -181,21 +165,31 @@ export default function Signup({ onRegister, onNavigateToLogin, onOAuth }: Signu
               />
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-text-primary pl-0.5">Professional Title</label>
-              <select 
-                required
-                value={industry}
-                onChange={(e) => setIndustry(e.target.value)}
-                className="w-full h-11 px-4 bg-white border border-outline-variant rounded-xl focus:ring-1 focus:ring-primary focus:border-primary transition-all outline-none text-xs text-text-primary"
-              >
-                <option value="" disabled>Select your industry</option>
-                <option value="Software Engineering">Software Engineering</option>
-                <option value="Product Management">Product Management</option>
-                <option value="Digital Design">Digital Design</option>
-                <option value="Marketing & Strategy">Marketing & Strategy</option>
-                <option value="Executive Leadership">Executive Leadership</option>
-              </select>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-text-primary pl-0.5">Username (opsional)</label>
+                <input
+                  type="text"
+                  placeholder="john_doe"
+                  pattern="[a-z0-9_]{3,40}"
+                  title="3–40 huruf kecil, angka, atau garis bawah"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value.toLowerCase())}
+                  className="w-full h-11 px-4 bg-white border border-outline-variant rounded-xl focus:ring-1 focus:ring-primary focus:border-primary transition-all outline-none text-xs text-text-primary"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-text-primary pl-0.5">Jenis akun</label>
+                <select
+                  value={accountType}
+                  onChange={(e) => setAccountType(e.target.value)}
+                  className="w-full h-11 px-4 bg-white border border-outline-variant rounded-xl focus:ring-1 focus:ring-primary focus:border-primary transition-all outline-none text-xs text-text-primary"
+                >
+                  <option value="personal">Pribadi</option>
+                  <option value="business">Bisnis</option>
+                  <option value="team">Tim</option>
+                </select>
+              </div>
             </div>
 
             <div className="space-y-1.5 relative">

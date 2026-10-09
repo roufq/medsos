@@ -28,18 +28,47 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Pages reachable without a session; never bounce these back to /login.
+const PUBLIC_PATHS = ['/login', '/register', '/forgot-password', '/thanks'];
+const onPublicPage = () => PUBLIC_PATHS.some((path) => window.location.pathname.startsWith(path));
+
+function goToLogin(reason) {
+  if (onPublicPage()) return;
+  const query = reason ? `?reason=${encodeURIComponent(reason)}` : '';
+  window.location.href = `/login${query}`;
+}
+
+// Refresh tokens are single-use (rotated on every refresh), so concurrent
+// 401s must share one refresh request instead of racing with the same token.
+let refreshPromise = null;
+function refreshSession() {
+  if (!refreshPromise) {
+    refreshPromise = axios
+      .post(`${api.defaults.baseURL}/auth/refresh`, {}, { withCredentials: true })
+      .finally(() => { refreshPromise = null; });
+  }
+  return refreshPromise;
+}
+
 // Intercept 401 responses to rotate the access token via the refresh cookie
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const originalRequest = error.config;
-    if (error.response?.status === 401 && !originalRequest._retry && !originalRequest.url?.includes('/auth/refresh')) {
+    const originalRequest = error.config || {};
+    const status = error.response?.status;
+    const code = error.response?.data?.code;
+    if (status === 403 && code === 'account_inactive') {
+      goToLogin('account_inactive');
+      return Promise.reject(error);
+    }
+    const isAuthCall = /\/auth\/(refresh|login|register|logout)/.test(originalRequest.url || '');
+    if (status === 401 && !originalRequest._retry && !isAuthCall) {
       originalRequest._retry = true;
       try {
-        await axios.post(`${api.defaults.baseURL}/auth/refresh`, {}, { withCredentials: true });
+        await refreshSession();
         return api(originalRequest);
       } catch (refreshError) {
-        window.location.href = '/login';
+        goToLogin(code === 'session_revoked' ? 'session_revoked' : '');
         return Promise.reject(refreshError);
       }
     }

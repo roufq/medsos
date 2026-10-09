@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Info, UserPlus, UserCheck } from 'lucide-react';
 import { networkApi } from '../../api/networkApi';
-import { Post, User } from '../types';
+import { Link } from 'react-router-dom';
+import { User } from '../types';
 
 interface RightSidebarProps {
-  posts: Post[];
+  posts: any[];
   followedUsers: string[];
   onFollowSuggestion: (userId: string) => void;
   onNavigate: (tab: 'home' | 'network' | 'jobs' | 'messages' | 'profile' | 'admin' | 'analytics') => void;
@@ -20,9 +21,8 @@ export default function RightSidebar({ posts, followedUsers, onFollowSuggestion,
       .catch((error) => console.error('Failed to load network suggestions', error));
   }, []);
 
-  const trendingPosts = useMemo(() => [...posts]
-    .sort((a, b) => ((b.likesCount || 0) + (b.commentsCount || 0) + (b.sharesCount || 0)) - ((a.likesCount || 0) + (a.commentsCount || 0) + (a.sharesCount || 0)))
-    .slice(0, 3), [posts]);
+  const score = (p: any) => (p.likes_count || 0) + (p.comments_count || 0) + (p.shares_count || 0);
+  const trendingPosts = useMemo(() => [...posts].sort((a, b) => score(b) - score(a)).slice(0, 3), [posts]);
 
   return (
     <aside className="hidden xl:flex flex-col w-72 sticky top-20 h-fit gap-6 select-none">
@@ -33,10 +33,10 @@ export default function RightSidebar({ posts, followedUsers, onFollowSuggestion,
         </div>
         <div className="flex flex-col gap-4">
           {trendingPosts.map((post) => (
-            <div key={post.id} className="block">
-              <div className="text-xs text-text-secondary">{post.author?.name || 'Unknown user'} · {(post.likesCount || 0) + (post.commentsCount || 0)} interactions</div>
+            <Link key={post.id} to={`/post/${post.id}`} className="block hover:opacity-80">
+              <div className="text-xs text-text-secondary">{post.user?.name || 'Pengguna'} · {score(post)} interaksi</div>
               <div className="font-bold text-sm text-text-primary mt-0.5 line-clamp-2">{post.title || post.content}</div>
-            </div>
+            </Link>
           ))}
           {trendingPosts.length === 0 && <p className="text-xs text-text-secondary">No posts in the database yet.</p>}
         </div>

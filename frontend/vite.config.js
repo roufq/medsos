@@ -13,6 +13,8 @@ export default defineConfig({
       '/api': 'http://127.0.0.1:3000',
       '/uploads': 'http://127.0.0.1:3000',
       '/web': 'http://127.0.0.1:3000',
+      '/p/': 'http://127.0.0.1:3000',
+      '/embed': 'http://127.0.0.1:3000',
     },
   },
 })

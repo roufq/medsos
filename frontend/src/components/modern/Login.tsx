@@ -1,5 +1,6 @@
 import { useState, FormEvent } from 'react';
 import { Mail, Lock, Eye, EyeOff, ShieldCheck, Zap, Globe, ArrowRight } from 'lucide-react';
+import OAuthButtons from './OAuthButtons';
 
 interface LoginProps {
 	onLogin: (identifier: string, password?: string) => void;
@@ -140,20 +141,7 @@ export default function Login({ onLogin, onNavigateToSignup, onNavigateToForgot,
             </div>
           </div>
 
-          {/* SSO Google Trigger */}
-          <button 
-            type="button"
-			onClick={() => onOAuth('google')}
-            className="w-full py-3 border border-border-subtle bg-white text-text-primary rounded-xl font-semibold text-xs hover:bg-surface-container-low transition-all flex items-center justify-center gap-3 cursor-pointer"
-          >
-            <img 
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuDXwueVzJRy4Y6lfOUTvn4Jxq0_-FaKLjiuuCQPsCrFoqF48qrHnINMhfIW35TOFo3tA6yMnmSLOw-35WmD5P_qB5p8Jpafd0kpSF3KGTKiEQ0I4MKvb73cDMGOhouaZukEzM4B2rlKwb8n8SPTG0kZXqG2RWHwgtg3sFAIvu8Vq36mY1D7oNgVVkbwWLcq3VrPEPOTv_doODBv8LZh-QEnvMexAMYkRsH42prT5aOCiJsvrV6W9G3AN55jNE-jzSTakmrcYVGo7Kg" 
-              alt="Google SSO" 
-              className="w-5 h-5 object-contain"
-              referrerPolicy="no-referrer"
-            />
-			<span>Sign in with Google</span>
-          </button>
+          <OAuthButtons onOAuth={onOAuth} />
 
           <div className="text-center">
             <p className="text-xs text-text-secondary">

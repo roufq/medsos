@@ -1,12 +1,14 @@
 package middleware
 
 import (
+	"errors"
 	"net/http"
 	"strings"
 
 	"goravel/app/models"
 	"goravel/pkg/csrf"
 	"goravel/pkg/jwt"
+	"goravel/pkg/session"
 
 	goravelhttp "github.com/goravel/framework/contracts/http"
 )
@@ -55,11 +57,24 @@ func AuthMiddleware() goravelhttp.Middleware {
 			c.Request().AbortWithStatusJson(http.StatusUnauthorized, goravelhttp.Json{"error": "Invalid or expired access token"})
 			return
 		}
+		// A valid signature is not enough: the account may since have been
+		// blocked, scheduled for deletion, or had its tokens revoked.
+		state, err := session.Validate(claims)
+		if errors.Is(err, session.ErrInactive) {
+			c.Request().AbortWithStatusJson(http.StatusForbidden, goravelhttp.Json{"error": "Account is not active", "code": "account_inactive"})
+			return
+		}
+		if err != nil {
+			c.Request().AbortWithStatusJson(http.StatusUnauthorized, goravelhttp.Json{"error": "Session has been revoked", "code": "session_revoked"})
+			return
+		}
 
-		// Inject user context variables into the Gin context
+		// Inject user context variables; the role comes from the database so a
+		// demotion takes effect without waiting for the token to expire.
 		c.WithValue("userID", claims.UserID)
 		c.WithValue("userEmail", claims.Email)
-		c.WithValue("userRole", claims.Role)
+		c.WithValue("userRole", state.Role)
+		c.WithValue("tokenClaims", claims)
 
 		c.Request().Next()
 	}

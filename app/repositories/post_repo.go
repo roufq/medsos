@@ -9,8 +9,10 @@ import (
 type PostRepository interface {
 	Create(post *models.Post) error
 	GetByID(id int64) (*models.Post, error)
-	ListAll(viewerID int64, limit, offset int, beforeID int64) ([]models.Post, error)
+	ListAll(viewerID int64, limit, offset int, beforeID int64, shortsOnly bool) ([]models.Post, error)
 	ListByUserID(viewerID, userID int64) ([]models.Post, error)
+	GetForViewer(viewerID, postID int64) (*models.Post, error)
+	GetManyForViewer(viewerID int64, ids []int64) ([]models.Post, error)
 	Delete(id int64) error
 	Update(post *models.Post) error
 	ToggleLike(postID, userID int64) (bool, error)
@@ -36,7 +38,52 @@ func (r *postRepo) GetByID(id int64) (*models.Post, error) {
 	return &post, nil
 }
 
-func (r *postRepo) ListAll(viewerID int64, limit, offset int, beforeID int64) ([]models.Post, error) {
+// withCounters selects the post columns plus per-viewer counters/flags.
+func withCounters(query *gorm.DB, viewerID int64) *gorm.DB {
+	return query.Select(`posts.*,
+			(SELECT COUNT(*) FROM post_likes WHERE post_likes.post_id = posts.id) AS likes_count,
+			(SELECT COUNT(*) FROM post_comments WHERE post_comments.post_id = posts.id) AS comments_count,
+			EXISTS(SELECT 1 FROM post_likes WHERE post_likes.post_id = posts.id AND post_likes.user_id = ?) AS is_liked_by_me,
+			EXISTS(SELECT 1 FROM saved_posts WHERE saved_posts.post_id = posts.id AND saved_posts.user_id = ?) AS is_saved_by_me,
+			(SELECT COUNT(*) FROM post_views WHERE post_views.post_id = posts.id) AS views_count,
+			(SELECT COUNT(*) FROM post_shares WHERE post_shares.post_id = posts.id) AS shares_count`, viewerID, viewerID)
+}
+
+// GetForViewer loads one post with counters; visibility is checked by the caller.
+func (r *postRepo) GetForViewer(viewerID, postID int64) (*models.Post, error) {
+	var post models.Post
+	if err := postPreloads(withCounters(db.DB.Model(&models.Post{}), viewerID)).Where("posts.id = ?", postID).Take(&post).Error; err != nil {
+		return nil, err
+	}
+	sanitizePostUsers(&post)
+	return &post, nil
+}
+
+// GetManyForViewer loads posts with counters, keeping the order of ids.
+// Visibility must already have been checked by the caller.
+func (r *postRepo) GetManyForViewer(viewerID int64, ids []int64) ([]models.Post, error) {
+	result := make([]models.Post, 0, len(ids))
+	if len(ids) == 0 {
+		return result, nil
+	}
+	var posts []models.Post
+	if err := postPreloads(withCounters(db.DB.Model(&models.Post{}), viewerID)).Where("posts.id IN ?", ids).Find(&posts).Error; err != nil {
+		return nil, err
+	}
+	byID := make(map[int64]models.Post, len(posts))
+	for _, post := range posts {
+		sanitizePostUsers(&post)
+		byID[post.ID] = post
+	}
+	for _, id := range ids {
+		if post, ok := byID[id]; ok {
+			result = append(result, post)
+		}
+	}
+	return result, nil
+}
+
+func (r *postRepo) ListAll(viewerID int64, limit, offset int, beforeID int64, shortsOnly bool) ([]models.Post, error) {
 	var posts []models.Post
 	query := db.DB.Model(&models.Post{}).
 		Select(`posts.*,
@@ -49,6 +96,9 @@ func (r *postRepo) ListAll(viewerID int64, limit, offset int, beforeID int64) ([
 		Where(`EXISTS (SELECT 1 FROM users author WHERE author.id = posts.user_id AND author.account_status = 'active')`).
 		Where(`NOT EXISTS (SELECT 1 FROM user_blocks b WHERE (b.blocker_id = ? AND b.blocked_id = posts.user_id) OR (b.blocker_id = posts.user_id AND b.blocked_id = ?))`, viewerID, viewerID).
 		Where(`(posts.user_id = ? OR (posts.visibility = 'public' AND EXISTS (SELECT 1 FROM users author WHERE author.id = posts.user_id AND author.is_private = 0)) OR EXISTS (SELECT 1 FROM follows f WHERE f.follower_id = ? AND f.followed_id = posts.user_id AND f.status = 'accepted'))`, viewerID, viewerID)
+	if shortsOnly {
+		query = query.Where(`EXISTS (SELECT 1 FROM post_media m WHERE m.post_id = posts.id AND m.is_short = 1)`)
+	}
 	query = postPreloads(query)
 	if beforeID > 0 {
 		query = query.Where("posts.id < ?", beforeID)

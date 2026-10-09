@@ -36,6 +36,27 @@ Callback production:
 https://domain.com/api/v1/auth/oauth/{provider}/callback
 ```
 
+Setelah callback berhasil, browser diarahkan ke `FRONTEND_URL` (atau `APP_URL` bila kosong). Login OAuth dalam 30 hari setelah hapus akun otomatis mengaktifkan akun kembali; akun yang diblokir admin tetap ditolak.
+
+## URL publik
+
+```dotenv
+APP_URL=https://domain.com
+# Opsional, bila SPA disajikan dari domain lain:
+FRONTEND_URL=https://app.domain.com
+```
+
+Dipakai untuk link share (`/p/{id}`, berisi tag OpenGraph), kode embed (`/embed/posts/{id}`), dan redirect OAuth. Cookie sesi otomatis diberi flag `Secure` bila `APP_URL` memakai `https://`.
+
+## Batas media
+
+```dotenv
+MEDIA_MAX_IMAGE_MB=10     # per gambar, default 10, maks 50
+MEDIA_MAX_UPLOAD_MB=1024  # per video, default 1024, maks 4096
+```
+
+Server memerlukan `ffprobe` (validasi video & durasi maks 30 menit) dan `ffmpeg` (transcode ke MP4 H.264).
+
 ## SMS dan WhatsApp
 
 ```dotenv
@@ -66,11 +87,11 @@ Gunakan IAM policy terbatas, signed URL untuk file privat, lifecycle policy, bac
 ## Google Maps
 
 ```dotenv
-GOOGLE_MAPS_API_KEY=
-GOOGLE_MAPS_SERVER_KEY=
+# frontend/.env — dipakai tombol "Lokasi saya" di form posting (Geocoding API).
+VITE_GOOGLE_MAPS_API_KEY=
 ```
 
-Aktifkan Maps JavaScript, Places, dan Geocoding API. Batasi key berdasarkan domain dan IP.
+Tanpa key, frontend memakai OpenStreetMap Nominatim untuk reverse geocoding. Aktifkan Geocoding API dan batasi key berdasarkan domain (HTTP referrer).
 
 ## Pembayaran
 

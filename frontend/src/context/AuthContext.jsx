@@ -25,26 +25,18 @@ export const AuthProvider = ({ children }) => {
     loadCurrentUser();
   }, []);
 
+  // `loading` only covers the initial session check; toggling it here would
+  // unmount the login/register page (PublicRoute) and lose its error state.
   const login = async (email, password) => {
-    setLoading(true);
-    try {
-      const data = await authApi.login(email, password);
-      setUser(data.user);
-      return data.user;
-    } finally {
-      setLoading(false);
-    }
+    const data = await authApi.login(email, password);
+    setUser(data.user);
+    return data.user;
   };
 
-  const register = async (name, email, password) => {
-    setLoading(true);
-    try {
-      const data = await authApi.register(name, email, password);
-      setUser(data.user);
-      return data.user;
-    } finally {
-      setLoading(false);
-    }
+  const register = async (name, email, password, extra = {}) => {
+    const data = await authApi.register(name, email, password, extra);
+    setUser(data.user);
+    return data.user;
   };
 
   const logout = async () => {

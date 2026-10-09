@@ -1,11 +1,19 @@
 package backend
 
 import (
+	"goravel/app/models"
+
 	"goravel/resources/views/backend/dom"
 )
 
-func LayoutAdmin(title string, activeMenu string, mainContent dom.Node) *dom.Element {
+func LayoutAdmin(title string, activeMenu string, currentUser *models.User, mainContent dom.Node) *dom.Element {
 	// Function to generate menu item classes
+	
+	avatarUrl := "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=100"
+	if currentUser != nil && currentUser.AvatarURL != nil && *currentUser.AvatarURL != "" {
+		avatarUrl = *currentUser.AvatarURL
+	}
+
 	menuItemClass := func(name string) string {
 		baseClass := "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ease-in-out "
 		if activeMenu == name {
@@ -189,7 +197,7 @@ func LayoutAdmin(title string, activeMenu string, mainContent dom.Node) *dom.Ele
 					dom.Div([]dom.Attr{dom.Class("h-8 w-8 rounded-full overflow-hidden border border-outline-variant cursor-pointer")},
 						dom.Img([]dom.Attr{
 							dom.Class("w-full h-full object-cover"),
-							dom.Src("https://lh3.googleusercontent.com/aida-public/AB6AXuDqsdUhFcG3uPaZGLXoKWUnqOu7qkdvrbRl_oAWjA79sqOuQj35GD_7MSD63tVLPecdAxbu1xg34JpOTFRAYu6R3MDnPgk6SN9-TNuPoQz_zMsW09PzA-HZGIng7GnkK0JgHMxOHTAFF6Vs9yspvzZK0-Q2CwdVEaVtYTfhXH6t8gGvA9FYthiLulCC7-Xif2SUQtO4riVu78F1uumAeUT84su0O5-DvRcrlQzq4tYaTD4nQPNC2qjQjwJQK_lRBDLQMJQl5jeeNoA"),
+							dom.Src(avatarUrl),
 						}),
 					),
 				),

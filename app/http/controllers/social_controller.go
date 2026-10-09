@@ -2,16 +2,16 @@ package controllers
 
 import (
 	"errors"
-	"fmt"
-	"html"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
 	"unicode/utf8"
 
 	"goravel/app/models"
+	"goravel/app/repositories"
+	"goravel/app/services"
 	"goravel/pkg/db"
+	"goravel/pkg/session"
 
 	goravelhttp "github.com/goravel/framework/contracts/http"
 	"gorm.io/gorm"
@@ -286,12 +286,15 @@ func (h *SocialController) SavedPosts(c goravelhttp.Context) goravelhttp.Respons
 	}
 	blocked := blockedBetweenBatch(userID, authorIDs)
 	following := acceptedFollowingBatch(userID, authorIDs)
-	visible := posts[:0]
+	ids := make([]int64, 0, len(posts))
 	for i := range posts {
 		if canViewPreloadedPost(userID, &posts[i], blocked, following) {
-			posts[i].User.HidePrivateData()
-			visible = append(visible, posts[i])
+			ids = append(ids, posts[i].ID)
 		}
+	}
+	visible, err := postsWithCounters.GetManyForViewer(userID, ids)
+	if err != nil {
+		return c.Response().Json(500, goravelhttp.Json{"error": "failed to load saved posts"})
 	}
 	return c.Response().Json(200, visible)
 }
@@ -335,132 +338,6 @@ func (h *SocialController) Repost(c goravelhttp.Context) goravelhttp.Response {
 		repost.OriginalPost.User.HidePrivateData()
 	}
 	return c.Response().Json(201, repost)
-}
-
-func (h *SocialController) EditPost(c goravelhttp.Context) goravelhttp.Response {
-	userID, err := authenticatedUserID(c)
-	if err != nil {
-		return c.Response().Json(401, goravelhttp.Json{"error": "Unauthorized"})
-	}
-	postID, err := routeID(c, "id")
-	if err != nil {
-		return c.Response().Json(400, goravelhttp.Json{"error": "invalid post"})
-	}
-	var post models.Post
-	if db.DB.First(&post, postID).Error != nil {
-		return c.Response().Json(404, goravelhttp.Json{"error": "post not found"})
-	}
-	if post.UserID != userID {
-		return c.Response().Json(403, goravelhttp.Json{"error": "forbidden"})
-	}
-	var input struct {
-		Title      *string  `json:"title"`
-		Content    *string  `json:"content"`
-		Location   *string  `json:"location"`
-		Visibility *string  `json:"visibility"`
-		Hashtags   []string `json:"hashtags"`
-		Mentions   []string `json:"mentions"`
-	}
-	if c.Request().Bind(&input) != nil {
-		return c.Response().Json(400, goravelhttp.Json{"error": "invalid request"})
-	}
-	updates := map[string]any{}
-	if input.Title != nil {
-		title := strings.TrimSpace(*input.Title)
-		if utf8.RuneCountInString(title) < 5 || utf8.RuneCountInString(title) > 100 {
-			return c.Response().Json(400, goravelhttp.Json{"error": "title must contain 5-100 characters"})
-		}
-		updates["title"] = title
-	}
-	if input.Content != nil {
-		content := strings.TrimSpace(*input.Content)
-		words := len(strings.Fields(content))
-		if words > 6000 {
-			return c.Response().Json(400, goravelhttp.Json{"error": "description must contain at most 6000 words"})
-		}
-		updates["content"] = content
-	}
-	if input.Location != nil {
-		location := strings.TrimSpace(*input.Location)
-		if len(location) > 255 {
-			return c.Response().Json(400, goravelhttp.Json{"error": "location is too long"})
-		}
-		updates["location"] = nullableString(location)
-	}
-	if input.Visibility != nil {
-		visibility := strings.ToLower(*input.Visibility)
-		if visibility != "public" && visibility != "followers" {
-			return c.Response().Json(400, goravelhttp.Json{"error": "invalid visibility"})
-		}
-		updates["visibility"] = visibility
-	}
-	err = db.DB.Transaction(func(tx *gorm.DB) error {
-		if len(updates) > 0 {
-			if err := tx.Model(&post).Updates(updates).Error; err != nil {
-				return err
-			}
-		}
-		if input.Hashtags != nil {
-			tags := uniqueTokens(input.Hashtags, "#", 64)
-			max := 9
-			if post.PostType == models.PostTypeShop {
-				max = 30
-			}
-			if len(tags) > max {
-				return fmt.Errorf("post allows at most %d hashtags", max)
-			}
-			if err := tx.Where("post_id = ?", postID).Delete(&models.PostHashtag{}).Error; err != nil {
-				return err
-			}
-			for _, tag := range tags {
-				if err := tx.Create(&models.PostHashtag{PostID: postID, Tag: tag}).Error; err != nil {
-					return err
-				}
-			}
-		}
-		if input.Mentions != nil {
-			usernames := uniqueTokens(input.Mentions, "@", 40)
-			if len(usernames) > 10 {
-				return fmt.Errorf("post allows at most 10 mentions")
-			}
-			if err := tx.Where("post_id = ?", postID).Delete(&models.PostMention{}).Error; err != nil {
-				return err
-			}
-			for _, username := range usernames {
-				var user models.User
-				if err := tx.Where("LOWER(username) = ?", username).First(&user).Error; err != nil {
-					return fmt.Errorf("mentioned user @%s was not found", username)
-				}
-				if err := tx.Create(&models.PostMention{PostID: postID, MentionedUserID: user.ID}).Error; err != nil {
-					return err
-				}
-			}
-		}
-		return nil
-	})
-	if err != nil {
-		return c.Response().Json(400, goravelhttp.Json{"error": err.Error()})
-	}
-	db.DB.Preload("User").Preload("Media").Preload("Link").Preload("Hashtags").Preload("Mentions.User").Preload("Shop").First(&post, postID)
-	post.User.HidePrivateData()
-	for i := range post.Mentions {
-		post.Mentions[i].User.HidePrivateData()
-	}
-	return c.Response().Json(200, post)
-}
-
-func uniqueTokens(values []string, prefix string, maximum int) []string {
-	seen := map[string]bool{}
-	result := []string{}
-	for _, value := range values {
-		value = strings.ToLower(strings.Trim(strings.TrimSpace(value), prefix))
-		if value != "" && len(value) <= maximum && !seen[value] {
-			seen[value] = true
-			result = append(result, value)
-		}
-	}
-	sort.Strings(result)
-	return result
 }
 
 func (h *SocialController) Comments(c goravelhttp.Context) goravelhttp.Response {
@@ -538,6 +415,7 @@ func (h *SocialController) ReplyComment(c goravelhttp.Context) goravelhttp.Respo
 		return c.Response().Json(500, goravelhttp.Json{"error": "failed to reply"})
 	}
 	notifyUser(parent.UserID, userID, "comment_reply", "comment", parent.ID, "Someone replied to your comment")
+	services.NotifyCommentMentions(userID, postID, comment.Content)
 	db.DB.Preload("User").First(&comment, comment.ID)
 	if comment.User != nil {
 		comment.User.HidePrivateData()
@@ -589,8 +467,17 @@ func (h *SocialController) DeleteComment(c goravelhttp.Context) goravelhttp.Resp
 	return c.Response().Json(200, goravelhttp.Json{"message": "comment deleted"})
 }
 
-var shareChannels = map[string]bool{"message": true, "facebook": true, "x": true, "threads": true, "linkedin": true, "instagram": true, "telegram": true, "tiktok": true, "whatsapp": true, "pinterest": true, "copy": true}
+var shareChannels = map[string]bool{"message": true, "facebook": true, "x": true, "threads": true, "linkedin": true, "instagram": true, "telegram": true, "tiktok": true, "whatsapp": true, "pinterest": true, "copy": true, "embed": true}
 
+var shareMessages = repositories.NewMessageRepository()
+
+// postsWithCounters reloads already-authorized posts with like/comment/view
+// counters and the viewer's liked/saved flags.
+var postsWithCounters = repositories.NewPostRepository()
+
+// Share records a share and returns the public link plus a share-intent URL
+// for the chosen platform. Channel "message" sends the link as a direct
+// message to recipient_id.
 func (h *SocialController) Share(c goravelhttp.Context) goravelhttp.Response {
 	userID, err := authenticatedUserID(c)
 	if err != nil {
@@ -601,10 +488,12 @@ func (h *SocialController) Share(c goravelhttp.Context) goravelhttp.Response {
 		return c.Response().Json(400, goravelhttp.Json{"error": "invalid post"})
 	}
 	var input struct {
-		Channel string `json:"channel"`
+		Channel     string `json:"channel"`
+		RecipientID int64  `json:"recipient_id"`
+		Message     string `json:"message"`
 	}
 	_ = c.Request().Bind(&input)
-	input.Channel = strings.ToLower(input.Channel)
+	input.Channel = strings.ToLower(strings.TrimSpace(input.Channel))
 	if !shareChannels[input.Channel] {
 		return c.Response().Json(400, goravelhttp.Json{"error": "unsupported share channel"})
 	}
@@ -612,9 +501,35 @@ func (h *SocialController) Share(c goravelhttp.Context) goravelhttp.Response {
 	if db.DB.First(&post, postID).Error != nil || !canViewPost(userID, &post) {
 		return c.Response().Json(404, goravelhttp.Json{"error": "post not found"})
 	}
+	title := ""
+	if post.Title != nil {
+		title = *post.Title
+	}
+	links := shareLinks(postID, title)
+	if input.Channel == "message" {
+		if input.RecipientID <= 0 || input.RecipientID == userID {
+			return c.Response().Json(400, goravelhttp.Json{"error": "recipient_id is required"})
+		}
+		var recipient models.User
+		if db.DB.First(&recipient, input.RecipientID).Error != nil || recipient.AccountStatus != "active" {
+			return c.Response().Json(404, goravelhttp.Json{"error": "recipient not found"})
+		}
+		// The recipient must be allowed to see the post, and must not be blocked.
+		if blockedBetween(userID, input.RecipientID) || !canViewPost(input.RecipientID, &post) {
+			return c.Response().Json(403, goravelhttp.Json{"error": "this post cannot be shared with that user"})
+		}
+		note := strings.TrimSpace(input.Message)
+		if len(note) > 1000 {
+			return c.Response().Json(400, goravelhttp.Json{"error": "message is too long"})
+		}
+		content := strings.TrimSpace(note + " " + publicPostURL(postID))
+		if _, err := shareMessages.SendMessage(userID, input.RecipientID, content); err != nil {
+			return c.Response().Json(500, goravelhttp.Json{"error": "failed to send message"})
+		}
+	}
 	db.DB.Create(&models.PostShare{PostID: postID, UserID: userID, Channel: input.Channel})
 	notifyUser(post.UserID, userID, "share", "post", postID, "Someone shared your post")
-	return c.Response().Json(200, goravelhttp.Json{"share_url": fmt.Sprintf("/post/%d", postID), "channel": input.Channel})
+	return c.Response().Json(200, goravelhttp.Json{"share_url": publicPostURL(postID), "intent_url": links[input.Channel], "links": links, "channel": input.Channel})
 }
 
 func (h *SocialController) Report(c goravelhttp.Context) goravelhttp.Response {
@@ -632,6 +547,13 @@ func (h *SocialController) Report(c goravelhttp.Context) goravelhttp.Response {
 	}
 	if c.Request().Bind(&input) != nil || strings.TrimSpace(input.Reason) == "" || len(input.Reason) > 100 || len(input.Details) > 5000 {
 		return c.Response().Json(400, goravelhttp.Json{"error": "valid reason is required"})
+	}
+	var post models.Post
+	if db.DB.First(&post, postID).Error != nil || !canViewPost(userID, &post) {
+		return c.Response().Json(404, goravelhttp.Json{"error": "post not found"})
+	}
+	if post.UserID == userID {
+		return c.Response().Json(400, goravelhttp.Json{"error": "you cannot report your own post"})
 	}
 	report := models.PostReport{PostID: postID, ReporterID: userID, Reason: strings.TrimSpace(input.Reason), Details: strings.TrimSpace(input.Details), Status: "pending"}
 	if err := db.DB.Create(&report).Error; err != nil {
@@ -766,12 +688,15 @@ func (h *SocialController) Search(c goravelhttp.Context) goravelhttp.Response {
 	blockedAuthors := blockedBetweenBatch(userID, postAuthorIDs)
 	followingAuthors := acceptedFollowingBatch(userID, postAuthorIDs)
 
-	visible := make([]models.Post, 0, len(posts))
+	visibleIDs := make([]int64, 0, len(posts))
 	for i := range posts {
 		if canViewPreloadedPost(userID, &posts[i], blockedAuthors, followingAuthors) {
-			posts[i].User.HidePrivateData()
-			visible = append(visible, posts[i])
+			visibleIDs = append(visibleIDs, posts[i].ID)
 		}
+	}
+	visible, err := postsWithCounters.GetManyForViewer(userID, visibleIDs)
+	if err != nil {
+		return c.Response().Json(500, goravelhttp.Json{"error": "failed to search posts"})
 	}
 
 	accessibleJobs := jobs[:0]
@@ -782,47 +707,21 @@ func (h *SocialController) Search(c goravelhttp.Context) goravelhttp.Response {
 		}
 	}
 
-	visibleProducts := make([]models.Post, 0, len(products))
+	productIDs := make([]int64, 0, len(products))
 	for i := range products {
 		if canViewPreloadedPost(userID, &products[i], blockedAuthors, followingAuthors) {
-			products[i].User.HidePrivateData()
-			visibleProducts = append(visibleProducts, products[i])
+			productIDs = append(productIDs, products[i].ID)
 		}
+	}
+	visibleProducts, err := postsWithCounters.GetManyForViewer(userID, productIDs)
+	if err != nil {
+		return c.Response().Json(500, goravelhttp.Json{"error": "failed to search products"})
 	}
 
 	return c.Response().Json(200, goravelhttp.Json{
 		"users": publicUsers(accessibleUsers), "posts": visible,
 		"jobs": accessibleJobs, "products": visibleProducts,
 	})
-}
-
-func (h *SocialController) EmbedPost(c goravelhttp.Context) goravelhttp.Response {
-	postID, err := routeID(c, "id")
-	if err != nil {
-		return c.Response().String(400, "Invalid post")
-	}
-	var post models.Post
-	if db.DB.Preload("User").Preload("Media").Preload("Link").First(&post, postID).Error != nil || !canViewPost(0, &post) {
-		return c.Response().String(404, "Post not found")
-	}
-	title, content := "Post", ""
-	if post.Title != nil {
-		title = *post.Title
-	}
-	if post.Content != nil {
-		content = *post.Content
-	}
-	page := fmt.Sprintf(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><style>body{font:14px system-ui;margin:0}.post{border:1px solid #ddd;border-radius:12px;padding:16px;max-width:640px}h3{margin:8px 0}p{white-space:pre-wrap}img,video{max-width:100%%}</style></head><body><article class="post"><strong>%s</strong><h3>%s</h3><p>%s</p></article></body></html>`, html.EscapeString(post.User.Name), html.EscapeString(title), html.EscapeString(content))
-	return c.Response().Data(200, "text/html; charset=utf-8", []byte(page))
-}
-
-func (h *SocialController) EmbedCode(c goravelhttp.Context) goravelhttp.Response {
-	postID, err := routeID(c, "id")
-	if err != nil {
-		return c.Response().Json(400, goravelhttp.Json{"error": "invalid post"})
-	}
-	code := fmt.Sprintf(`<iframe src="%s/embed/posts/%d" width="100%%" height="420" loading="lazy" sandbox="allow-same-origin"></iframe>`, strings.TrimRight(c.Request().Header("Origin", ""), "/"), postID)
-	return c.Response().Json(200, goravelhttp.Json{"embed_code": code})
 }
 
 type adminReportResponse struct {
@@ -893,10 +792,25 @@ func (h *SocialController) AdminBlockUser(c goravelhttp.Context) goravelhttp.Res
 	if err != nil {
 		return c.Response().Json(400, goravelhttp.Json{"error": "invalid user"})
 	}
-	result := db.DB.Model(&models.User{}).Where("id = ? AND role <> 'admin'", id).Update("account_status", "blocked")
-	if result.RowsAffected == 0 {
+	var blocked int64
+	err = db.DB.Transaction(func(tx *gorm.DB) error {
+		result := tx.Model(&models.User{}).Where("id = ? AND role <> 'admin'", id).Update("account_status", "blocked")
+		if result.Error != nil {
+			return result.Error
+		}
+		if blocked = result.RowsAffected; blocked == 0 {
+			return nil
+		}
+		// Revoke every token so the block takes effect immediately.
+		return session.RevokeAll(tx, id)
+	})
+	if err != nil {
+		return c.Response().Json(500, goravelhttp.Json{"error": "failed to block user"})
+	}
+	if blocked == 0 {
 		return c.Response().Json(404, goravelhttp.Json{"error": "user not found"})
 	}
+	session.Invalidate(id)
 	return c.Response().Json(200, goravelhttp.Json{"message": "user blocked"})
 }
 
@@ -909,5 +823,6 @@ func (h *SocialController) AdminUnblockUser(c goravelhttp.Context) goravelhttp.R
 	if result.RowsAffected == 0 {
 		return c.Response().Json(404, goravelhttp.Json{"error": "blocked user not found"})
 	}
+	session.Invalidate(id)
 	return c.Response().Json(200, goravelhttp.Json{"message": "user unblocked"})
 }

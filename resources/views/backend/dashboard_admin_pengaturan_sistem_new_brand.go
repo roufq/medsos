@@ -1,12 +1,14 @@
 package backend
 
 import (
+	"goravel/app/models"
+
 	"goravel/resources/views/backend/dom"
 	"io"
 )
 
-func RenderDashboardAdminPengaturanSistemNewBrand(w io.Writer) error {
-	page := LayoutAdmin("Connect Modern - Admin Dashboard", "Settings",
+func RenderDashboardAdminPengaturanSistemNewBrand(w io.Writer, user *models.User) error {
+	page := LayoutAdmin("Connect Modern - Admin Dashboard", "Settings", user,
 		dom.Div(
 						[]dom.Attr{
 							dom.Class("max-w-[1100px] mx-auto"),

@@ -19,7 +19,8 @@ import (
 	"goravel/app/models"
 	"goravel/pkg/db"
 	"goravel/pkg/hash"
-	appjwt "goravel/pkg/jwt"
+	"goravel/app/services"
+	"goravel/pkg/session"
 
 	goravelhttp "github.com/goravel/framework/contracts/http"
 )
@@ -139,13 +140,34 @@ func (h *OAuthController) Callback(c goravelhttp.Context) goravelhttp.Response {
 	if err != nil {
 		return c.Response().Json(500, goravelhttp.Json{"error": "failed to create OAuth account"})
 	}
-	access, err := appjwt.GenerateAccessToken(user)
+	// Signing in with the provider within the 30-day window reactivates a
+	// deleted account (OAuth-only users have no password for /reactivate).
+	if user.AccountStatus == "pending_deletion" && user.DeletionRequestedAt != nil && user.DeletionRequestedAt.After(time.Now().Add(-30*24*time.Hour)) {
+		if db.DB.Model(user).Updates(map[string]any{"account_status": "active", "deletion_requested_at": nil}).Error == nil {
+			user.AccountStatus, user.DeletionRequestedAt = "active", nil
+			session.Invalidate(user.ID)
+		}
+	}
+	// OAuth must not bypass the blocked check of password login.
+	if user.AccountStatus != "active" {
+		return c.Response().Redirect(http.StatusFound, frontendURL("/login?oauth_error=account_inactive"))
+	}
+	tokens, err := services.IssueTokens(user)
 	if err != nil {
 		return c.Response().Json(500, goravelhttp.Json{"error": "failed to create session"})
 	}
-	refresh, _ := appjwt.GenerateRefreshToken(user)
-	setAuthCookies(c, access, refresh)
-	return c.Response().Json(200, goravelhttp.Json{"access_token": access, "refresh_token": refresh, "user": user})
+	setAuthCookies(c, tokens.AccessToken, tokens.RefreshToken)
+	// The browser arrives here through a top-level redirect from the provider,
+	// so send it back into the SPA (the session lives in httpOnly cookies).
+	return c.Response().Redirect(http.StatusFound, frontendURL("/"))
+}
+
+func frontendURL(path string) string {
+	base := strings.TrimRight(os.Getenv("FRONTEND_URL"), "/")
+	if base == "" {
+		base = strings.TrimRight(os.Getenv("APP_URL"), "/")
+	}
+	return base + path
 }
 
 func (h *OAuthController) exchangeCode(p oauthProvider, code, verifier string) (string, string, error) {
@@ -304,7 +326,7 @@ func upsertOAuthUser(provider string, identity oauthIdentityPayload) (*models.Us
 			email = provider + "-" + identity.Subject + "@oauth.invalid"
 		}
 		avatar := identity.Avatar
-		user = models.User{Name: name, Username: &username, Email: email, Password: encoded, Role: models.RoleUser, AccountType: "personal", AccountStatus: "active", ProfileLayout: "grid"}
+		user = models.User{Name: name, Username: &username, Email: email, Password: encoded, Role: models.RoleUser, AccountType: "personal", AccountStatus: "active", ProfileLayout: "grid", NeedsPassword: true}
 		if avatar != "" {
 			user.AvatarURL = &avatar
 		}

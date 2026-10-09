@@ -10,8 +10,9 @@ type RegisterRequest struct {
 	Username    string `form:"username" json:"username"`
 	Email       string `form:"email" json:"email" binding:"required,email,max=100"`
 	Phone       string `form:"phone" json:"phone"`
+	PhoneCountry string `form:"phone_country" json:"phone_country"`
 	AccountType string `form:"account_type" json:"account_type"`
-	Password    string `form:"password" json:"password" binding:"required,min=8,max=255"`
+	Password    string `form:"password" json:"password" binding:"required,min=8,max=72"`
 }
 
 // LoginRequest defines the credentials payload for log in

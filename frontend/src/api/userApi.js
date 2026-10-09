@@ -10,7 +10,7 @@ export const userApi = {
     return res.data;
   },
 	updateSettings: async (settings) => (await api.put('/users/settings', settings)).data,
-	deleteAccount: async (password) => (await api.post('/users/account/delete', { password })).data,
+	deleteAccount: async (password, confirm = '') => (await api.post('/users/account/delete', { password, confirm })).data,
 	blockUser: async (id) => (await api.post(`/users/${id}/block`)).data,
 	unblockUser: async (id) => (await api.delete(`/users/${id}/block`)).data,
 	getBlockedUsers: async () => (await api.get('/users/blocked')).data,

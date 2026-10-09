@@ -3,6 +3,8 @@ package controllers
 import (
 	"bytes"
 	"net/http"
+	"os"
+	"strings"
 
 	"goravel/app/dto"
 	"goravel/app/models"
@@ -40,11 +42,24 @@ func NewAuthController(authService services.AuthService) *AuthController {
 // middleware.AuthMiddleware can require the two to match for cookie-backed
 // requests. See pkg/csrf.
 func setAuthCookies(c goravelhttp.Context, accessToken, refreshToken string) {
-	c.Response().Cookie(goravelhttp.Cookie{Name: "token", Value: accessToken, MaxAge: 900, Path: "/", HttpOnly: true})
-	c.Response().Cookie(goravelhttp.Cookie{Name: "refresh_token", Value: refreshToken, MaxAge: 604800, Path: "/", HttpOnly: true})
+	c.Response().Cookie(authCookie("token", accessToken, int(jwt.AccessTTL.Seconds()), true))
+	c.Response().Cookie(authCookie("refresh_token", refreshToken, int(jwt.RefreshTTL.Seconds()), true))
 	if csrfToken, err := csrf.NewToken(); err == nil {
-		c.Response().Cookie(goravelhttp.Cookie{Name: csrf.CookieName, Value: csrfToken, MaxAge: 604800, Path: "/", HttpOnly: false})
+		c.Response().Cookie(authCookie(csrf.CookieName, csrfToken, int(jwt.RefreshTTL.Seconds()), false))
 	}
+}
+
+func clearAuthCookies(c goravelhttp.Context) {
+	c.Response().Cookie(authCookie("token", "", -1, true))
+	c.Response().Cookie(authCookie("refresh_token", "", -1, true))
+	c.Response().Cookie(authCookie(csrf.CookieName, "", -1, false))
+}
+
+// authCookie applies SameSite=Lax everywhere and Secure whenever the app is
+// served over HTTPS, so session cookies never travel over plain HTTP.
+func authCookie(name, value string, maxAge int, httpOnly bool) goravelhttp.Cookie {
+	secure := strings.HasPrefix(strings.ToLower(os.Getenv("APP_URL")), "https://")
+	return goravelhttp.Cookie{Name: name, Value: value, MaxAge: maxAge, Path: "/", HttpOnly: httpOnly, Secure: secure, SameSite: "Lax"}
 }
 
 func (h *AuthController) RegisterAPI(c goravelhttp.Context) goravelhttp.Response {
@@ -100,10 +115,16 @@ func (h *AuthController) RefreshAPI(c goravelhttp.Context) goravelhttp.Response 
 }
 
 func (h *AuthController) LogoutAPI(c goravelhttp.Context) goravelhttp.Response {
-	// Clear the cookies to synchronize state if they were used
-	c.Response().Cookie(goravelhttp.Cookie{Name: "token", Value: "", MaxAge: -1, Path: "/", HttpOnly: true})
-	c.Response().Cookie(goravelhttp.Cookie{Name: "refresh_token", Value: "", MaxAge: -1, Path: "/", HttpOnly: true})
-	c.Response().Cookie(goravelhttp.Cookie{Name: csrf.CookieName, Value: "", MaxAge: -1, Path: "/", HttpOnly: false})
+	// Revoke the refresh token server-side, not just in the browser; API
+	// clients may send it in the body instead of the cookie.
+	refreshToken := c.Request().Cookie("refresh_token")
+	if refreshToken == "" {
+		var req dto.RefreshRequest
+		_ = c.Request().Bind(&req)
+		refreshToken = req.RefreshToken
+	}
+	h.authService.Logout(refreshToken)
+	clearAuthCookies(c)
 	return c.Response().Json(http.StatusOK, goravelhttp.Json{"message": "Logged out successfully"})
 }
 
@@ -129,8 +150,7 @@ func (h *AuthController) checkActiveWebSession(c goravelhttp.Context) (bool, gor
 	if refTokenStr != "" {
 		res, refreshErr := h.authService.Refresh(&dto.RefreshRequest{RefreshToken: refTokenStr})
 		if refreshErr == nil {
-			c.Response().Cookie(goravelhttp.Cookie{Name: "token", Value: res.AccessToken, MaxAge: 900, Path: "/", HttpOnly: true})
-			c.Response().Cookie(goravelhttp.Cookie{Name: "refresh_token", Value: res.RefreshToken, MaxAge: 604800, Path: "/", HttpOnly: true})
+			setAuthCookies(c, res.AccessToken, res.RefreshToken)
 
 			claims, _ := jwt.ValidateAccessToken(res.AccessToken)
 			if claims.Role == models.RoleAdmin {
@@ -181,8 +201,7 @@ func (h *AuthController) HandleLoginWeb(c goravelhttp.Context) goravelhttp.Respo
 		return c.Response().Data(http.StatusOK, "text/html; charset=utf-8", buf.Bytes())
 	}
 
-	c.Response().Cookie(goravelhttp.Cookie{Name: "token", Value: res.AccessToken, MaxAge: 900, Path: "/", HttpOnly: true})
-	c.Response().Cookie(goravelhttp.Cookie{Name: "refresh_token", Value: res.RefreshToken, MaxAge: 604800, Path: "/", HttpOnly: true})
+	setAuthCookies(c, res.AccessToken, res.RefreshToken)
 
 	claims, _ := jwt.ValidateAccessToken(res.AccessToken)
 	if claims.Role == models.RoleAdmin {
@@ -240,14 +259,13 @@ func (h *AuthController) HandleRegisterWeb(c goravelhttp.Context) goravelhttp.Re
 		return c.Response().Data(http.StatusOK, "text/html; charset=utf-8", buf.Bytes())
 	}
 
-	c.Response().Cookie(goravelhttp.Cookie{Name: "token", Value: res.AccessToken, MaxAge: 900, Path: "/", HttpOnly: true})
-	c.Response().Cookie(goravelhttp.Cookie{Name: "refresh_token", Value: res.RefreshToken, MaxAge: 604800, Path: "/", HttpOnly: true})
+	setAuthCookies(c, res.AccessToken, res.RefreshToken)
 
 	return c.Response().Redirect(http.StatusSeeOther, "/web/beranda")
 }
 
 func (h *AuthController) HandleLogoutWeb(c goravelhttp.Context) goravelhttp.Response {
-	c.Response().Cookie(goravelhttp.Cookie{Name: "token", Value: "", MaxAge: -1, Path: "/", HttpOnly: true})
-	c.Response().Cookie(goravelhttp.Cookie{Name: "refresh_token", Value: "", MaxAge: -1, Path: "/", HttpOnly: true})
+	h.authService.Logout(c.Request().Cookie("refresh_token"))
+	clearAuthCookies(c)
 	return c.Response().Redirect(http.StatusSeeOther, "/web/login")
 }

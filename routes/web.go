@@ -31,6 +31,12 @@ func Web() {
 
 	facades.Route().Static("uploads", "./uploads")
 
+	// Public, unauthenticated post pages: share target (OpenGraph) and embed.
+	socialController := controllers.NewSocialController()
+	public := facades.Route().Middleware(middleware.ConcurrentLimit(300), middleware.RateLimit("public-post", 240, time.Minute))
+	public.Get("p/{id}", socialController.PublicPostPage)
+	public.Get("embed/posts/{id}", socialController.EmbedPost)
+
 	// Serve Frontend Static Assets
 	facades.Route().Static("frontend/dist", "./frontend/dist")
 

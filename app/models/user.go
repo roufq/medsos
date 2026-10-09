@@ -31,6 +31,8 @@ type User struct {
 	Country             *string    `gorm:"type:varchar(100)" json:"country"`
 	Website             *string    `gorm:"type:varchar(500)" json:"website"`
 	BirthDate           *time.Time `gorm:"type:date" json:"birth_date,omitempty"`
+	BirthPlace          *string    `gorm:"type:varchar(100)" json:"birth_place,omitempty"`
+	PhoneCountry        *string    `gorm:"type:char(2)" json:"phone_country,omitempty"`
 	Gender              *string    `gorm:"type:varchar(20)" json:"gender,omitempty"`
 	Interests           []string   `gorm:"serializer:json;type:text" json:"interests,omitempty"`
 	ShopCategory        *string    `gorm:"type:varchar(100)" json:"shop_category,omitempty"`
@@ -39,12 +41,24 @@ type User struct {
 	EmailVerifiedAt     *time.Time `json:"email_verified_at,omitempty"`
 	PhoneVerifiedAt     *time.Time `json:"phone_verified_at,omitempty"`
 	PasswordChangedAt   *time.Time `json:"password_changed_at,omitempty"`
+	// NeedsPassword marks accounts created through OAuth that never chose a
+	// local password; they may set one without supplying a current password.
+	NeedsPassword bool `gorm:"not null;default:false" json:"needs_password"`
+	// TokenVersion is embedded in every issued JWT. Bumping it revokes all of
+	// the user's outstanding access and refresh tokens at once.
+	TokenVersion int64 `gorm:"not null;default:0" json:"-"`
 	DeletionRequestedAt *time.Time `gorm:"index" json:"deletion_requested_at,omitempty"`
 	CreatedAt           time.Time  `gorm:"autoCreateTime" json:"created_at"`
 	UpdatedAt           time.Time  `gorm:"autoUpdateTime" json:"updated_at"`
 	FollowersCount      int64      `gorm:"column:followers_count;->" json:"followers_count"`
 	FollowingCount      int64      `gorm:"column:following_count;->" json:"following_count"`
 	IsFollowedByMe      bool       `gorm:"column:is_followed_by_me;->" json:"is_followed_by_me"`
+	// FollowStatus is the viewer's follow state: "", "pending", or "accepted".
+	FollowStatus string `gorm:"-" json:"follow_status,omitempty"`
+	// ProfileLocked is set when a private profile is shown to a non-follower:
+	// only the public header is returned.
+	ProfileLocked bool `gorm:"-" json:"profile_locked,omitempty"`
+	IsBlockedByMe bool `gorm:"-" json:"is_blocked_by_me,omitempty"`
 
 	Likes     []PostLike    `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"likes,omitempty"`
 	Comments  []PostComment `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"comments,omitempty"`
@@ -58,6 +72,9 @@ func (u *User) HidePrivateData() {
 	u.Email = ""
 	u.Phone = nil
 	u.BirthDate = nil
+	u.BirthPlace = nil
+	u.PhoneCountry = nil
+	u.NeedsPassword = false
 	u.Gender = nil
 	u.EmailVerifiedAt = nil
 	u.PhoneVerifiedAt = nil

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"goravel/app/dto"
@@ -11,6 +12,7 @@ import (
 	"goravel/app/services"
 	"goravel/pkg/db"
 	"goravel/pkg/jwt"
+	"goravel/pkg/session"
 	"goravel/resources/views/backend"
 
 	goravelhttp "github.com/goravel/framework/contracts/http"
@@ -42,19 +44,20 @@ func (h *UserController) getWebUser(c goravelhttp.Context) (*models.User, gorave
 
 		res, refreshErr := h.authService.Refresh(&dto.RefreshRequest{RefreshToken: refTokenStr})
 		if refreshErr != nil {
-			// Clear invalid cookies
-			c.Response().Cookie(goravelhttp.Cookie{Name: "token", Value: "", MaxAge: -1, Path: "/", HttpOnly: true})
-			c.Response().Cookie(goravelhttp.Cookie{Name: "refresh_token", Value: "", MaxAge: -1, Path: "/", HttpOnly: true})
+			clearAuthCookies(c)
 			return nil, c.Response().Redirect(http.StatusSeeOther, "/web/login")
 		}
 
-		c.Response().Cookie(goravelhttp.Cookie{Name: "token", Value: res.AccessToken, MaxAge: 900, Path: "/", HttpOnly: true})
-		c.Response().Cookie(goravelhttp.Cookie{Name: "refresh_token", Value: res.RefreshToken, MaxAge: 604800, Path: "/", HttpOnly: true})
+		setAuthCookies(c, res.AccessToken, res.RefreshToken)
 		tokenStr = res.AccessToken
 	}
 
 	claims, err := jwt.ValidateAccessToken(tokenStr)
 	if err != nil {
+		return nil, c.Response().Redirect(http.StatusSeeOther, "/web/login")
+	}
+	if _, err := session.Validate(claims); err != nil {
+		clearAuthCookies(c)
 		return nil, c.Response().Redirect(http.StatusSeeOther, "/web/login")
 	}
 
@@ -81,7 +84,12 @@ func (h *UserController) GetProfileAPI(c goravelhttp.Context) goravelhttp.Respon
 	if idParam != "" && idParam != "me" {
 		parsed, err := strconv.ParseInt(idParam, 10, 64)
 		if err != nil {
-			return c.Response().Json(http.StatusBadRequest, goravelhttp.Json{"error": "Invalid user ID"})
+			// Not numeric: resolve @username links (mentions) to an ID.
+			var found models.User
+			if db.DB.Select("id").Where("LOWER(username) = LOWER(?)", strings.TrimPrefix(idParam, "@")).First(&found).Error != nil {
+				return c.Response().Json(http.StatusNotFound, goravelhttp.Json{"error": "User not found"})
+			}
+			parsed = found.ID
 		}
 		targetID = parsed
 	} else {
@@ -97,17 +105,32 @@ func (h *UserController) GetProfileAPI(c goravelhttp.Context) goravelhttp.Respon
 	if err != nil {
 		return c.Response().Json(http.StatusNotFound, goravelhttp.Json{"error": "User not found"})
 	}
-	if user.AccountStatus != "active" || blockedBetween(viewerID, targetID) {
+	if user.AccountStatus != "active" {
 		return c.Response().Json(http.StatusNotFound, goravelhttp.Json{"error": "User not found"})
 	}
-	if user.IsPrivate && viewerID != targetID && !acceptedFollower(viewerID, targetID) {
-		return c.Response().Json(http.StatusForbidden, goravelhttp.Json{"error": "Profile is private"})
+	if viewerID != targetID {
+		// Someone the viewer blocked stays visible (so they can unblock);
+		// someone who blocked the viewer does not.
+		var blockedByMe, blockedMe int64
+		db.DB.Model(&models.UserBlock{}).Where("blocker_id = ? AND blocked_id = ?", viewerID, targetID).Count(&blockedByMe)
+		db.DB.Model(&models.UserBlock{}).Where("blocker_id = ? AND blocked_id = ?", targetID, viewerID).Count(&blockedMe)
+		if blockedMe > 0 {
+			return c.Response().Json(http.StatusNotFound, goravelhttp.Json{"error": "User not found"})
+		}
+		user.IsBlockedByMe = blockedByMe > 0
+		var follow models.Follow
+		if db.DB.Where("follower_id = ? AND followed_id = ?", viewerID, targetID).First(&follow).Error == nil {
+			user.FollowStatus = follow.Status
+		}
 	}
 	db.DB.Model(&models.Follow{}).Where("followed_id = ? AND status = 'accepted'", targetID).Count(&user.FollowersCount)
 	db.DB.Model(&models.Follow{}).Where("follower_id = ? AND status = 'accepted'", targetID).Count(&user.FollowingCount)
-	user.IsFollowedByMe = viewerID != targetID && acceptedFollower(viewerID, targetID)
+	user.IsFollowedByMe = user.FollowStatus == "accepted"
 	if viewerID != targetID {
 		user.HidePrivateData()
+		if user.IsPrivate && !user.IsFollowedByMe {
+			user.ProfileLocked = true
+		}
 	}
 
 	return c.Response().Json(http.StatusOK, user)
@@ -302,7 +325,15 @@ func (h *UserController) ShowAdminDashboardWeb(c goravelhttp.Context) goravelhtt
 	}
 
 	var buf bytes.Buffer
-	_ = backend.RenderDashboardAdminIkhtisarV3NewBrand(&buf)
+	
+	var stats backend.DashboardStats
+	db.DB.Model(&models.User{}).Count(&stats.TotalUsers)
+	db.DB.Model(&models.Post{}).Where("created_at > ?", time.Now().Add(-30*24*time.Hour)).Count(&stats.NewPosts)
+	db.DB.Model(&models.PostReport{}).Where("status = ?", "pending").Count(&stats.ActiveReports)
+	db.DB.Model(&models.ShopProduct{}).Count(&stats.TotalShops)
+	
+	_ = backend.RenderDashboardAdminIkhtisarV3NewBrand(&buf, user, stats)
+
 	return c.Response().Data(http.StatusOK, "text/html; charset=utf-8", buf.Bytes())
 }
 
@@ -318,7 +349,7 @@ func (h *UserController) ShowAdminUsersWeb(c goravelhttp.Context) goravelhttp.Re
 
 	allUsers, _ := h.userService.ListAll()
 	var buf bytes.Buffer
-	_ = backend.RenderDashboardAdminManajemenPenggunaV2(&buf, allUsers)
+	_ = backend.RenderDashboardAdminManajemenPenggunaV2(&buf, allUsers, user)
 	return c.Response().Data(http.StatusOK, "text/html; charset=utf-8", buf.Bytes())
 }
 
@@ -332,9 +363,9 @@ func (h *UserController) ShowAdminPostsWeb(c goravelhttp.Context) goravelhttp.Re
 		return c.Response().String(http.StatusForbidden, "Forbidden: Only administrators can access this area.")
 	}
 
-	posts, _ := h.postService.GetFeed(user.ID, 100, 0, 0)
+	posts, _ := h.postService.GetFeed(user.ID, 100, 0, 0, false)
 	var buf bytes.Buffer
-	_ = backend.RenderDashboardAdminPosts(&buf, posts)
+	_ = backend.RenderDashboardAdminPosts(&buf, posts, user)
 	return c.Response().Data(http.StatusOK, "text/html; charset=utf-8", buf.Bytes())
 }
 
@@ -372,7 +403,7 @@ func (h *UserController) ShowAdminModerationWeb(c goravelhttp.Context) goravelht
 	}
 
 	var buf bytes.Buffer
-	_ = backend.RenderDashboardAdminModerasiKontenNewBrand(&buf)
+	_ = backend.RenderDashboardAdminModerasiKontenNewBrand(&buf, user)
 	return c.Response().Data(http.StatusOK, "text/html; charset=utf-8", buf.Bytes())
 }
 
@@ -387,6 +418,6 @@ func (h *UserController) ShowAdminSettingsWeb(c goravelhttp.Context) goravelhttp
 	}
 
 	var buf bytes.Buffer
-	_ = backend.RenderDashboardAdminPengaturanSistemNewBrand(&buf)
+	_ = backend.RenderDashboardAdminPengaturanSistemNewBrand(&buf, user)
 	return c.Response().Data(http.StatusOK, "text/html; charset=utf-8", buf.Bytes())
 }

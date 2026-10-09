@@ -26,7 +26,10 @@ const AdminDashboardPage = () => {
     unreadCount,
     loadNotifications,
     openNotification: handleNotification,
-  } = useNotifications((actorId) => navigate(`/profile/${actorId}`));
+  } = useNotifications((notification) => {
+    if (notification.entity_type === "post" && notification.entity_id) navigate(`/post/${notification.entity_id}`);
+    else if (notification.actor?.id) navigate(`/profile/${notification.actor.id}`);
+  });
 
   const fetchAdminData = async () => {
     try {

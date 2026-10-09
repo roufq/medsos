@@ -1,8 +1,11 @@
 import api from './axios';
 
 export const postApi = {
-  getFeed: async (limit = 10, offset = 0, userId = null, beforeId = null) => {
+  getFeed: async (limit = 10, offset = 0, userId = null, beforeId = null, kind = '') => {
     let url = `/posts?limit=${limit}&offset=${offset}`;
+    if (kind) {
+      url += `&kind=${encodeURIComponent(kind)}`;
+    }
     if (userId) {
       url += `&user_id=${userId}`;
     }
@@ -46,7 +49,8 @@ export const postApi = {
 	deleteComment: async (id) => (await api.delete(`/comments/${id}`)).data,
 	toggleSave: async (id) => (await api.post(`/posts/${id}/save`)).data,
 	repost: async (id, commentary = '') => (await api.post(`/posts/${id}/repost`, { commentary })).data,
-	share: async (id, channel = 'copy') => (await api.post(`/posts/${id}/share`, { channel })).data,
+	getPost: async (id) => (await api.get(`/posts/${id}`)).data,
+	share: async (id, channel = 'copy', extra = {}) => (await api.post(`/posts/${id}/share`, { channel, ...extra })).data,
 	report: async (id, reason, details = '') => (await api.post(`/posts/${id}/report`, { reason, details })).data,
 	recordView: async (id) => (await api.post(`/posts/${id}/view`)).data,
 	getEmbedCode: async (id) => (await api.get(`/posts/${id}/embed-code`)).data,

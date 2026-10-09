@@ -1,12 +1,27 @@
 package backend
 
 import (
+	"goravel/app/models"
+	
+	"golang.org/x/text/language"
+	"golang.org/x/text/message"
+
 	"goravel/resources/views/backend/dom"
 	"io"
 )
 
-func RenderDashboardAdminIkhtisarV3NewBrand(w io.Writer) error {
-	page := LayoutAdmin("Connect Modern - Admin Dashboard", "Overview",
+
+type DashboardStats struct {
+	TotalUsers    int64
+	NewPosts      int64
+	ActiveReports int64
+	TotalShops    int64
+}
+
+func RenderDashboardAdminIkhtisarV3NewBrand(w io.Writer, user *models.User, stats DashboardStats) error {
+	p := message.NewPrinter(language.English)
+
+	page := LayoutAdmin("Connect Modern - Admin Dashboard", "Overview", user,
 		dom.Div(
 						[]dom.Attr{
 							dom.Class("max-w-max-width-container mx-auto"),
@@ -106,7 +121,7 @@ func RenderDashboardAdminIkhtisarV3NewBrand(w io.Writer) error {
 									[]dom.Attr{
 										dom.Class("font-display-lg text-display-lg text-text-primary"),
 									},
-									dom.Text("42,892"),
+									dom.Text(p.Sprintf("%d", stats.TotalUsers)),
 								),
 							),
 							dom.Div(
@@ -151,7 +166,7 @@ func RenderDashboardAdminIkhtisarV3NewBrand(w io.Writer) error {
 									[]dom.Attr{
 										dom.Class("font-display-lg text-display-lg text-text-primary"),
 									},
-									dom.Text("15,402"),
+									dom.Text(p.Sprintf("%d", stats.NewPosts)),
 								),
 							),
 							dom.Div(
@@ -196,7 +211,7 @@ func RenderDashboardAdminIkhtisarV3NewBrand(w io.Writer) error {
 									[]dom.Attr{
 										dom.Class("font-display-lg text-display-lg text-text-primary"),
 									},
-									dom.Text("128"),
+									dom.Text(p.Sprintf("%d", stats.ActiveReports)),
 								),
 							),
 							dom.Div(
@@ -241,7 +256,7 @@ func RenderDashboardAdminIkhtisarV3NewBrand(w io.Writer) error {
 									[]dom.Attr{
 										dom.Class("font-display-lg text-display-lg text-text-primary"),
 									},
-									dom.Text("$84,200"),
+									dom.Text(p.Sprintf("%d", stats.TotalShops)),
 								),
 							),
 						),

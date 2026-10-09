@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Signup from '../components/modern/Signup';
@@ -9,27 +9,25 @@ const RegisterPage = () => {
   const navigate = useNavigate();
   const [error, setError] = useState('');
 
-  const handleRegister = async (email, fullName, password) => {
+  const handleRegister = async (email, fullName, password, extra) => {
+    setError('');
     try {
-      setError('');
-      await register(fullName, email, password);
+      await register(fullName, email, password, extra);
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.error || 'Registration failed. Try again.');
-      alert(err.response?.data?.error || 'Registration failed. Try again.');
+      setError(err.response?.data?.error || 'Pendaftaran gagal. Coba lagi.');
     }
   };
 
-  const handleNavigateToLogin = () => {
-    navigate('/login');
-  };
-
   return (
-    <Signup 
-      onRegister={handleRegister} 
-	  onNavigateToLogin={handleNavigateToLogin} 
-	  onOAuth={(provider) => { window.location.href = authApi.oauthStartUrl(provider); }}
-    />
+    <>
+      {error && <div className="fixed top-4 inset-x-4 z-50 mx-auto max-w-md rounded-xl bg-white p-4 shadow-lg border border-border-subtle text-sm text-error font-semibold" role="alert">{error}</div>}
+      <Signup
+        onRegister={handleRegister}
+        onNavigateToLogin={() => navigate('/login')}
+        onOAuth={(provider) => { window.location.href = authApi.oauthStartUrl(provider); }}
+      />
+    </>
   );
 };
 

@@ -97,6 +97,7 @@ func InitDB() {
 		&models.User{},
 		&models.Post{},
 		&models.PostMedia{},
+		&models.MediaUpload{},
 		&models.PostLink{},
 		&models.Portfolio{},
 		&models.PostLike{},
@@ -114,6 +115,7 @@ func InitDB() {
 		&models.VerificationCode{},
 		&models.OAuthIdentity{},
 		&models.OAuthLoginState{},
+		&models.RevokedToken{},
 		&models.JobPosting{},
 		&models.JobApplication{},
 		&models.Conversation{},
@@ -145,6 +147,7 @@ func InitDB() {
 	}
 	DB.Where("expires_at < ?", time.Now()).Delete(&models.VerificationCode{})
 	DB.Where("expires_at < ?", time.Now()).Delete(&models.OAuthLoginState{})
+	DB.Where("expires_at < ?", time.Now()).Delete(&models.RevokedToken{})
 
 	// 4. Seed Default Admin if the database is empty
 	var userCount int64

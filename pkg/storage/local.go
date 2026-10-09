@@ -1,33 +1,35 @@
 package storage
 
 import (
-	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
-	"math"
-	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/goravel/framework/contracts/filesystem"
 )
 
-const maxVideoDurationSeconds = 30 * 60
+// MaxVideoDurationSeconds is the platform-wide 30 minute limit.
+const MaxVideoDurationSeconds = 30 * 60
 
-func maxUploadSize() int64 {
-	value, err := strconv.ParseInt(strings.TrimSpace(os.Getenv("MEDIA_MAX_UPLOAD_MB")), 10, 64)
-	if err != nil || value < 1 || value > 2048 {
-		value = 1024
+func envMegabytes(name string, fallback, maximum int64) int64 {
+	value, err := strconv.ParseInt(strings.TrimSpace(os.Getenv(name)), 10, 64)
+	if err != nil || value < 1 || value > maximum {
+		value = fallback
 	}
 	return value * 1024 * 1024
 }
+
+// maxVideoSize is configurable via MEDIA_MAX_UPLOAD_MB (default 1024 MB).
+func maxVideoSize() int64 { return envMegabytes("MEDIA_MAX_UPLOAD_MB", 1024, 4096) }
+
+// maxImageSize is configurable via MEDIA_MAX_IMAGE_MB (default 10 MB).
+func maxImageSize() int64 { return envMegabytes("MEDIA_MAX_IMAGE_MB", 10, 50) }
 
 type MediaInfo struct {
 	Type            string
@@ -35,8 +37,17 @@ type MediaInfo struct {
 	extension       string
 }
 
+// StoredMedia describes a file after it was validated and saved.
+type StoredMedia struct {
+	URL             string
+	Type            string
+	DurationSeconds int
+	SizeBytes       int64
+}
+
 type StorageService interface {
 	UploadFile(filesystem.File) (string, error)
+	Upload(filesystem.File) (*StoredMedia, error)
 }
 
 type LocalStorageService struct {
@@ -47,6 +58,9 @@ type LocalStorageService struct {
 func NewLocalStorageService(directory, baseURL string) *LocalStorageService {
 	return &LocalStorageService{directory: directory, baseURL: strings.TrimRight(baseURL, "/")}
 }
+
+// BaseURL is the prefix every stored file URL starts with.
+func (s *LocalStorageService) BaseURL() string { return s.baseURL + "/uploads/" }
 
 // InspectFile checks the content instead of trusting the uploaded filename.
 func InspectFile(file filesystem.File) (*MediaInfo, error) {
@@ -62,87 +76,106 @@ func InspectFile(file filesystem.File) (*MediaInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-	limit := maxUploadSize()
-	if !stat.Mode().IsRegular() || stat.Size() == 0 || stat.Size() > limit {
-		return nil, fmt.Errorf("media must be a non-empty file of at most %d MB", limit/(1024*1024))
+	if !stat.Mode().IsRegular() || stat.Size() == 0 {
+		return nil, errors.New("media must be a non-empty file")
 	}
-	header := make([]byte, 512)
-	n, err := source.Read(header)
-	if err != nil && err != io.EOF {
+	header := make([]byte, sniffHeaderSize)
+	n, err := io.ReadFull(source, header)
+	if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
 		return nil, err
 	}
-	info := &MediaInfo{}
-	switch http.DetectContentType(header[:n]) {
-	case "image/jpeg":
-		info.Type, info.extension = "image", ".jpg"
-	case "image/png":
-		info.Type, info.extension = "image", ".png"
-	case "image/gif":
-		info.Type, info.extension = "image", ".gif"
-	case "image/webp":
-		info.Type, info.extension = "image", ".webp"
-	case "video/mp4":
-		info.Type, info.extension = "video", ".mp4"
-	case "video/webm":
-		info.Type, info.extension = "video", ".webm"
-	case "video/quicktime":
-		info.Type, info.extension = "video", ".mov"
-	case "video/x-msvideo":
-		info.Type, info.extension = "video", ".avi"
-	case "video/mpeg":
-		info.Type, info.extension = "video", ".mpeg"
-	default:
-		return nil, errors.New("supported media: JPEG, PNG, GIF, WebP, MOV, AVI, MPEG, MP4, and WebM")
+	mediaType, extension, ok := detectMedia(header[:n])
+	if !ok {
+		return nil, errors.New(SupportedFormatsMessage)
 	}
-	if info.Type == "video" {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
+	info := &MediaInfo{Type: mediaType, extension: extension}
+	limit := maxImageSize()
+	if mediaType == "video" {
+		limit = maxVideoSize()
+	}
+	if stat.Size() > limit {
+		return nil, fmt.Errorf("%s must be at most %d MB", mediaType, limit/(1024*1024))
+	}
+	if mediaType == "video" {
 		path, err := filepath.Abs(file.File())
 		if err != nil {
 			return nil, err
 		}
-		output, err := exec.CommandContext(ctx, "ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", path).Output()
+		duration, err := probeVideo(path)
 		if err != nil {
-			return nil, fmt.Errorf("cannot inspect video; ensure ffprobe is installed: %w", err)
+			return nil, err
 		}
-		duration, err := strconv.ParseFloat(strings.TrimSpace(string(output)), 64)
-		if err != nil || math.IsNaN(duration) || math.IsInf(duration, 0) || duration <= 0 || duration > maxVideoDurationSeconds {
-			return nil, errors.New("invalid video duration")
+		if duration > MaxVideoDurationSeconds {
+			return nil, errors.New("video must be at most 30 minutes long")
 		}
-		info.DurationSeconds = int(math.Ceil(duration))
+		info.DurationSeconds = duration
 	}
 	return info, nil
 }
 
 func (s *LocalStorageService) UploadFile(file filesystem.File) (string, error) {
-	info, err := InspectFile(file)
+	stored, err := s.Upload(file)
 	if err != nil {
 		return "", err
 	}
+	return stored.URL, nil
+}
+
+// Upload validates, compresses (images), and stores the file once.
+func (s *LocalStorageService) Upload(file filesystem.File) (*StoredMedia, error) {
+	info, err := InspectFile(file)
+	if err != nil {
+		return nil, err
+	}
 	if err := os.MkdirAll(s.directory, 0755); err != nil {
-		return "", err
+		return nil, err
 	}
 	var random [16]byte
 	if _, err := rand.Read(random[:]); err != nil {
-		return "", err
+		return nil, err
 	}
-	name := hex.EncodeToString(random[:]) + info.extension
-	source, err := os.Open(file.File())
-	if err != nil {
-		return "", err
+	extension := info.extension
+	var imageBytes []byte
+	if info.Type == "image" {
+		original, err := os.ReadFile(file.File())
+		if err != nil {
+			return nil, err
+		}
+		imageBytes, extension, err = compressImage(original, extension)
+		if err != nil {
+			return nil, err
+		}
 	}
-	defer source.Close()
+	name := hex.EncodeToString(random[:]) + extension
 	target := filepath.Join(s.directory, name)
 	destination, err := os.OpenFile(target, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0644)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	limit := maxUploadSize()
-	n, copyErr := io.Copy(destination, io.LimitReader(source, limit+1))
+	var written int64
+	var copyErr error
+	if imageBytes != nil {
+		var n int
+		n, copyErr = destination.Write(imageBytes)
+		written = int64(n)
+	} else {
+		source, openErr := os.Open(file.File())
+		if openErr != nil {
+			destination.Close()
+			_ = os.Remove(target)
+			return nil, openErr
+		}
+		limit := maxVideoSize()
+		written, copyErr = io.Copy(destination, io.LimitReader(source, limit+1))
+		source.Close()
+		if written > limit {
+			copyErr = errors.New("file too large")
+		}
+	}
 	closeErr := destination.Close()
-	if copyErr != nil || closeErr != nil || n > limit {
+	if copyErr != nil || closeErr != nil {
 		_ = os.Remove(target)
-		return "", errors.New("failed to save media")
+		return nil, errors.New("failed to save media")
 	}
-	return s.baseURL + "/uploads/" + name, nil
+	return &StoredMedia{URL: s.baseURL + "/uploads/" + name, Type: info.Type, DurationSeconds: info.DurationSeconds, SizeBytes: written}, nil
 }
