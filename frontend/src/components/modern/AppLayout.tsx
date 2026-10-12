@@ -44,7 +44,7 @@ export default function AppLayout({ currentTab, children, onPostCreated, compose
   };
 
   return (
-    <div className="bg-background text-on-background min-h-screen font-sans">
+    <div className="poster-app bg-background text-on-background min-h-screen font-sans">
       <Header
         currentUser={currentUser as any}
         searchQuery={searchQuery}
@@ -52,8 +52,11 @@ export default function AppLayout({ currentTab, children, onPostCreated, compose
         onNavigate={goTo as any}
         onOpenProfile={(id) => navigate(`/profile/${id}`)}
         onToggleMobileSidebar={() => setMobileOpen((open) => !open)}
+        currentTab={isComposerOpen ? 'newpost' : currentTab}
+        onRequestCreatePost={() => setComposer(true)}
+        onLogout={handleLogout}
       />
-      <main className="max-w-7xl mx-auto flex gap-6 px-3 sm:px-6 py-6 min-h-[calc(100vh-80px)]">
+      <main className="poster-main">
         <Sidebar currentTab={currentTab} onNavigate={goTo} onRequestCreatePost={() => setComposer(true)} onLogout={handleLogout} />
         {mobileOpen && <Sidebar currentTab={currentTab} onNavigate={goTo} onRequestCreatePost={() => setComposer(true)} onLogout={handleLogout} mobileOpen onCloseMobile={() => setMobileOpen(false)} />}
         <div className="flex-grow min-w-0">{children}</div>

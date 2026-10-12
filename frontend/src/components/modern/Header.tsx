@@ -1,12 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Bell, Mail, Settings, Menu, BriefcaseBusiness, Package, FileText } from 'lucide-react';
+import { Search, Bell, Mail, Settings, Menu, BriefcaseBusiness, Package, FileText, Home, UserRound, ShoppingBag, SquarePlay, SquarePen, ChevronDown, Sun, Moon, LogOut } from 'lucide-react';
+import { useTheme } from '../../context/ThemeContext';
 import { socialApi } from '../../api/socialApi';
 import { useNotifications } from '../../hooks/useNotifications';
 import { User } from '../types';
 
 interface HeaderProps {
   currentUser: User;
+  currentTab?: string;
+  onRequestCreatePost?: () => void;
+  onLogout?: () => Promise<void>;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   onNavigate: (tab: 'home' | 'network' | 'jobs' | 'messages' | 'profile' | 'admin' | 'analytics') => void;
@@ -16,7 +20,14 @@ interface HeaderProps {
 
 const emptyResults = { users: [], posts: [], jobs: [], products: [] };
 
-export default function Header({ currentUser, searchQuery, setSearchQuery, onNavigate, onOpenProfile, onToggleMobileSidebar }: HeaderProps) {
+export default function Header({ currentUser, searchQuery, setSearchQuery, onNavigate, onOpenProfile, onToggleMobileSidebar, currentTab, onRequestCreatePost, onLogout }: HeaderProps) {
+  const { theme, toggleTheme } = useTheme();
+  const [loggingOut, setLoggingOut] = useState(false);
+  const handleLogout = async () => {
+    if (!onLogout || loggingOut) return;
+    setLoggingOut(true);
+    try { await onLogout(); } finally { setLoggingOut(false); }
+  };
   const [isFocused, setIsFocused] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState('');
@@ -76,23 +87,23 @@ export default function Header({ currentUser, searchQuery, setSearchQuery, onNav
   };
 
   return (
-    <header className="w-full sticky top-0 bg-white border-b border-border-subtle z-40">
-      <div className="flex justify-between items-center px-6 py-3 max-w-7xl mx-auto">
-        <div className="flex items-center gap-6 flex-1">
+    <header className="poster-header w-full sticky top-0 z-40">
+      <div className="poster-header-inner">
+        <div className="poster-header-start">
           <button type="button" onClick={onToggleMobileSidebar} className="md:hidden text-text-secondary hover:text-primary transition-colors cursor-pointer p-1" aria-label="Open menu">
             <Menu className="w-6 h-6" />
           </button>
 
-          <div onClick={() => onNavigate('home')} className="font-headline-lg text-headline-lg font-bold text-primary cursor-pointer tracking-tight select-none">Connect Modern</div>
+          <div onClick={() => onNavigate('home')} className="poster-logo">theposter</div>
 
-          <div className="relative hidden md:block w-full max-w-md">
-            <div className="flex items-center bg-surface-container-low rounded-full px-4 py-2 border border-transparent focus-within:border-primary focus-within:bg-white focus-within:shadow-md transition-all">
+          <div className="poster-search relative hidden md:block">
+            <div className="poster-search-input flex items-center rounded-full px-4 py-2">
               <Search className="w-5 h-5 text-outline" />
               <input type="search" value={searchQuery} onFocus={() => setIsFocused(true)} onChange={(event) => setSearchQuery(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && searchQuery.trim().length >= 2) { setIsFocused(false); navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`); } }} placeholder="Cari judul, #hashtag, lokasi, @username…" className="bg-transparent border-none outline-none focus:ring-0 text-sm ml-2 w-full text-text-primary placeholder:text-outline" aria-label="Search application" />
             </div>
 
             {isFocused && searchQuery.trim().length >= 2 && (
-              <div className="absolute left-0 right-0 top-12 max-h-[70vh] overflow-y-auto rounded-2xl border border-border-subtle bg-white p-2 shadow-xl">
+              <div className="absolute left-0 right-0 top-12 max-h-[70vh] overflow-y-auto rounded-2xl border border-border-subtle bg-white p-2 shadow-xl text-text-primary">
                 {isSearching && <p className="px-3 py-4 text-sm text-text-secondary">Searching database...</p>}
                 {!isSearching && searchError && <p className="px-3 py-4 text-sm text-error">{searchError}</p>}
                 {!isSearching && !searchError && totalResults === 0 && <p className="px-3 py-4 text-sm text-text-secondary">No matching data found.</p>}
@@ -126,7 +137,15 @@ export default function Header({ currentUser, searchQuery, setSearchQuery, onNav
           </div>
         </div>
 
-        <div className="flex items-center gap-5">
+        <nav className="poster-top-nav" aria-label="Navigasi utama">
+          <button className={currentTab === 'home' ? 'active' : ''} onClick={() => onNavigate('home')}><Home size={19} />Home</button>
+          <button className={currentTab === 'profile' ? 'active' : ''} onClick={() => onNavigate('profile')}><UserRound size={19} />Profile</button>
+          <button onClick={() => navigate('/search?q=shop')}><ShoppingBag size={19} />Shop</button>
+          <button className={currentTab === 'shorts' ? 'active' : ''} onClick={() => navigate('/shorts')}><SquarePlay size={19} />Video</button>
+          <button className={currentTab === 'newpost' ? 'active' : ''} onClick={onRequestCreatePost}><SquarePen size={19} />New Post</button>
+        </nav>
+        <div className="poster-account flex items-center gap-5">
+          <button type="button" className="poster-theme-toggle" onClick={toggleTheme} aria-label={theme === 'dark' ? 'Aktifkan mode terang' : 'Aktifkan mode gelap'} title={theme === 'dark' ? 'Mode terang' : 'Mode gelap'} aria-pressed={theme === 'dark'}>{theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}</button>
           <div className="flex gap-1">
             <div className="relative">
               <button type="button" onClick={() => { const next = !notificationsOpen; setNotificationsOpen(next); setIsFocused(false); if (next) loadNotifications(); }} className="relative p-2 text-text-secondary hover:text-primary transition-all rounded-full hover:bg-surface-container-low cursor-pointer" aria-label="Notifications">
@@ -134,7 +153,7 @@ export default function Header({ currentUser, searchQuery, setSearchQuery, onNav
                 {unreadCount > 0 && <span className="absolute right-0 top-0 min-w-4 h-4 px-1 rounded-full bg-error text-white text-[9px] font-bold flex items-center justify-center">{unreadCount > 99 ? '99+' : unreadCount}</span>}
               </button>
               {notificationsOpen && (
-                <div className="absolute right-0 top-11 w-80 max-h-[70vh] overflow-y-auto rounded-2xl border border-border-subtle bg-white p-2 shadow-xl">
+                <div className="absolute right-0 top-11 w-80 max-h-[70vh] overflow-y-auto rounded-2xl border border-border-subtle bg-white p-2 shadow-xl text-text-primary">
                   <div className="flex items-center justify-between px-3 py-2"><span className="text-sm font-bold">Notifications</span><span className="text-xs text-text-secondary">{unreadCount} unread</span></div>
                   {notificationsLoading && notifications.length === 0 && <p className="px-3 py-4 text-xs text-text-secondary">Loading notifications...</p>}
                   {!notificationsLoading && notifications.length === 0 && <p className="px-3 py-4 text-xs text-text-secondary">No notifications yet.</p>}
@@ -154,6 +173,8 @@ export default function Header({ currentUser, searchQuery, setSearchQuery, onNav
           <div onClick={() => onNavigate('profile')} className="w-9 h-9 rounded-full overflow-hidden border border-border-subtle cursor-pointer active:scale-95 hover:shadow-sm transition-all">
             <img src={currentUser.avatar} alt={currentUser.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
           </div>
+          <button onClick={() => navigate('/settings')} aria-label="Pengaturan akun" className="poster-account-chevron"><ChevronDown size={16} /></button>
+          {onLogout && <button type="button" onClick={handleLogout} disabled={loggingOut} className="poster-logout" aria-label="Keluar" title="Keluar dari akun"><LogOut size={18} /><span>{loggingOut ? 'Keluar...' : 'Keluar'}</span></button>}
         </div>
       </div>
     </header>

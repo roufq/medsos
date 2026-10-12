@@ -71,7 +71,7 @@ const HomePage = () => {
       {loading && posts.length === 0 ? (
         <div className="flex justify-center py-20"><Loader className="animate-spin text-primary" size={40} /></div>
       ) : (
-        <div className="flex gap-6 items-start">
+        <div className="poster-feed-layout">
           <Feed
             posts={posts}
             currentUser={currentUser}

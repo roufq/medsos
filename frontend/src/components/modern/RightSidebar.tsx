@@ -1,75 +1,58 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Info, UserPlus, UserCheck } from 'lucide-react';
+import { Flame, Users, Hash, ArrowRight, ChevronRight } from 'lucide-react';
 import { networkApi } from '../../api/networkApi';
 import { Link } from 'react-router-dom';
-import { User } from '../types';
 
 interface RightSidebarProps {
   posts: any[];
   followedUsers: string[];
   onFollowSuggestion: (userId: string) => void;
-  onNavigate: (tab: 'home' | 'network' | 'jobs' | 'messages' | 'profile' | 'admin' | 'analytics') => void;
+  onNavigate: (tab: any) => void;
   onOpenProfile?: (userId: string) => void;
 }
 
 export default function RightSidebar({ posts, followedUsers, onFollowSuggestion, onNavigate, onOpenProfile }: RightSidebarProps) {
-  const [suggestions, setSuggestions] = useState<User[]>([]);
-
+  const [suggestions, setSuggestions] = useState<any[]>([]);
   useEffect(() => {
-    networkApi.getSuggestions()
-      .then((users) => setSuggestions((users || []).slice(0, 3)))
+    networkApi.getSuggestions().then((users) => setSuggestions((users || []).slice(0, 4)))
       .catch((error) => console.error('Failed to load network suggestions', error));
   }, []);
-
-  const score = (p: any) => (p.likes_count || 0) + (p.comments_count || 0) + (p.shares_count || 0);
-  const trendingPosts = useMemo(() => [...posts].sort((a, b) => score(b) - score(a)).slice(0, 3), [posts]);
-
+  const topics = useMemo(() => {
+    const counts = new Map<string, number>();
+    posts.forEach((post) => {
+      const tags = `${post.title || ''} ${post.content || ''}`.match(/#[\p{L}\p{N}_]+/gu) || [];
+      new Set([...tags.map((tag) => tag.toLowerCase()), ...(post.hashtags || []).map((item: any) => `#${item.tag}`.toLowerCase())]).forEach((tag) => counts.set(tag, (counts.get(tag) || 0) + 1));
+    });
+    return [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
+  }, [posts]);
   return (
-    <aside className="hidden xl:flex flex-col w-72 sticky top-20 h-fit gap-6 select-none">
-      <div className="bg-white rounded-2xl p-5 shadow-sm border border-border-subtle/20">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="font-headline-md text-headline-md text-text-primary text-[15px] font-bold">Popular Posts</h3>
-          <Info className="w-4 h-4 text-text-secondary" />
+    <aside className="poster-right">
+      <section className="poster-panel">
+        <div className="poster-panel-heading"><h3><Flame size={20} />Trending Topics</h3><Link to="/search">Lihat Semua <ArrowRight size={14} /></Link></div>
+        <div className="poster-topics">
+          {topics.map(([tag, count]) => <Link key={tag} to={`/search?q=${encodeURIComponent(tag)}`}><Hash size={17} /><strong>{tag}</strong><span>{count} posts</span><ChevronRight size={17} /></Link>)}
+          {topics.length === 0 && <p className="poster-empty">Hashtag dari postingan akan muncul di sini.</p>}
         </div>
-        <div className="flex flex-col gap-4">
-          {trendingPosts.map((post) => (
-            <Link key={post.id} to={`/post/${post.id}`} className="block hover:opacity-80">
-              <div className="text-xs text-text-secondary">{post.user?.name || 'Pengguna'} · {score(post)} interaksi</div>
-              <div className="font-bold text-sm text-text-primary mt-0.5 line-clamp-2">{post.title || post.content}</div>
-            </Link>
-          ))}
-          {trendingPosts.length === 0 && <p className="text-xs text-text-secondary">No posts in the database yet.</p>}
-        </div>
-      </div>
-
-      <div className="bg-white rounded-2xl p-5 shadow-sm border border-border-subtle/20">
-        <h3 className="font-headline-md text-headline-md text-text-primary text-[15px] font-bold mb-4">Grow Your Network</h3>
-        <div className="flex flex-col gap-4">
-          {suggestions.map((user: any) => {
+      </section>
+      <section className="poster-panel">
+        <div className="poster-panel-heading"><h3><Users size={19} />Suggested People</h3><button onClick={() => onNavigate('network')}>Lihat Semua <ArrowRight size={14} /></button></div>
+        <div className="poster-people">
+          {suggestions.map((user) => {
             const id = String(user.id);
-            const isFollowed = followedUsers.includes(id);
-            return (
-              <div key={id} className="flex items-center gap-3">
-                <div onClick={() => onOpenProfile?.(id)} className="w-10 h-10 rounded-full overflow-hidden cursor-pointer flex-shrink-0 bg-surface-container flex items-center justify-center font-bold text-primary">
-                  {user.avatar_url ? <img src={user.avatar_url} alt={user.name} className="w-full h-full object-cover" /> : user.name?.slice(0, 1).toUpperCase()}
-                </div>
-                <div className="flex-grow min-w-0">
-                  <div onClick={() => onOpenProfile?.(id)} className="font-bold text-text-primary text-xs hover:underline cursor-pointer truncate">{user.name}</div>
-                  <div className="text-[11px] text-text-secondary truncate">{user.title || user.company || ''}</div>
-                </div>
-                <button type="button" disabled={isFollowed} onClick={() => onFollowSuggestion(id)} className={`p-1.5 rounded-full transition-all ${isFollowed ? 'bg-success/10 text-success' : 'bg-primary/5 text-primary hover:bg-primary/15'}`} title={isFollowed ? 'Request sent' : 'Follow'}>
-                  {isFollowed ? <UserCheck className="w-4.5 h-4.5" /> : <UserPlus className="w-4.5 h-4.5" />}
-                </button>
-              </div>
-            );
+            const followed = followedUsers.includes(id);
+            return <div key={id} className="poster-person">
+              <button className="poster-person-avatar" onClick={() => onOpenProfile?.(id)} aria-label={`Profil ${user.name}`}>
+                {user.avatar_url ? <img src={user.avatar_url} alt="" /> : user.name?.slice(0, 1).toUpperCase()}
+              </button>
+              <button className="poster-person-info" onClick={() => onOpenProfile?.(id)}><strong>{user.name}</strong><span>@{user.username || 'user'}</span><span>{user.followers_count != null ? `${user.followers_count} followers` : user.title || user.company || ''}</span></button>
+              <button className="poster-follow" disabled={followed} onClick={() => onFollowSuggestion(id)}>{followed ? 'Following' : 'Follow'}</button>
+            </div>;
           })}
-          {suggestions.length === 0 && <p className="text-xs text-text-secondary">No suggestions in the database.</p>}
+          {suggestions.length === 0 && <p className="poster-empty">Belum ada rekomendasi pengguna.</p>}
         </div>
-      </div>
-
-      <div className="px-2 text-xs font-medium text-text-secondary">
-        <span>© {new Date().getFullYear()} Connect Modern Suite</span>
-      </div>
+      </section>
+      <Link to="/network" className="poster-discover"><div><strong>Jelajahi Dunia<br />dengan Postinganmu</strong><p>Bagikan momen terbaikmu<br />di seluruh dunia</p></div><span><ChevronRight size={22} /></span></Link>
+      <footer className="poster-footer"><div><Link to="/network">About</Link><Link to="/settings">Support</Link><Link to="/search">Blog</Link><Link to="/jobs">Jobs</Link><Link to="/settings">Privacy</Link><Link to="/settings">Terms</Link></div><p>? {new Date().getFullYear()} theposter. All rights reserved.</p></footer>
     </aside>
   );
 }

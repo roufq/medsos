@@ -56,7 +56,7 @@ export default function Sidebar({
   const go = (tab: string) => { onCloseMobile?.(); onNavigate(tab); };
   const asideClass = mobileOpen
     ? 'fixed inset-y-0 left-0 z-[60] flex flex-col w-72 max-w-[85vw] gap-2 p-4 bg-white shadow-xl overflow-y-auto md:hidden'
-    : 'hidden md:flex flex-col h-[calc(100vh-80px)] w-64 sticky top-20 gap-2 p-4 bg-white rounded-2xl border border-border-subtle/40 shadow-sm overflow-y-auto';
+    : 'poster-rail hidden md:flex';
 
   return (
     <>
@@ -74,6 +74,9 @@ export default function Sidebar({
           const isActive = currentTab === item.id;
           return (
             <button
+              title={item.label}
+              aria-label={item.label}
+              aria-current={isActive ? 'page' : undefined}
               key={item.id}
               onClick={() => go(item.id)}
               className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl font-bold transition-all text-left group scale-98 active:scale-95 cursor-pointer ${

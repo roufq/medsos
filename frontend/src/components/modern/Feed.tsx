@@ -1,4 +1,4 @@
-import { Image as ImageIcon, Video, ShoppingBag, Loader2 } from 'lucide-react';
+import { Image as ImageIcon, Video, ShoppingBag, Loader2, Link, MapPin } from 'lucide-react';
 import PostCard from './PostCard';
 
 interface FeedProps {
@@ -16,20 +16,20 @@ interface FeedProps {
 
 export default function Feed({ posts, currentUser, onRequestCreatePost, onNavigate, onPostDeleted, onPostUpdated, onPostCreated, onLoadMore, hasMore, loadingMore }: FeedProps) {
   return (
-    <div className="flex-1 max-w-[680px] w-full flex flex-col gap-6">
-      <div className="bg-white rounded-2xl p-5 shadow-sm border border-border-subtle/30 flex flex-col gap-4">
+    <div className="poster-feed">
+      <div className="poster-composer flex flex-col gap-4">
         <div className="flex gap-4">
           <button type="button" onClick={() => onNavigate('profile')} className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
             <img src={currentUser.avatar} alt={currentUser.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
           </button>
           <button type="button" onClick={onRequestCreatePost} className="flex-grow bg-surface-container-low hover:bg-surface-container text-left px-6 py-3 rounded-full text-text-secondary text-sm font-medium">
-            Apa yang ingin Anda bagikan?
+            What's on your mind?
           </button>
         </div>
-        <div className="flex gap-4 px-2 pt-2 border-t border-border-subtle/20 text-sm font-semibold text-text-secondary">
-          <button type="button" onClick={onRequestCreatePost} className="flex items-center gap-2 hover:text-primary"><ImageIcon className="w-5 h-5 text-primary" />Foto</button>
-          <button type="button" onClick={onRequestCreatePost} className="flex items-center gap-2 hover:text-primary"><Video className="w-5 h-5 text-error" />Video</button>
-          <button type="button" onClick={onRequestCreatePost} className="flex items-center gap-2 hover:text-primary"><ShoppingBag className="w-5 h-5 text-success" />Jual</button>
+        <div className="poster-composer-actions">
+          {[{ label: 'Photo', icon: ImageIcon }, { label: 'Video', icon: Video }, { label: 'Poster', icon: ImageIcon }, { label: 'Link', icon: Link }, { label: 'Location', icon: MapPin }, { label: 'Shop', icon: ShoppingBag }].map(({ label, icon: Icon }) => (
+            <button key={label} type="button" onClick={onRequestCreatePost}><Icon size={17} />{label}</button>
+          ))}
         </div>
       </div>
 

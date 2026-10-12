@@ -36,7 +36,7 @@ export function MediaGallery({ media, onOpen }: { media: any[]; onOpen: (index: 
   const images = media.filter((m) => m.media_type === 'image');
   const video = media.find((m) => m.media_type === 'video');
   return (
-    <div className="flex flex-col gap-2 mb-4">
+    <div className="poster-media flex flex-col gap-2 mb-4">
       {video && (
         <div className="relative rounded-xl overflow-hidden bg-black">
           {video.processing_status === 'ready' ? (
@@ -218,7 +218,7 @@ export default function PostCard({ post: initialPost, onDeleted, onUpdated, onRe
   const menuItem = 'w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-surface-container-low text-left';
 
   return (
-    <article ref={cardRef} className="bg-white rounded-2xl shadow-sm border border-border-subtle/20 p-5">
+    <article ref={cardRef} className="poster-post bg-white rounded-2xl border border-border-subtle/20 p-5">
       {isRepost && (
         <div className="flex items-center gap-2 text-xs font-semibold text-text-secondary mb-3"><Repeat2 className="w-4 h-4" />{post.user?.name} merepost</div>
       )}
@@ -289,18 +289,18 @@ export default function PostCard({ post: initialPost, onDeleted, onUpdated, onRe
         </span>
       </div>
 
-      <div className="grid grid-cols-5 gap-1 pt-2 text-xs sm:text-sm font-semibold">
+      <div className="poster-post-actions grid grid-cols-5 gap-1 pt-2 text-xs sm:text-sm font-semibold">
         <button type="button" onClick={toggleLike} className={`flex items-center justify-center gap-1.5 py-2 rounded-xl hover:bg-surface-container-low ${post.is_liked_by_me ? 'text-error' : 'text-text-secondary'}`} aria-pressed={Boolean(post.is_liked_by_me)}>
-          <Heart className={`w-4 h-4 ${post.is_liked_by_me ? 'fill-current' : ''}`} /><span className="hidden sm:inline">Suka</span>
+          <Heart className={`w-4 h-4 ${post.is_liked_by_me ? 'fill-current' : ''}`} /><span>{post.likes_count || 0}</span>
         </button>
         <button type="button" onClick={() => setCommentsOpen((v) => !v)} className={`flex items-center justify-center gap-1.5 py-2 rounded-xl hover:bg-surface-container-low ${commentsOpen ? 'text-primary' : 'text-text-secondary'}`}>
-          <MessageCircle className="w-4 h-4" /><span className="hidden sm:inline">Komentar</span>
+          <MessageCircle className="w-4 h-4" /><span>{post.comments_count || 0}</span>
         </button>
         <button type="button" onClick={() => setModal('repost')} className="flex items-center justify-center gap-1.5 py-2 rounded-xl hover:bg-surface-container-low text-text-secondary">
           <Repeat2 className="w-4 h-4" /><span className="hidden sm:inline">Repost</span>
         </button>
         <button type="button" onClick={() => setModal('share')} className="flex items-center justify-center gap-1.5 py-2 rounded-xl hover:bg-surface-container-low text-text-secondary">
-          <Share2 className="w-4 h-4" /><span className="hidden sm:inline">Bagikan</span>
+          <Share2 className="w-4 h-4" /><span>{post.shares_count || 0}</span>
         </button>
         <button type="button" onClick={toggleSave} className={`flex items-center justify-center gap-1.5 py-2 rounded-xl hover:bg-surface-container-low ${post.is_saved_by_me ? 'text-primary' : 'text-text-secondary'}`} aria-pressed={Boolean(post.is_saved_by_me)}>
           {post.is_saved_by_me ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}<span className="hidden sm:inline">Simpan</span>

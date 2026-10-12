@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { X, Image as ImageIcon, Video, Link as LinkIcon, MapPin, Loader2, Trash2, ShoppingBag, FileText, LocateFixed } from 'lucide-react';
+import { X, Image as ImageIcon, Video, Link as LinkIcon, MapPin, Loader2, ShoppingBag, FileText, LocateFixed, Hash, AtSign, Plus, Save, Send, Heart, MessageCircle, Share2, Eye, MoreHorizontal, Crop } from 'lucide-react';
 import { postApi } from '../../api/postApi';
 import { useAuth } from '../../context/AuthContext';
-import { POST_RULES as R, countWords, currencyDecimals, mergeTokens, parseTokens, toMinorUnits, tokensInText } from '../../utils/postFormat';
+import { RichText, formatPrice, POST_RULES as R, countWords, currencyDecimals, mergeTokens, parseTokens, toMinorUnits, tokensInText } from '../../utils/postFormat';
 
 interface CreatePostModalProps {
   isOpen: boolean;
@@ -45,6 +45,11 @@ async function reverseGeocode(lat: number, lng: number): Promise<string> {
 export default function CreatePostModal({ isOpen, onClose, onSaved, editPost }: CreatePostModalProps) {
   const { user } = useAuth();
   const isEdit = Boolean(editPost);
+  const [activeType, setActiveType] = useState('image');
+  const [activeDetail, setActiveDetail] = useState('');
+  const [draftMessage, setDraftMessage] = useState('');
+  const descriptionInput = useRef<HTMLTextAreaElement>(null);
+  const draftKey = `theposter-draft-${user?.id || 'local'}`;
   const [mode, setMode] = useState<'post' | 'shop'>('post');
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -68,7 +73,20 @@ export default function CreatePostModal({ isOpen, onClose, onSaved, editPost }: 
     if (!isOpen) return;
     setError('');
     mediaTouched.current = false;
-    if (!editPost) return;
+    setDraftMessage('');
+    if (!editPost) {
+      try {
+        const draft = JSON.parse(localStorage.getItem(draftKey) || 'null');
+        if (draft) {
+          setTitle(draft.title || ''); setContent(draft.content || ''); setMedia(draft.media || []);
+          setLinkUrl(draft.linkUrl || ''); setHashtagInput(draft.hashtagInput || ''); setMentionInput(draft.mentionInput || '');
+          setLocation(draft.location || ''); setVisibility(draft.visibility || 'public'); setMode(draft.mode || 'post');
+          setActiveType(draft.activeType || 'image'); if (draft.shop) setShop(draft.shop);
+          setDraftMessage('Draft terakhir dipulihkan.');
+        }
+      } catch { setDraftMessage('Draft tidak dapat dipulihkan.'); }
+      return;
+    }
     setMode(editPost.post_type === 'shop' ? 'shop' : 'post');
     setTitle(editPost.title || '');
     setContent(editPost.content || '');
@@ -85,7 +103,18 @@ export default function CreatePostModal({ isOpen, onClose, onSaved, editPost }: 
         stock: s.stock ?? '', brand: s.brand || '', fulfillment: (s.fulfillment || '').split(',').filter(Boolean), payment: s.payment_method || '',
       });
     }
-  }, [isOpen, editPost]);
+  }, [isOpen, editPost, draftKey]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const previous = document.body.style.overflow;
+    const previousFocus = document.activeElement as HTMLElement | null;
+    document.body.style.overflow = 'hidden';
+    const keydown = (event: KeyboardEvent) => { if (event.key === 'Escape' && !submitting && !uploading) onClose(); };
+    document.addEventListener('keydown', keydown);
+    const frame = requestAnimationFrame(() => document.querySelector<HTMLElement>('.new-post-close')?.focus());
+    return () => { document.body.style.overflow = previous; document.removeEventListener('keydown', keydown); cancelAnimationFrame(frame); previousFocus?.focus(); };
+  }, [isOpen, onClose, submitting, uploading]);
 
   const isShop = mode === 'shop';
   const images = media.filter((m) => m.type === 'image');
@@ -179,6 +208,8 @@ export default function CreatePostModal({ isOpen, onClose, onSaved, editPost }: 
           link_url: postType === 'link' ? linkUrl.trim() : '',
           ...(isShop ? { image_urls: images.map((m) => m.url), video_url: videos[0]?.url || '', shop: shopPayload } : { media_urls: media.map((m) => m.url) }),
         });
+        try { localStorage.removeItem(draftKey); } catch { /* posting succeeded */ }
+        setMode('post'); setActiveType('image'); setActiveDetail('');
         setTitle(''); setContent(''); setMedia([]); setLinkUrl(''); setLinkPreview(null); setHashtagInput(''); setMentionInput(''); setLocation('');
         setShop({ price: '', currency: 'IDR', category: '', condition: '', stock: '', brand: '', fulfillment: [], payment: '' });
       }
@@ -191,47 +222,76 @@ export default function CreatePostModal({ isOpen, onClose, onSaved, editPost }: 
     }
   };
 
-  const counter = (ok: boolean) => (ok ? 'text-success' : 'text-error');
-  const input = 'w-full rounded-xl border border-border-subtle px-3 py-2 text-sm outline-none focus:border-primary';
+  const saveDraft = () => {
+    try {
+      localStorage.setItem(draftKey, JSON.stringify({ title, content, media, linkUrl, hashtagInput, mentionInput, location, visibility, mode, shop, activeType }));
+      setDraftMessage('Draft tersimpan di browser ini.');
+    } catch { setError('Draft tidak dapat disimpan di browser ini.'); }
+  };
+  const selectType = (type: string) => {
+    setActiveType(type);
+    if (!isEdit) setMode(type === 'shop' ? 'shop' : 'post');
+    if (type === 'link' || type === 'location') setActiveDetail(type);
+  };
+  const addToken = (prefix: string) => {
+    setContent((value) => value + (value && !/\s$/.test(value) ? ' ' : '') + prefix);
+    requestAnimationFrame(() => { descriptionInput.current?.focus(); descriptionInput.current?.setSelectionRange(100000, 100000); });
+  };
 
+  const cropImage = async () => {
+    const item = images[0];
+    if (!item || uploading) return;
+    setUploading((n) => n + 1); setError('');
+    try {
+      const image = new Image(); image.crossOrigin = 'anonymous'; image.src = item.url;
+      await image.decode();
+      const size = Math.min(image.naturalWidth, image.naturalHeight);
+      const canvas = document.createElement('canvas'); canvas.width = size; canvas.height = size;
+      const context = canvas.getContext('2d'); if (!context) throw new Error('Crop tidak tersedia.');
+      context.drawImage(image, (image.naturalWidth - size) / 2, (image.naturalHeight - size) / 2, size, size, 0, 0, size, size);
+      const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob((result) => result ? resolve(result) : reject(new Error('Crop gagal.')), 'image/jpeg', .9));
+      const result = await postApi.uploadMedia(new File([blob], 'cropped-image.jpg', { type: 'image/jpeg' }));
+      mediaTouched.current = true;
+      setMedia((current) => current.map((m) => m.url === item.url ? { url: result.url, type: 'image', duration: 0 } : m));
+    } catch (err) { setError(errorText(err, 'Gagal memotong gambar.')); }
+    finally { setUploading((n) => n - 1); }
+  };
+
+  const input = 'new-post-input';
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-2 sm:p-4">
-      <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[95vh] overflow-y-auto p-5 shadow-xl flex flex-col gap-4">
-        <div className="flex justify-between items-center border-b border-border-subtle/20 pb-3">
-          <h3 className="font-bold text-text-primary">{isEdit ? 'Edit postingan' : 'Buat postingan'}</h3>
-          <button type="button" onClick={onClose} disabled={submitting} className="p-1 rounded-full hover:bg-surface-container" aria-label="Tutup"><X className="w-5 h-5" /></button>
-        </div>
-
-        {!isEdit && (
-          <div className="grid grid-cols-2 gap-2 rounded-xl bg-surface-container-low p-1 text-sm font-bold">
-            <button type="button" onClick={() => setMode('post')} className={`flex items-center justify-center gap-2 rounded-lg py-2 ${!isShop ? 'bg-white shadow-sm text-primary' : 'text-text-secondary'}`}><FileText className="w-4 h-4" />Postingan</button>
-            <button type="button" onClick={() => setMode('shop')} className={`flex items-center justify-center gap-2 rounded-lg py-2 ${isShop ? 'bg-white shadow-sm text-primary' : 'text-text-secondary'}`}><ShoppingBag className="w-4 h-4" />Jual produk</button>
+    <div className="new-post-overlay" onClick={(event) => { if (event.target === event.currentTarget && !submitting && !uploading) onClose(); }}>
+      <div className="new-post-dialog" role="dialog" aria-modal="true" aria-labelledby="new-post-title" onKeyDown={(event) => {
+        if (event.key !== 'Tab') return;
+        const items = Array.from(event.currentTarget.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), textarea, select, a[href]')).filter((item) => item.getClientRects().length > 0);
+        const first = items[0]; const last = items[items.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+      }}>
+        <button type="button" onClick={onClose} disabled={submitting || uploading > 0} className="new-post-close" aria-label="Tutup"><X size={20} /></button>
+        <div className="new-post-form">
+          <h3 id="new-post-title" className="new-post-title">{isEdit ? 'Edit Postingan' : 'Buat Postingan Baru'}</h3>
+          {!isEdit && <div className="new-post-types" aria-label="Jenis postingan">
+            {[{ id: 'image', label: 'Gambar', icon: ImageIcon }, { id: 'video', label: 'Video', icon: Video }, { id: 'poster', label: 'Poster', icon: FileText }, { id: 'link', label: 'Link', icon: LinkIcon }, { id: 'location', label: 'Lokasi', icon: MapPin }, { id: 'shop', label: 'Shop', icon: ShoppingBag }].map(({ id, label, icon: Icon }) => <button key={id} type="button" aria-pressed={activeType === id} className={activeType === id ? 'active' : ''} onClick={() => selectType(id)}><Icon size={19} />{label}</button>)}
+          </div>}
+          <label className="new-post-field"><span>{isShop ? 'Nama Produk' : 'Judul Postingan'} <b>*</b></span><input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={R.titleMax} placeholder="Judul postingan" className={input} /><small>{titleLength}/{R.titleMax}</small></label>
+          <label className="new-post-field"><span>Deskripsi</span><textarea ref={descriptionInput} value={content} onChange={(e) => setContent(e.target.value)} rows={7} placeholder="Bagikan cerita Anda, tambahkan #hashtag dan @username..." className={input} /><small>{words}/{R.descriptionMaxWords} kata</small></label>
+          <div className="new-post-tools">
+            <button type="button" onClick={() => { addToken('#'); setActiveDetail('hashtag'); }}><Hash size={16} />Hashtag</button>
+            <button type="button" onClick={() => setActiveDetail(activeDetail === 'link' ? '' : 'link')}><LinkIcon size={16} />Link</button>
+            <button type="button" onClick={() => { addToken('@'); setActiveDetail('mention'); }}><AtSign size={16} />Mention</button>
+            <button type="button" onClick={() => setActiveDetail(activeDetail === 'location' ? '' : 'location')}><MapPin size={16} />Location</button>
           </div>
-        )}
-
-        <div className="flex items-center gap-3">
-          <img src={user?.avatar_url || '/favicon.svg'} alt="" className="w-10 h-10 rounded-full object-cover" />
-          <div className="flex-1">
-            <div className="font-bold text-sm">{user?.name}</div>
-            <select value={visibility} onChange={(e) => setVisibility(e.target.value)} className="text-xs text-text-secondary bg-transparent outline-none">
-              <option value="public">🌐 Publik</option>
-              <option value="followers">👥 Hanya pengikut</option>
-            </select>
-          </div>
-        </div>
-
-        <label className="flex flex-col gap-1">
-          <span className="text-xs font-bold">{isShop ? 'Nama produk' : 'Judul'} <span className="text-error">*</span></span>
-          <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={R.titleMax} placeholder={isShop ? 'Nama produk yang jelas & singkat' : 'Judul postingan'} className={input} />
-          <span className={`text-[11px] text-right ${counter(titleLength >= R.titleMin)}`}>{titleLength}/{R.titleMax}</span>
-        </label>
-
-        <label className="flex flex-col gap-1">
-          <span className="text-xs font-bold">{isShop ? 'Deskripsi produk' : 'Deskripsi'} <span className="text-error">*</span></span>
-          <textarea value={content} onChange={(e) => setContent(e.target.value)} rows={8} placeholder={isShop ? 'Jelaskan produk Anda…' : `Tulis minimal ${R.descriptionMinWords} kata. Gunakan #hashtag dan @username langsung di teks.`} className={`${input} resize-y`} />
-          <span className={`text-[11px] text-right ${counter(isShop ? words > 0 : words >= R.descriptionMinWords && words <= R.descriptionMaxWords)}`}>{words} kata {isShop ? '' : `(min ${R.descriptionMinWords}, maks ${R.descriptionMaxWords})`}</span>
-        </label>
-
+          {(activeDetail === 'hashtag' || activeDetail === 'mention') && <div className="new-post-details"><label className="new-post-field"><span>Hashtag</span><input value={hashtagInput} onChange={(e) => setHashtagInput(e.target.value)} placeholder="#travel #indonesia #alam" className={input} /></label><label className="new-post-field"><span>Mention</span><input value={mentionInput} onChange={(e) => setMentionInput(e.target.value)} placeholder="@username" className={input} /></label></div>}
+          {(activeDetail === 'link' || activeType === 'link' || linkUrl) && <div className="new-post-detail-row"><LinkIcon size={17} /><input value={linkUrl} onChange={(e) => { setLinkUrl(e.target.value); setLinkPreview(null); }} placeholder="https://..." className={input} /><button type="button" onClick={previewLink} disabled={!linkUrl.trim()}>Pratinjau</button></div>}
+          {linkPreview && <div className="new-post-link-preview">{linkPreview.image && <img src={linkPreview.image} alt="" />}<div><strong>{linkPreview.title}</strong><p>{linkPreview.description}</p></div></div>}
+          {(activeDetail === 'location' || activeType === 'location' || location) && <div className="new-post-detail-row"><MapPin size={17} /><input value={location} maxLength={255} onChange={(e) => setLocation(e.target.value)} placeholder="Lokasi" className={input} /><button type="button" onClick={useMyLocation} disabled={locating}>{locating ? <Loader2 size={16} className="animate-spin" /> : <LocateFixed size={16} />}Lokasi saya</button></div>}
+          <section className="new-post-media"><h4>Media</h4><div className="new-post-media-grid">
+            {media.map((m) => <div key={m.url} className="new-post-thumbnail">{m.type === 'image' ? <img src={m.url} alt="Media terunggah" /> : <div><Video size={26} /><span>{formatDuration(m.duration)}</span></div>}<button type="button" onClick={() => removeMedia(m.url)} aria-label="Hapus media"><X size={14} /></button></div>)}
+            <button type="button" className="new-post-add-media" disabled={uploading > 0 || (activeType === 'video' ? videos.length > 0 || (!isShop && images.length > 0) : images.length >= R.imagesMax || (!isShop && videos.length > 0))} onClick={() => activeType === 'video' ? videoInput.current?.click() : imageInput.current?.click()}><Plus size={20} /><span>Tambah Media</span><small>{activeType === 'video' ? 'Video, maks. 30 menit' : 'JPG, PNG, GIF, WebP'}<br />{activeType === 'video' ? 'Maks. 1 video' : 'Maks. 10 MB / gambar'}</small></button>
+          </div>{images.length > 0 && <button type="button" className="new-post-crop" onClick={cropImage} disabled={uploading > 0} title="Potong gambar pertama menjadi persegi"><Crop size={15} />Crop persegi</button>}{uploading > 0 && <p className="new-post-uploading"><Loader2 size={16} className="animate-spin" />Mengunggah {uploading} file...</p>}</section>
+          <input ref={imageInput} type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple className="hidden" onChange={(e) => { upload(e.target.files, 'image'); e.target.value = ''; }} />
+          <input ref={videoInput} type="file" accept="video/*,.mkv,.flv,.wmv,.mxf,.ts" className="hidden" onChange={(e) => { upload(e.target.files, 'video'); e.target.value = ''; }} />
+          <label className="new-post-shop-toggle"><input type="checkbox" checked={isShop} disabled={isEdit} onChange={(e) => { setMode(e.target.checked ? 'shop' : 'post'); setActiveType(e.target.checked ? 'shop' : 'image'); }} /><span className="new-post-switch" /><span>Tambahkan ke Shop<small>Jika produk, akan ditampilkan di tab Shop</small></span></label>
         {isShop && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 rounded-xl border border-border-subtle/50 p-3">
             <label className="flex flex-col gap-1 text-xs font-bold">Harga <span className="sr-only">wajib</span>
@@ -266,66 +326,23 @@ export default function CreatePostModal({ isOpen, onClose, onSaved, editPost }: 
           </div>
         )}
 
-        {media.length > 0 && (
-          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-            {media.map((m) => (
-              <div key={m.url} className="relative rounded-lg overflow-hidden bg-surface-container aspect-square">
-                {m.type === 'image' ? <img src={m.url} alt="" className="w-full h-full object-cover" /> : (
-                  <div className="w-full h-full flex flex-col items-center justify-center text-xs text-text-secondary"><Video className="w-6 h-6" />{formatDuration(m.duration)}{m.duration >= R.shortMin && m.duration <= R.shortMax && <span className="font-black text-error">SHORT</span>}</div>
-                )}
-                <button type="button" onClick={() => removeMedia(m.url)} className="absolute top-1 right-1 rounded-full bg-black/60 p-1 text-white" aria-label="Hapus media"><Trash2 className="w-3 h-3" /></button>
-              </div>
-            ))}
-          </div>
-        )}
-        {uploading > 0 && <p className="text-xs text-text-secondary flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" />Mengunggah {uploading} file… (video besar butuh waktu)</p>}
 
-        {!isShop && (postType === 'link' || (!media.length && !isEdit) || editPost?.post_type === 'link') && (
-          <div className="flex flex-col gap-2">
-            <div className="flex gap-2">
-              <div className="flex-1 flex items-center gap-2 rounded-xl border border-border-subtle px-3"><LinkIcon className="w-4 h-4 text-outline" /><input value={linkUrl} onChange={(e) => { setLinkUrl(e.target.value); setLinkPreview(null); }} placeholder="https://… (opsional)" className="flex-1 py-2 text-sm outline-none" disabled={media.length > 0} /></div>
-              {linkUrl.trim() && <button type="button" onClick={previewLink} className="rounded-xl border border-border-subtle px-3 text-xs font-bold">Pratinjau</button>}
-            </div>
-            {linkPreview && (
-              <div className="rounded-xl border border-border-subtle p-3 text-xs flex gap-3">
-                {linkPreview.image && <img src={linkPreview.image} alt="" className="w-20 h-20 object-cover rounded-lg" referrerPolicy="no-referrer" />}
-                <div><div className="font-bold">{linkPreview.title}</div><p className="text-text-secondary line-clamp-3">{linkPreview.description}</p></div>
-              </div>
-            )}
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <label className="flex flex-col gap-1 text-xs font-bold">Hashtag <span className="text-error">*</span>
-            <input value={hashtagInput} onChange={(e) => setHashtagInput(e.target.value)} placeholder="#travel #kuliner #bali" className={input} />
-            <span className={`font-normal ${counter(hashtags.length >= R.hashtagsMin && hashtags.length <= maxTags)}`}>{hashtags.length} hashtag (wajib {R.hashtagsMin}–{maxTags})</span>
-          </label>
-          <label className="flex flex-col gap-1 text-xs font-bold">Mention {minMentions > 0 && <span className="text-error">*</span>}
-            <input value={mentionInput} onChange={(e) => setMentionInput(e.target.value)} placeholder="@username @teman" className={input} />
-            <span className={`font-normal ${counter(mentions.length >= minMentions && mentions.length <= R.mentionsMax)}`}>{mentions.length} akun ({minMentions}–{R.mentionsMax})</span>
-          </label>
+          <label className="new-post-visibility">Visibilitas<select value={visibility} onChange={(e) => setVisibility(e.target.value)}><option value="public">Publik</option><option value="followers">Hanya pengikut</option></select></label>
+          {error && <p className="new-post-error" role="alert">{error}</p>}
+          {!error && problems.length > 0 && <details className="new-post-validation"><summary>Ketentuan postingan ({problems.length} belum terpenuhi)</summary><ul>{problems.map((problem) => <li key={problem}>{problem}</li>)}</ul></details>}
+          <div className="new-post-footer">{!isEdit && <button type="button" className="new-post-draft" onClick={saveDraft} disabled={submitting || uploading > 0}><Save size={17} />Draft</button>}<button type="button" onClick={submit} disabled={submitting || uploading > 0} className="new-post-submit">{submitting ? <Loader2 size={17} className="animate-spin" /> : <Send size={17} />}{isEdit ? 'Simpan Perubahan' : 'Post Sekarang'}</button></div>
+          {draftMessage && <p className="new-post-draft-message" role="status">{draftMessage}</p>}
         </div>
-
-        <div className="flex gap-2">
-          <div className="flex-1 flex items-center gap-2 rounded-xl border border-border-subtle px-3"><MapPin className="w-4 h-4 text-outline" /><input value={location} maxLength={255} onChange={(e) => setLocation(e.target.value)} placeholder="Lokasi (opsional)" className="flex-1 py-2 text-sm outline-none" /></div>
-          <button type="button" onClick={useMyLocation} disabled={locating} className="rounded-xl border border-border-subtle px-3 text-xs font-bold flex items-center gap-1">{locating ? <Loader2 className="w-4 h-4 animate-spin" /> : <LocateFixed className="w-4 h-4" />}Lokasi saya</button>
-        </div>
-
-        {error && <p className="rounded-lg bg-error/10 p-2 text-xs font-semibold text-error">{error}</p>}
-        {!error && problems.length > 0 && <ul className="text-[11px] text-text-secondary list-disc pl-5">{problems.slice(0, 4).map((p) => <li key={p}>{p}</li>)}</ul>}
-
-        <div className="flex justify-between items-center border-t border-border-subtle/20 pt-3">
-          <div className="flex gap-2">
-            <button type="button" onClick={() => imageInput.current?.click()} disabled={videos.length > 0 && !isShop} className="flex items-center gap-1 rounded-full px-3 py-2 text-xs font-bold text-primary hover:bg-primary/10 disabled:opacity-40"><ImageIcon className="w-4 h-4" />Gambar ({images.length}/{R.imagesMax})</button>
-            <button type="button" onClick={() => videoInput.current?.click()} disabled={videos.length > 0 || (!isShop && images.length > 0)} className="flex items-center gap-1 rounded-full px-3 py-2 text-xs font-bold text-primary hover:bg-primary/10 disabled:opacity-40"><Video className="w-4 h-4" />Video</button>
-            <input ref={imageInput} type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple className="hidden" onChange={(e) => { upload(e.target.files, 'image'); e.target.value = ''; }} />
-            <input ref={videoInput} type="file" accept="video/*,.mkv,.flv,.wmv,.mxf,.ts" className="hidden" onChange={(e) => { upload(e.target.files, 'video'); e.target.value = ''; }} />
-          </div>
-          <button type="button" onClick={submit} disabled={submitting || uploading > 0} className="rounded-full bg-primary px-6 py-2 text-sm font-bold text-white disabled:opacity-50 flex items-center gap-2">
-            {submitting && <Loader2 className="w-4 h-4 animate-spin" />}{isEdit ? 'Simpan & posting ulang' : 'Posting'}
-          </button>
-        </div>
-        <p className="text-[10px] text-outline">Gambar JPG/PNG/GIF/WebP hingga 10 MB (otomatis dikompresi). Video MP4/MOV/AVI/WMV/FLV/WebM/MKV/MPEG/MXF hingga 30 menit; video 1–1,5 menit masuk ke Shorts.</p>
+        <aside className="new-post-preview"><h4>Pratinjau Postingan</h4><article className="new-post-preview-card"><div className="new-post-preview-menu"><MoreHorizontal size={19} /></div>
+          {media[0] ? (media[0].type === 'image' ? <img src={media[0].url} alt="Pratinjau media" className="new-post-preview-image" /> : <video src={media[0].url} controls className="new-post-preview-image" />) : linkPreview?.image ? <img src={linkPreview.image} alt="Pratinjau link" className="new-post-preview-image" /> : <div className="new-post-preview-placeholder"><ImageIcon size={36} /><span>Pratinjau media Anda</span></div>}
+          <div className="new-post-preview-copy"><h3>{title || 'Judul postingan Anda'}</h3><div className="new-post-preview-description"><RichText text={content || 'Deskripsi postingan akan muncul di sini.'} /></div>
+            {hashtags.length > 0 && <p className="new-post-preview-tags">{hashtags.map((tag) => <span key={tag}>#{tag} </span>)}</p>}
+            {linkUrl && <p className="new-post-preview-meta"><LinkIcon size={16} /><span>{linkUrl}</span></p>}
+            {mentions.length > 0 && <p className="new-post-preview-meta"><AtSign size={16} /><span>{mentions.map((name) => '@' + name).join('   ')}</span></p>}
+            {location && <p className="new-post-preview-meta location"><MapPin size={16} /><span>{location}</span></p>}
+            {isShop && shop.price && <p className="new-post-preview-price">{formatPrice(toMinorUnits(shop.price, shop.currency), shop.currency)}</p>}
+          </div><div className="new-post-preview-actions"><span><Heart size={18} />0</span><span><MessageCircle size={18} />0</span><span><Share2 size={18} />0</span><span><Eye size={18} />0</span></div>
+        </article></aside>
       </div>
     </div>
   );
