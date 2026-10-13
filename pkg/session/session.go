@@ -104,6 +104,9 @@ func Validate(claims *jwt.Claims) (State, error) {
 	if claims.Type == jwt.TypeRefresh && IsRevoked(claims.ID) {
 		return State{}, ErrRevoked
 	}
+	if err := CheckIdle(claims); err != nil {
+		return State{}, err
+	}
 	return state, nil
 }
 

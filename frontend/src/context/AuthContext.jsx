@@ -1,3 +1,4 @@
+import IdleSession from '../components/common/IdleSession';
 import { createContext, useState, useEffect, useContext } from 'react';
 import { authApi } from '../api/authApi';
 import { userApi } from '../api/userApi';
@@ -46,6 +47,7 @@ export const AuthProvider = ({ children }) => {
       console.error('Logout API failed:', e);
     }
     setUser(null);
+    try { localStorage.setItem('theposter-logout', String(Date.now())); } catch { /* storage disabled */ }
   };
 
   const updateProfileState = (updatedUser) => {
@@ -64,6 +66,7 @@ export const AuthProvider = ({ children }) => {
         isAuthenticated: !!user,
       }}
     >
+      <IdleSession />
       {children}
     </AuthContext.Provider>
   );

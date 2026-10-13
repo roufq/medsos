@@ -34,3 +34,5 @@ npm run dev
 Buka http://localhost:5173. Vite meneruskan `/api`, `/uploads`, dan `/web` ke backend port 3000. Hentikan proses terminal dengan Ctrl+C.
 
 Upload dan pemrosesan video memakai `ffprobe.exe` serta `ffmpeg.exe` portable di `tmp/toolchain/ffmpeg/bin`. Backend mencari folder tersebut otomatis; `start-local.ps1` juga menambahkannya ke PATH proses. Untuk instalasi lain, gunakan PATH atau variabel `FFPROBE_PATH` / `FFMPEG_PATH`. Email SMTP dan login OAuth memerlukan konfigurasi layanan tersendiri apabila fitur tersebut digunakan.
+
+Sesi login otomatis berakhir setelah 30 menit tanpa aktivitas. Frontend menampilkan peringatan 1 menit sebelumnya dan menyinkronkan aktivitas antar-tab. Backend memeriksa `login_sessions.last_activity` saat memvalidasi access maupun refresh token; background polling tidak memperpanjang sesi. Logout mengakhiri sesi browser tersebut tanpa mengeluarkan perangkat lain.

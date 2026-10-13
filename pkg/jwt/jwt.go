@@ -43,6 +43,7 @@ const (
 // every outstanding token of a user, and the registered ID (jti) identifies a
 // single refresh token so logout/rotation can revoke just that session.
 type Claims struct {
+	SessionID    string          `json:"sid,omitempty"`
 	UserID       int64           `json:"user_id"`
 	Email        string          `json:"email"`
 	Role         models.UserRole `json:"role"`
@@ -59,7 +60,7 @@ func newTokenID() (string, error) {
 	return hex.EncodeToString(b[:]), nil
 }
 
-func generate(user *models.User, tokenType string, ttl time.Duration) (string, error) {
+func generate(user *models.User, tokenType string, ttl time.Duration, sessionID string) (string, error) {
 	secret, err := signingSecret()
 	if err != nil {
 		return "", err
@@ -70,6 +71,7 @@ func generate(user *models.User, tokenType string, ttl time.Duration) (string, e
 	}
 	now := time.Now()
 	claims := &Claims{
+		SessionID:    sessionID,
 		UserID:       user.ID,
 		Email:        user.Email,
 		Role:         user.Role,
@@ -85,13 +87,21 @@ func generate(user *models.User, tokenType string, ttl time.Duration) (string, e
 }
 
 // GenerateAccessToken creates a short-lived access token.
-func GenerateAccessToken(user *models.User) (string, error) {
-	return generate(user, TypeAccess, AccessTTL)
+func GenerateAccessToken(user *models.User, sessionID ...string) (string, error) {
+	id := ""
+	if len(sessionID) > 0 {
+		id = sessionID[0]
+	}
+	return generate(user, TypeAccess, AccessTTL, id)
 }
 
 // GenerateRefreshToken creates a long-lived refresh token.
-func GenerateRefreshToken(user *models.User) (string, error) {
-	return generate(user, TypeRefresh, RefreshTTL)
+func GenerateRefreshToken(user *models.User, sessionID ...string) (string, error) {
+	id := ""
+	if len(sessionID) > 0 {
+		id = sessionID[0]
+	}
+	return generate(user, TypeRefresh, RefreshTTL, id)
 }
 
 func parse(tokenStr, expectedType string) (*Claims, error) {

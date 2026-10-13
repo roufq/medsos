@@ -2,6 +2,8 @@ package controllers
 
 import (
 	"bytes"
+	"errors"
+	"goravel/pkg/session"
 	"net/http"
 	"os"
 	"strings"
@@ -107,6 +109,10 @@ func (h *AuthController) RefreshAPI(c goravelhttp.Context) goravelhttp.Response 
 
 	res, err := h.authService.Refresh(&req)
 	if err != nil {
+		if errors.Is(err, session.ErrIdleExpired) {
+			clearAuthCookies(c)
+			return c.Response().Json(401, goravelhttp.Json{"error": "Session expired due to inactivity", "code": "session_idle_expired"})
+		}
 		return c.Response().Json(http.StatusUnauthorized, goravelhttp.Json{"error": err.Error()})
 	}
 

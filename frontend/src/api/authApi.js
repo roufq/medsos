@@ -1,6 +1,8 @@
 import api from './axios';
 
 export const authApi = {
+ session: async () => (await api.get('/auth/session')).data,
+ activity: async () => (await api.post('/auth/activity')).data,
 	forgotPassword: async (target, channel = 'email') => (await api.post('/auth/password/forgot', { target, channel })).data,
 	resetPassword: async (target, code, newPassword) => (await api.post('/auth/password/reset', { target, code, new_password: newPassword })).data,
 	login: async (identifier, password) => {

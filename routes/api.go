@@ -62,6 +62,8 @@ func Api() {
 	api.Middleware(middleware.AuthMiddleware(), middleware.RateLimit("api", 300, time.Minute)).Group(func(router route.Router) {
 		// Auth
 		router.Post("auth/logout", authController.LogoutAPI)
+		router.Get("auth/session", controllers.SessionInfo)
+		router.Post("auth/activity", controllers.SessionActivity)
 		router.Put("auth/password", accountController.ChangePassword)
 		router.Post("auth/verification/request", accountController.RequestVerification)
 		router.Post("auth/verification/confirm", accountController.ConfirmVerification)

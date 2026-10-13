@@ -566,3 +566,10 @@ body { background-color: rgb(var(--app-bg)); color: rgb(var(--text-main)); }
 .mention-suggestions strong { font-size: 11px; font-weight: 600; color: rgb(var(--text-main)); }
 .mention-suggestions small, .new-post-mentions > small { display: block; font-size: 10px; color: rgb(var(--text-muted)); }
 .mention-suggestions p { padding: 12px; font-size: 10px; color: rgb(var(--text-muted)); }
+
+.idle-session-warning { position: fixed; top: 82px; right: 24px; z-index: 250; max-width: calc(100vw - 32px); display: flex; align-items: center; gap: 12px; border: 1px solid #d5a955; border-radius: 14px; padding: 16px; color: rgb(var(--text-main)); background: rgb(var(--card-bg)); box-shadow: 0 8px 32px #0003; }
+.idle-session-warning > svg { color: #d49a32; flex-shrink: 0; }
+.idle-session-warning strong { font-size: 13px; }
+.idle-session-warning p { font-size: 11px; margin-top: 4px; color: rgb(var(--text-muted)); }
+.idle-session-warning button { border-radius: 20px; padding: 8px 14px; color: #fff; background: #293c55; font-size: 11px; white-space: nowrap; }
+@media (max-width: 767px) { .idle-session-warning { top: 76px; right: 16px; left: 16px; flex-wrap: wrap; } }

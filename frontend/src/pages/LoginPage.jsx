@@ -5,6 +5,7 @@ import Login from '../components/modern/Login';
 import { authApi } from '../api/authApi';
 
 const REASONS = {
+  session_idle_expired: 'Sesi berakhir karena tidak aktif selama 30 menit. Silakan masuk kembali.',
   account_inactive: 'Akun Anda tidak aktif (diblokir atau sedang dalam proses penghapusan).',
   session_revoked: 'Sesi Anda telah berakhir. Silakan masuk kembali.',
 };

@@ -96,6 +96,7 @@ func InitDB() {
 	err = DB.AutoMigrate(
 		&models.User{},
 		&models.Post{},
+		&models.LoginSession{},
 		&models.PostMedia{},
 		&models.MediaUpload{},
 		&models.PostLink{},

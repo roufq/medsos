@@ -186,6 +186,9 @@ func (s *authService) Refresh(req *dto.RefreshRequest) (*dto.AuthResponse, error
 	}
 	// Blocked/deleted accounts and revoked sessions may not mint new tokens.
 	if _, err := session.Validate(claims); err != nil {
+		if errors.Is(err, session.ErrIdleExpired) {
+			return nil, err
+		}
 		return nil, errors.New("invalid or expired refresh token")
 	}
 	// Rotation: each refresh token is single-use.
@@ -198,22 +201,36 @@ func (s *authService) Refresh(req *dto.RefreshRequest) (*dto.AuthResponse, error
 	if err != nil {
 		return nil, errors.New("user not found")
 	}
-	return issueTokens(user)
+	return issueTokens(user, claims.SessionID)
 }
 
 // Logout revokes the given refresh token so it cannot be replayed.
 func (s *authService) Logout(refreshToken string) {
 	if claims, err := jwt.ValidateRefreshToken(refreshToken); err == nil {
 		_ = session.RevokeRefresh(claims)
+		session.End(claims.SessionID)
 	}
 }
 
-func issueTokens(user *models.User) (*dto.AuthResponse, error) {
-	accessToken, err := jwt.GenerateAccessToken(user)
+func issueTokens(user *models.User, existingID ...string) (*dto.AuthResponse, error) {
+	id := ""
+	if len(existingID) > 0 {
+		id = existingID[0]
+	}
+	if id == "" {
+		var err error
+		id, err = session.Start(user.ID)
+		if err != nil {
+			return nil, err
+		}
+	} else if err := session.Extend(id); err != nil {
+		return nil, err
+	}
+	accessToken, err := jwt.GenerateAccessToken(user, id)
 	if err != nil {
 		return nil, err
 	}
-	refreshToken, err := jwt.GenerateRefreshToken(user)
+	refreshToken, err := jwt.GenerateRefreshToken(user, id)
 	if err != nil {
 		return nil, err
 	}

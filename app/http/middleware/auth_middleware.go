@@ -64,6 +64,10 @@ func AuthMiddleware() goravelhttp.Middleware {
 			c.Request().AbortWithStatusJson(http.StatusForbidden, goravelhttp.Json{"error": "Account is not active", "code": "account_inactive"})
 			return
 		}
+		if errors.Is(err, session.ErrIdleExpired) {
+			c.Request().AbortWithStatusJson(http.StatusUnauthorized, goravelhttp.Json{"error": "Session expired due to inactivity", "code": "session_idle_expired"})
+			return
+		}
 		if err != nil {
 			c.Request().AbortWithStatusJson(http.StatusUnauthorized, goravelhttp.Json{"error": "Session has been revoked", "code": "session_revoked"})
 			return

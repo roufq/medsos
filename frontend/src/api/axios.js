@@ -61,6 +61,7 @@ api.interceptors.response.use(
       goToLogin('account_inactive');
       return Promise.reject(error);
     }
+    if (status === 401 && code === 'session_idle_expired') { goToLogin('session_idle_expired'); return Promise.reject(error); }
     const isAuthCall = /\/auth\/(refresh|login|register|logout)/.test(originalRequest.url || '');
     if (status === 401 && !originalRequest._retry && !isAuthCall) {
       originalRequest._retry = true;
@@ -68,7 +69,7 @@ api.interceptors.response.use(
         await refreshSession();
         return api(originalRequest);
       } catch (refreshError) {
-        goToLogin(code === 'session_revoked' ? 'session_revoked' : '');
+        goToLogin(refreshError.response?.data?.code === 'session_idle_expired' ? 'session_idle_expired' : code === 'session_revoked' ? 'session_revoked' : '');
         return Promise.reject(refreshError);
       }
     }
