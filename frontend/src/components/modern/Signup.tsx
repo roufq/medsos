@@ -1,239 +1,40 @@
-import { useState, FormEvent } from 'react';
-import { Eye, EyeOff, ArrowRight, Shield, Zap, Users, BarChart3, HelpCircle, CheckCircle } from 'lucide-react';
+import { useLanguage } from "../../context/LanguageContext";import { useState, FormEvent } from 'react';
+import { Mail, Lock, Eye, EyeOff, ArrowRight, UserRound, Smartphone, Calendar, Globe, MapPin, Building2, Loader2 } from 'lucide-react';
 import OAuthButtons from './OAuthButtons';
-
-interface SignupProps {
-	onRegister: (email: string, fullName: string, password?: string, extra?: Record<string, string>) => void;
-	onNavigateToLogin: () => void;
-	onOAuth: (provider: string) => void;
-}
-
-export default function Signup({ onRegister, onNavigateToLogin, onOAuth }: SignupProps) {
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [email, setEmail] = useState('');
-  const [username, setUsername] = useState('');
-  const [accountType, setAccountType] = useState('personal');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    if (!email) return;
-    const fullName = `${firstName} ${lastName}`.trim();
-    onRegister(email, fullName, password, { username, account_type: accountType });
+import AuthShowcase from './AuthShowcase';
+interface SignupProps {onRegister: (email: string, fullName: string, password?: string, extra?: any) => void | Promise<void>;onNavigateToLogin: () => void;onOAuth: (provider: string) => void;}
+const INTERESTS = ['Teknologi', 'Olahraga', 'Musik', 'Film & TV', 'Travel', 'Kuliner', 'Fashion', 'Game', 'Bisnis', 'Lainnya'];
+export default function Signup({ onRegister, onNavigateToLogin, onOAuth }: SignupProps) {const { t } = useLanguage();
+  const [form, setForm] = useState({ name: '', email: '', password: '', confirm: '', phone: '', dial: '+62', gender: '', birth_date: '', country: 'Indonesia', location: '', city: '' });
+  const [interests, setInterests] = useState<string[]>([]);const [showPassword, setShowPassword] = useState(false);const [showConfirm, setShowConfirm] = useState(false);const [agree, setAgree] = useState(false);const [error, setError] = useState('');const [busy, setBusy] = useState(false);
+  const set = (key: string, value: string) => setForm((current) => ({ ...current, [key]: value }));
+  const submit = async (event: FormEvent) => {
+    event.preventDefault();if (busy) return;setError('');
+    if (form.password !== form.confirm) {setError('Konfirmasi password tidak sama.');return;}
+    if (!agree) {setError('Persetujuan diperlukan untuk melanjutkan.');return;}
+    setBusy(true);
+    const phone = form.phone ? form.dial + form.phone.replace(/\D/g, '').replace(/^0+/, '') : '';
+    try {await onRegister(form.email, form.name.trim(), form.password, { phone, phone_country: form.dial === '+62' ? 'ID' : form.dial === '+60' ? 'MY' : 'SG', profile: { ...(form.gender ? { gender: form.gender } : {}), birth_date: form.birth_date, country: form.country, location: form.location, city: form.city, interests } });} finally {setBusy(false);}
   };
-
-  return (
-    <div className="min-h-screen flex items-stretch select-none">
-      
-      {/* Left Column: Brand Benefits & Testimonial testimonials */}
-      <aside className="hidden lg:flex flex-col justify-between w-1/2 p-12 bg-primary relative overflow-hidden text-white">
-        {/* Background visual geometry pattern */}
-        <div className="absolute inset-0 pointer-events-none opacity-30 select-none">
-          <div className="absolute top-[20%] right-[-10%] w-[320px] h-[320px] rounded-full border border-white/20" />
-          <div className="absolute bottom-[-10%] left-[-10%] w-[280px] h-[280px] rounded-full border border-white/20" />
-        </div>
-
-        <div className="relative z-10">
-          {/* Logo brand details header */}
-          <div className="flex items-center gap-3 mb-12">
-            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center">
-              <svg className="w-6 h-6 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-                <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-              </svg>
-            </div>
-            <h1 className="text-xl font-bold tracking-tight">Connect Modern</h1>
-          </div>
-
-          <h2 className="text-4xl lg:text-5xl font-black leading-tight max-w-md mb-6 tracking-tight">
-            Elevate your professional trajectory.
-          </h2>
-          <p className="text-white/80 text-base max-w-sm mb-12 font-medium leading-relaxed">
-            Join a curated network of 50,000+ industry specialists and unlock tools designed for modern career growth.
-          </p>
-
-          {/* Social Benefit Cards */}
-          <div className="space-y-6 max-w-md">
-            <div className="flex items-start gap-4 p-5 bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 transition-transform hover:scale-102 cursor-default">
-              <div className="p-2.5 bg-white/20 rounded-xl">
-                <Users className="w-5 h-5" />
-              </div>
-              <div>
-                <h4 className="font-bold text-sm">Strategic Alliances</h4>
-                <p className="text-xs text-white/70 mt-1">Connect with decision-makers using our AI-driven matchmaking algorithm.</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-4 p-5 bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 transition-transform hover:scale-102 cursor-default">
-              <div className="p-2.5 bg-white/20 rounded-xl">
-                <BarChart3 className="w-5 h-5" />
-              </div>
-              <div>
-                <h4 className="font-bold text-sm">Growth Insights</h4>
-                <p className="text-xs text-white/70 mt-1">Access exclusive market data and career sentiment analytics for your niche.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Product statement */}
-        <div className="relative z-10 mt-auto max-w-md">
-          <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-6">
-            <p className="text-sm leading-relaxed text-white/90">Create an account to connect with real users, publish posts, manage portfolios, and discover opportunities stored in this application's database.</p>
-          </div>
-        </div>
-      </aside>
-
-      {/* Right Column: Registration Form layout stream */}
-      <main className="flex-grow flex flex-col justify-center items-center p-6 sm:p-12 lg:p-20 bg-background min-h-screen">
-        <div className="w-full max-w-[480px]">
-          
-          {/* Mobile adaptive landing header logo */}
-          <div className="lg:hidden flex items-center gap-3 mb-10">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white">
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-              </svg>
-            </div>
-            <h2 className="text-lg font-bold text-text-primary">Connect Modern</h2>
-          </div>
-
-          <div className="mb-8">
-            <h2 className="text-2xl md:text-3xl font-black text-text-primary mb-1.5 tracking-tight">Create Your Account</h2>
-            <p className="text-xs text-text-secondary">
-              Already have an account?{' '}
-              <button 
-                type="button"
-                onClick={onNavigateToLogin}
-                className="text-primary font-bold hover:underline cursor-pointer"
-              >
-                Log in
-              </button>
-            </p>
-          </div>
-
-          {/* Social signup quick routes */}
-          <div className="mb-8"><OAuthButtons onOAuth={onOAuth} verb="Daftar" /></div>
-
-          <div className="relative flex items-center mb-8 select-none">
-            <div className="flex-grow border-t border-outline-variant/60" />
-            <span className="flex-shrink mx-4 text-[9px] font-bold text-outline uppercase tracking-widest">Or continue with email</span>
-            <div className="flex-grow border-t border-outline-variant/60" />
-          </div>
-
-          {/* Real interactive Registration Form details */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-text-primary pl-0.5">First Name</label>
-                <input 
-                  type="text"
-                  required
-                  placeholder="John" 
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  className="w-full h-11 px-4 bg-white border border-outline-variant rounded-xl focus:ring-1 focus:ring-primary focus:border-primary transition-all outline-none text-xs text-text-primary"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-text-primary pl-0.5">Last Name</label>
-                <input 
-                  type="text"
-                  required
-                  placeholder="Doe" 
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  className="w-full h-11 px-4 bg-white border border-outline-variant rounded-xl focus:ring-1 focus:ring-primary focus:border-primary transition-all outline-none text-xs text-text-primary"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-text-primary pl-0.5">Email Address</label>
-              <input 
-                type="email"
-                required
-                placeholder="john.doe@company.com" 
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full h-11 px-4 bg-white border border-outline-variant rounded-xl focus:ring-1 focus:ring-primary focus:border-primary transition-all outline-none text-xs text-text-primary"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-text-primary pl-0.5">Username (opsional)</label>
-                <input
-                  type="text"
-                  placeholder="john_doe"
-                  pattern="[a-z0-9_]{3,40}"
-                  title="3–40 huruf kecil, angka, atau garis bawah"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value.toLowerCase())}
-                  className="w-full h-11 px-4 bg-white border border-outline-variant rounded-xl focus:ring-1 focus:ring-primary focus:border-primary transition-all outline-none text-xs text-text-primary"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-text-primary pl-0.5">Jenis akun</label>
-                <select
-                  value={accountType}
-                  onChange={(e) => setAccountType(e.target.value)}
-                  className="w-full h-11 px-4 bg-white border border-outline-variant rounded-xl focus:ring-1 focus:ring-primary focus:border-primary transition-all outline-none text-xs text-text-primary"
-                >
-                  <option value="personal">Pribadi</option>
-                  <option value="business">Bisnis</option>
-                  <option value="team">Tim</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="space-y-1.5 relative">
-              <label className="text-xs font-bold text-text-primary pl-0.5">Create Password</label>
-              <input 
-                type={showPassword ? 'text' : 'password'}
-                required
-                placeholder="••••••••" 
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full h-11 px-4 pr-11 bg-white border border-outline-variant rounded-xl focus:ring-1 focus:ring-primary focus:border-primary transition-all outline-none text-xs text-text-primary"
-              />
-              <button 
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3.5 top-8.5 text-outline hover:text-text-primary transition-colors cursor-pointer"
-              >
-                {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
-              </button>
-              <p className="text-[10px] text-text-secondary pl-0.5 mt-1">Must be at least 8 characters with one number.</p>
-            </div>
-
-            <div className="pt-4">
-              <button 
-                type="submit"
-                className="w-full h-12 bg-primary text-white font-bold rounded-xl shadow-lg shadow-primary/20 hover:bg-primary-container transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer text-xs"
-              >
-                <span>Get Started</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-
-            <p className="text-[10px] text-center text-outline leading-relaxed px-4 pt-2">
-              By clicking "Get Started", you agree to our{' '}
-              <a href="#" className="font-semibold text-text-primary hover:underline">Terms of Service</a>{' '}
-              and{' '}
-              <a href="#" className="font-semibold text-text-primary hover:underline">Privacy Policy</a>.
-            </p>
-
-          </form>
-
-        </div>
-      </main>
-
-    </div>
-  );
+  return <AuthShowcase signup><section className="auth-form-panel"><h2>{t("Daftar Akun Baru")}</h2><p className="auth-form-description">{t("Isi data di bawah ini untuk membuat akun Postterest.")}</p><form onSubmit={submit} className="auth-register-form">
+    <fieldset><legend>{t("Informasi Akun")}</legend><div className="auth-form-grid">
+      <label className="auth-input-wrap auth-full"><UserRound size={17} /><input aria-label={t("Nama lengkap")} autoComplete="name" required minLength={2} maxLength={100} value={form.name} onChange={(e) => set('name', e.target.value)} placeholder={t("Nama lengkap")} /></label>
+      <div><label className="auth-input-wrap"><Mail size={17} /><input aria-label={t("Email address")} type="email" autoComplete="email" required value={form.email} onChange={(e) => set('email', e.target.value)} placeholder={t("Email address")} /></label><small>{t("Gunakan email aktif kamu")}</small></div>
+      <div><label className="auth-input-wrap"><Lock size={17} /><input aria-label="Password" type={showPassword ? 'text' : 'password'} autoComplete="new-password" required minLength={8} maxLength={72} value={form.password} onChange={(e) => set('password', e.target.value)} placeholder="Password" /><button type="button" aria-label={t("Tampilkan password")} onClick={() => setShowPassword(!showPassword)}>{showPassword ? <Eye size={16} /> : <EyeOff size={16} />}</button></label><small>{t("Minimal 8 karakter")}</small></div>
+      <div className="auth-full"><label className="auth-input-wrap"><Lock size={17} /><input aria-label={t("Konfirmasi Password")} type={showConfirm ? 'text' : 'password'} autoComplete="new-password" required value={form.confirm} onChange={(e) => set('confirm', e.target.value)} placeholder={t("Konfirmasi Password")} /><button type="button" aria-label={t("Tampilkan konfirmasi password")} onClick={() => setShowConfirm(!showConfirm)}>{showConfirm ? <Eye size={16} /> : <EyeOff size={16} />}</button></label><small>{t("Masukkan kembali password kamu")}</small></div>
+    </div></fieldset>
+    <fieldset><legend>{t("Informasi Pribadi")}</legend><div className="auth-form-grid">
+      <div className="auth-full"><label className="auth-input-wrap"><Smartphone size={17} /><select aria-label="Kode negara telepon" value={form.dial} onChange={(e) => set('dial', e.target.value)} className="auth-dial"><option>+62</option><option>+60</option><option>+65</option></select><input aria-label="Nomor HP" type="tel" autoComplete="tel-national" value={form.phone} onChange={(e) => set('phone', e.target.value)} placeholder="Nomor HP (opsional)" /></label><small>Gunakan nomor HP aktif, contoh: 0812 3456 7890</small></div>
+      <label className="auth-input-wrap"><UserRound size={17} /><select aria-label={t("Jenis Kelamin")} value={form.gender} onChange={(e) => set('gender', e.target.value)}><option value="">{t("Pilih jenis kelamin")}</option><option value="male">{t("Laki-laki")}</option><option value="female">{t("Perempuan")}</option><option value="other">{t("Lainnya")}</option></select></label>
+      <label className="auth-input-wrap"><Calendar size={17} /><input aria-label={t("Tanggal Lahir")} type="date" value={form.birth_date} onChange={(e) => set('birth_date', e.target.value)} /></label>
+    </div></fieldset>
+    <fieldset><legend>{t("Lokasi")}</legend><div className="auth-form-grid">
+      <label className="auth-input-wrap"><Globe size={17} /><select aria-label={t("Negara")} value={form.country} onChange={(e) => set('country', e.target.value)}><option>Indonesia</option><option>Malaysia</option><option>Singapura</option><option>Australia</option><option value="Lainnya">{t("Lainnya")}</option></select></label>
+      <label className="auth-input-wrap"><MapPin size={17} /><input aria-label={t("Provinsi")} value={form.location} maxLength={100} onChange={(e) => set('location', e.target.value)} placeholder={t("Provinsi / wilayah")} /></label>
+      <label className="auth-input-wrap auth-full"><Building2 size={17} /><input aria-label="Kota atau Kabupaten" value={form.city} maxLength={100} onChange={(e) => set('city', e.target.value)} placeholder={t("Kota / Kabupaten")} /></label>
+    </div></fieldset>
+    <fieldset><legend>{t("Minat (Interest)")}</legend><p className="auth-interest-hint">{t("Pilih minat kamu (bisa lebih dari satu)")}</p><div className="auth-interests">{INTERESTS.map((interest) => <label key={interest}><input type="checkbox" checked={interests.includes(interest)} onChange={(e) => setInterests(e.target.checked ? [...interests, interest] : interests.filter((item) => item !== interest))} />{interest}</label>)}</div></fieldset>
+    <label className="auth-agree"><input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} required /><span>Saya menyetujui syarat penggunaan dan kebijakan privasi Postterest.</span></label>
+    {error && <p role="alert" className="auth-inline-error">{error}</p>}<button type="submit" disabled={busy} className="auth-primary">{busy ? <Loader2 size={16} className="animate-spin" /> : null}{t("Daftar Sekarang")}<ArrowRight size={16} /></button>
+  </form><div className="auth-divider"><span>{t("atau daftar dengan")}</span></div><OAuthButtons onOAuth={onOAuth} verb="Daftar" /><p className="auth-switch">{t("Sudah punya akun?")}<button type="button" onClick={onNavigateToLogin}>{t("Login sekarang")}</button></p></section></AuthShowcase>;
 }

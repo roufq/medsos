@@ -9,7 +9,7 @@ import (
 type PostRepository interface {
 	Create(post *models.Post) error
 	GetByID(id int64) (*models.Post, error)
-	ListAll(viewerID int64, limit, offset int, beforeID int64, shortsOnly bool) ([]models.Post, error)
+	ListAll(viewerID int64, limit, offset int, beforeID int64, shortsOnly bool, kind ...string) ([]models.Post, error)
 	ListByUserID(viewerID, userID int64) ([]models.Post, error)
 	GetForViewer(viewerID, postID int64) (*models.Post, error)
 	GetManyForViewer(viewerID int64, ids []int64) ([]models.Post, error)
@@ -83,7 +83,7 @@ func (r *postRepo) GetManyForViewer(viewerID int64, ids []int64) ([]models.Post,
 	return result, nil
 }
 
-func (r *postRepo) ListAll(viewerID int64, limit, offset int, beforeID int64, shortsOnly bool) ([]models.Post, error) {
+func (r *postRepo) ListAll(viewerID int64, limit, offset int, beforeID int64, shortsOnly bool, kind ...string) ([]models.Post, error) {
 	var posts []models.Post
 	query := db.DB.Model(&models.Post{}).
 		Select(`posts.*,
@@ -96,6 +96,18 @@ func (r *postRepo) ListAll(viewerID int64, limit, offset int, beforeID int64, sh
 		Where(`EXISTS (SELECT 1 FROM users author WHERE author.id = posts.user_id AND author.account_status = 'active')`).
 		Where(`NOT EXISTS (SELECT 1 FROM user_blocks b WHERE (b.blocker_id = ? AND b.blocked_id = posts.user_id) OR (b.blocker_id = posts.user_id AND b.blocked_id = ?))`, viewerID, viewerID).
 		Where(`(posts.user_id = ? OR (posts.visibility = 'public' AND EXISTS (SELECT 1 FROM users author WHERE author.id = posts.user_id AND author.is_private = 0)) OR EXISTS (SELECT 1 FROM follows f WHERE f.follower_id = ? AND f.followed_id = posts.user_id AND f.status = 'accepted'))`, viewerID, viewerID)
+	if len(kind) > 0 {
+		switch kind[0] {
+		case "shop", "image", "link":
+			query = query.Where("posts.post_type = ?", kind[0])
+		case "poster":
+			query = query.Where("posts.post_type = ?", "image")
+		case "location":
+			query = query.Where("posts.location IS NOT NULL AND posts.location <> ''")
+		case "video":
+			query = query.Where("EXISTS (SELECT 1 FROM post_media m WHERE m.post_id = posts.id AND m.media_type = 'video')")
+		}
+	}
 	if shortsOnly {
 		query = query.Where(`EXISTS (SELECT 1 FROM post_media m WHERE m.post_id = posts.id AND m.is_short = 1)`)
 	}

@@ -1,5 +1,6 @@
+import { postUrl } from '../utils/postUrl';
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Loader, ChevronLeft } from 'lucide-react';
 import { postApi } from '../api/postApi';
 import AppLayout from '../components/modern/AppLayout';
@@ -8,6 +9,7 @@ import PostCard from '../components/modern/PostCard';
 export default function PostPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [post, setPost] = useState(null);
   const [error, setError] = useState('');
 
@@ -16,6 +18,10 @@ export default function PostPage() {
     setError('');
     postApi.getPost(id).then(setPost).catch((e) => setError(e.response?.data?.error || 'Postingan tidak ditemukan.'));
   }, [id]);
+
+  useEffect(() => {
+    if (post?.public_hash && (String(post.id) === id || post.public_hash === id) && location.pathname !== postUrl(post)) navigate(postUrl(post), { replace: true });
+  }, [post, id, location.pathname, navigate]);
 
   return (
     <AppLayout currentTab="">

@@ -1,11 +1,15 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import MentionInput from './MentionInput';
+import { useLanguage } from "../../context/LanguageContext";import { useEffect, useMemo, useRef, useState } from 'react';
 import { X, Image as ImageIcon, Video, Link as LinkIcon, MapPin, Loader2, ShoppingBag, FileText, LocateFixed, Hash, AtSign, Plus, Save, Send, Heart, MessageCircle, Share2, Eye, MoreHorizontal, Crop } from 'lucide-react';
+import HashtagInput from './HashtagInput';
 import { postApi } from '../../api/postApi';
 import { useAuth } from '../../context/AuthContext';
-import { RichText, formatPrice, POST_RULES as R, countWords, currencyDecimals, mergeTokens, parseTokens, toMinorUnits, tokensInText } from '../../utils/postFormat';
+import { RichText, formatPrice, POST_RULES as R, currencyDecimals, mergeTokens, parseTokens, toMinorUnits, tokensInText } from '../../utils/postFormat';
 
 interface CreatePostModalProps {
   isOpen: boolean;
+  initialType?: string;
+  onTypeChange?: (type: string) => void;
   onClose: () => void;
   /** Called with the created or updated post returned by the API. */
   onSaved?: (post: any) => void;
@@ -14,7 +18,7 @@ interface CreatePostModalProps {
   currentUser?: any;
 }
 
-interface MediaItem { url: string; type: 'image' | 'video'; duration: number; }
+interface MediaItem {url: string;type: 'image' | 'video';duration: number;}
 
 const CURRENCIES = ['IDR', 'USD', 'EUR', 'SGD', 'MYR', 'JPY', 'GBP', 'AUD', 'CNY', 'KRW', 'THB', 'PHP', 'VND', 'INR', 'SAR', 'AED'];
 const CATEGORIES = ['Elektronik', 'Handphone & Aksesoris', 'Komputer & Laptop', 'Fashion Pria', 'Fashion Wanita', 'Fashion Anak', 'Kecantikan', 'Kesehatan', 'Rumah & Dapur', 'Otomotif', 'Olahraga & Outdoor', 'Hobi & Koleksi', 'Buku & Alat Tulis', 'Makanan & Minuman', 'Ibu & Bayi', 'Properti', 'Jasa', 'Lainnya'];
@@ -42,7 +46,7 @@ async function reverseGeocode(lat: number, lng: number): Promise<string> {
   return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
 }
 
-export default function CreatePostModal({ isOpen, onClose, onSaved, editPost }: CreatePostModalProps) {
+export default function CreatePostModal({ isOpen, onClose, onSaved, editPost, initialType, onTypeChange }: CreatePostModalProps) {const { t, language } = useLanguage();
   const { user } = useAuth();
   const isEdit = Boolean(editPost);
   const [activeType, setActiveType] = useState('image');
@@ -69,22 +73,45 @@ export default function CreatePostModal({ isOpen, onClose, onSaved, editPost }: 
   const videoInput = useRef<HTMLInputElement>(null);
   const mediaTouched = useRef(false);
 
+  const sections = useRef<Record<string, any>>({});
+  const initializedKey = useRef('');
+  const sectionVersion = useRef(0);
+  const captureSection = () => ({ title, content, media, linkUrl, linkPreview, hashtagInput, mentionInput, location, visibility, shop, activeDetail });
+  const restoreSection = (type: string, draft: any = {}) => {
+    sectionVersion.current++;
+    setTitle(draft.title || '');setContent(draft.content || '');setMedia(draft.media || []);
+    setLinkUrl(draft.linkUrl || '');setLinkPreview(draft.linkPreview || null);
+    setHashtagInput(draft.hashtagInput || '');setMentionInput(draft.mentionInput || '');
+    setLocation(draft.location || '');setVisibility(draft.visibility || 'public');
+    setShop(draft.shop || { price: '', currency: 'IDR', category: '', condition: '', stock: '', brand: '', fulfillment: [], payment: '' });
+    setMode(type === 'shop' ? 'shop' : 'post');setActiveType(type);
+    setActiveDetail(draft.activeDetail || (type === 'link' || type === 'location' ? type : ''));
+    setError('');setDraftMessage('');
+  };
+
   useEffect(() => {
     if (!isOpen) return;
     setError('');
     mediaTouched.current = false;
     setDraftMessage('');
     if (!editPost) {
+      if (initializedKey.current === draftKey) {
+        if (initialType && initialType !== activeType) selectType(initialType);else
+        onTypeChange?.(activeType);
+        return;
+      }
+      initializedKey.current = draftKey;
+      sections.current = {};
+      let restoredType = initialType || 'image';
       try {
         const draft = JSON.parse(localStorage.getItem(draftKey) || 'null');
         if (draft) {
-          setTitle(draft.title || ''); setContent(draft.content || ''); setMedia(draft.media || []);
-          setLinkUrl(draft.linkUrl || ''); setHashtagInput(draft.hashtagInput || ''); setMentionInput(draft.mentionInput || '');
-          setLocation(draft.location || ''); setVisibility(draft.visibility || 'public'); setMode(draft.mode || 'post');
-          setActiveType(draft.activeType || 'image'); if (draft.shop) setShop(draft.shop);
-          setDraftMessage('Draft terakhir dipulihkan.');
+          sections.current = draft.sections || { [draft.activeType || 'image']: draft };
+          restoredType = initialType || draft.activeType || 'image';
         }
-      } catch { setDraftMessage('Draft tidak dapat dipulihkan.'); }
+      } catch {/* Start with empty sections if browser storage is unavailable. */}
+      restoreSection(restoredType, sections.current[restoredType]);
+      onTypeChange?.(restoredType);
       return;
     }
     setMode(editPost.post_type === 'shop' ? 'shop' : 'post');
@@ -100,26 +127,26 @@ export default function CreatePostModal({ isOpen, onClose, onSaved, editPost }: 
       const s = editPost.shop;
       setShop({
         price: String(s.price_minor / 10 ** currencyDecimals(s.currency)), currency: s.currency, category: s.category, condition: s.condition,
-        stock: s.stock ?? '', brand: s.brand || '', fulfillment: (s.fulfillment || '').split(',').filter(Boolean), payment: s.payment_method || '',
+        stock: s.stock ?? '', brand: s.brand || '', fulfillment: (s.fulfillment || '').split(',').filter(Boolean), payment: s.payment_method || ''
       });
     }
-  }, [isOpen, editPost, draftKey]);
+  }, [isOpen, editPost, draftKey, initialType]);
 
   useEffect(() => {
     if (!isOpen) return;
     const previous = document.body.style.overflow;
     const previousFocus = document.activeElement as HTMLElement | null;
     document.body.style.overflow = 'hidden';
-    const keydown = (event: KeyboardEvent) => { if (event.key === 'Escape' && !submitting && !uploading) onClose(); };
+    const keydown = (event: KeyboardEvent) => {if (event.key === 'Escape' && !submitting && !uploading) onClose();};
     document.addEventListener('keydown', keydown);
     const frame = requestAnimationFrame(() => document.querySelector<HTMLElement>('.new-post-close')?.focus());
-    return () => { document.body.style.overflow = previous; document.removeEventListener('keydown', keydown); cancelAnimationFrame(frame); previousFocus?.focus(); };
+    return () => {document.body.style.overflow = previous;document.removeEventListener('keydown', keydown);cancelAnimationFrame(frame);previousFocus?.focus();};
   }, [isOpen, onClose, submitting, uploading]);
 
   const isShop = mode === 'shop';
   const images = media.filter((m) => m.type === 'image');
   const videos = media.filter((m) => m.type === 'video');
-  const words = countWords(content);
+  const characters = [...content.trim()].length;
   const hashtags = useMemo(() => mergeTokens(parseTokens(hashtagInput, '#'), tokensInText(content, '#')), [hashtagInput, content]);
   const mentions = useMemo(() => mergeTokens(parseTokens(mentionInput, '@'), tokensInText(content, '@')), [mentionInput, content]);
   const maxTags = isShop ? R.shopHashtagsMax : R.hashtagsMax;
@@ -129,8 +156,8 @@ export default function CreatePostModal({ isOpen, onClose, onSaved, editPost }: 
   const problems: string[] = [];
   const titleLength = [...title.trim()].length;
   if (titleLength < R.titleMin || titleLength > R.titleMax) problems.push(`Judul wajib ${R.titleMin}–${R.titleMax} karakter.`);
-  if (isShop ? words === 0 : words < R.descriptionMinWords) problems.push(isShop ? 'Deskripsi produk wajib diisi.' : `Deskripsi minimal ${R.descriptionMinWords} kata (sekarang ${words}).`);
-  if (words > R.descriptionMaxWords) problems.push(`Deskripsi maksimal ${R.descriptionMaxWords} kata.`);
+  if (isShop ? characters === 0 : characters < R.descriptionMinChars) problems.push(isShop ? 'Deskripsi produk wajib diisi.' : language === 'en' ? `Description requires at least ${R.descriptionMinChars} characters (currently ${characters}).` : `Deskripsi minimal ${R.descriptionMinChars} karakter (sekarang ${characters}).`);
+  if (characters > R.descriptionMaxChars) problems.push(language === 'en' ? `Description allows at most ${R.descriptionMaxChars} characters.` : `Deskripsi maksimal ${R.descriptionMaxChars} karakter.`);
   if (hashtags.length < R.hashtagsMin || hashtags.length > maxTags) problems.push(`Hashtag wajib ${R.hashtagsMin}–${maxTags} (sekarang ${hashtags.length}).`);
   if (mentions.length < minMentions || mentions.length > R.mentionsMax) problems.push(`Mention ${minMentions}–${R.mentionsMax} akun dengan @username (sekarang ${mentions.length}).`);
   if (!isShop && media.length > 0 && linkUrl.trim()) problems.push('Pilih salah satu: media atau link URL.');
@@ -170,28 +197,34 @@ export default function CreatePostModal({ isOpen, onClose, onSaved, editPost }: 
     }
   };
 
-  const removeMedia = (url: string) => { mediaTouched.current = true; setMedia((current) => current.filter((m) => m.url !== url)); };
+  const removeMedia = (url: string) => {mediaTouched.current = true;setMedia((current) => current.filter((m) => m.url !== url));};
 
   const previewLink = async () => {
+    const version = sectionVersion.current;
     setLinkPreview(null);
-    try { setLinkPreview(await postApi.getLinkPreview(linkUrl.trim())); } catch (err) { setError(errorText(err, 'Pratinjau link gagal')); }
+    try {
+      const preview = await postApi.getLinkPreview(linkUrl.trim());
+      if (version === sectionVersion.current) setLinkPreview(preview);
+    } catch (err) {
+      if (version === sectionVersion.current) setError(errorText(err, 'Pratinjau link gagal'));
+    }
   };
 
   const useMyLocation = () => {
-    if (!navigator.geolocation) { setError('Browser tidak mendukung lokasi.'); return; }
+    if (!navigator.geolocation) {setError('Browser tidak mendukung lokasi.');return;}
     setLocating(true);
     navigator.geolocation.getCurrentPosition(async (pos) => {
-      try { setLocation(await reverseGeocode(pos.coords.latitude, pos.coords.longitude)); } catch { setError('Gagal menentukan nama lokasi.'); } finally { setLocating(false); }
-    }, () => { setLocating(false); setError('Izin lokasi ditolak.'); }, { timeout: 10000 });
+      try {setLocation(await reverseGeocode(pos.coords.latitude, pos.coords.longitude));} catch {setError('Gagal menentukan nama lokasi.');} finally {setLocating(false);}
+    }, () => {setLocating(false);setError('Izin lokasi ditolak.');}, { timeout: 10000 });
   };
 
   const submit = async () => {
-    if (problems.length) { setError(problems[0]); return; }
+    if (problems.length) {setError(problems[0]);return;}
     setSubmitting(true);
     setError('');
     const shopPayload = isShop ? {
       price_minor: toMinorUnits(shop.price, shop.currency), currency: shop.currency, category: shop.category, condition: shop.condition,
-      stock: shop.stock === '' ? null : Number(shop.stock), brand: shop.brand, fulfillment: shop.fulfillment.join(','), payment_method: shop.payment,
+      stock: shop.stock === '' ? null : Number(shop.stock), brand: shop.brand, fulfillment: shop.fulfillment.join(','), payment_method: shop.payment
     } : undefined;
     try {
       let saved;
@@ -200,17 +233,21 @@ export default function CreatePostModal({ isOpen, onClose, onSaved, editPost }: 
           title: title.trim(), content: content.trim(), hashtags, mentions, location: location.trim(), visibility,
           ...(editPost.post_type === 'link' ? { link_url: linkUrl.trim() } : {}),
           ...(mediaTouched.current ? { media_urls: media.map((m) => m.url) } : {}),
-          ...(shopPayload ? { shop: shopPayload } : {}),
+          ...(shopPayload ? { shop: shopPayload } : {})
         });
       } else {
         saved = await postApi.createPost({
           title: title.trim(), content: content.trim(), post_type: postType, hashtags, mentions, location: location.trim(), visibility,
           link_url: postType === 'link' ? linkUrl.trim() : '',
-          ...(isShop ? { image_urls: images.map((m) => m.url), video_url: videos[0]?.url || '', shop: shopPayload } : { media_urls: media.map((m) => m.url) }),
+          ...(isShop ? { image_urls: images.map((m) => m.url), video_url: videos[0]?.url || '', shop: shopPayload } : { media_urls: media.map((m) => m.url) })
         });
-        try { localStorage.removeItem(draftKey); } catch { /* posting succeeded */ }
-        setMode('post'); setActiveType('image'); setActiveDetail('');
-        setTitle(''); setContent(''); setMedia([]); setLinkUrl(''); setLinkPreview(null); setHashtagInput(''); setMentionInput(''); setLocation('');
+        delete sections.current[activeType];
+        try {
+          if (Object.keys(sections.current).length) localStorage.setItem(draftKey, JSON.stringify({ activeType, sections: sections.current }));else
+          localStorage.removeItem(draftKey);
+        } catch {/* posting succeeded */}
+        setActiveDetail('');
+        setTitle('');setContent('');setMedia([]);setLinkUrl('');setLinkPreview(null);setHashtagInput('');setMentionInput('');setLocation('');
         setShop({ price: '', currency: 'IDR', category: '', condition: '', stock: '', brand: '', fulfillment: [], payment: '' });
       }
       onSaved?.(saved);
@@ -224,118 +261,124 @@ export default function CreatePostModal({ isOpen, onClose, onSaved, editPost }: 
 
   const saveDraft = () => {
     try {
-      localStorage.setItem(draftKey, JSON.stringify({ title, content, media, linkUrl, hashtagInput, mentionInput, location, visibility, mode, shop, activeType }));
+      sections.current[activeType] = captureSection();
+      localStorage.setItem(draftKey, JSON.stringify({ activeType, sections: sections.current }));
       setDraftMessage('Draft tersimpan di browser ini.');
-    } catch { setError('Draft tidak dapat disimpan di browser ini.'); }
+    } catch {setError('Draft tidak dapat disimpan di browser ini.');}
   };
   const selectType = (type: string) => {
-    setActiveType(type);
-    if (!isEdit) setMode(type === 'shop' ? 'shop' : 'post');
-    if (type === 'link' || type === 'location') setActiveDetail(type);
+    if (type === activeType || uploading || submitting || locating) return;
+    sections.current[activeType] = captureSection();
+    restoreSection(type, sections.current[type]);
+    onTypeChange?.(type);
+    requestAnimationFrame(() => {
+      const selector = type === 'link' ? '.new-post-detail-row input[placeholder="https://..."]' : type === 'location' ? '.new-post-detail-row input[data-field="location"]' : type === 'shop' ? '.new-post-shop-toggle' : '.new-post-media';
+      document.querySelector(selector)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    });
   };
   const addToken = (prefix: string) => {
     setContent((value) => value + (value && !/\s$/.test(value) ? ' ' : '') + prefix);
-    requestAnimationFrame(() => { descriptionInput.current?.focus(); descriptionInput.current?.setSelectionRange(100000, 100000); });
+    requestAnimationFrame(() => {descriptionInput.current?.focus();descriptionInput.current?.setSelectionRange(100000, 100000);});
   };
 
   const cropImage = async () => {
     const item = images[0];
     if (!item || uploading) return;
-    setUploading((n) => n + 1); setError('');
+    setUploading((n) => n + 1);setError('');
     try {
-      const image = new Image(); image.crossOrigin = 'anonymous'; image.src = item.url;
+      const image = new Image();image.crossOrigin = 'anonymous';image.src = item.url;
       await image.decode();
       const size = Math.min(image.naturalWidth, image.naturalHeight);
-      const canvas = document.createElement('canvas'); canvas.width = size; canvas.height = size;
-      const context = canvas.getContext('2d'); if (!context) throw new Error('Crop tidak tersedia.');
+      const canvas = document.createElement('canvas');canvas.width = size;canvas.height = size;
+      const context = canvas.getContext('2d');if (!context) throw new Error('Crop tidak tersedia.');
       context.drawImage(image, (image.naturalWidth - size) / 2, (image.naturalHeight - size) / 2, size, size, 0, 0, size, size);
       const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob((result) => result ? resolve(result) : reject(new Error('Crop gagal.')), 'image/jpeg', .9));
       const result = await postApi.uploadMedia(new File([blob], 'cropped-image.jpg', { type: 'image/jpeg' }));
       mediaTouched.current = true;
       setMedia((current) => current.map((m) => m.url === item.url ? { url: result.url, type: 'image', duration: 0 } : m));
-    } catch (err) { setError(errorText(err, 'Gagal memotong gambar.')); }
-    finally { setUploading((n) => n - 1); }
+    } catch (err) {setError(errorText(err, 'Gagal memotong gambar.'));} finally
+    {setUploading((n) => n - 1);}
   };
 
   const input = 'new-post-input';
   return (
-    <div className="new-post-overlay" onClick={(event) => { if (event.target === event.currentTarget && !submitting && !uploading) onClose(); }}>
+    <div className="new-post-overlay" onClick={(event) => {if (event.target === event.currentTarget && !submitting && !uploading) onClose();}}>
       <div className="new-post-dialog" role="dialog" aria-modal="true" aria-labelledby="new-post-title" onKeyDown={(event) => {
         if (event.key !== 'Tab') return;
         const items = Array.from(event.currentTarget.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), textarea, select, a[href]')).filter((item) => item.getClientRects().length > 0);
-        const first = items[0]; const last = items[items.length - 1];
-        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
-        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+        const first = items[0];const last = items[items.length - 1];
+        if (event.shiftKey && document.activeElement === first) {event.preventDefault();last?.focus();} else
+        if (!event.shiftKey && document.activeElement === last) {event.preventDefault();first?.focus();}
       }}>
-        <button type="button" onClick={onClose} disabled={submitting || uploading > 0} className="new-post-close" aria-label="Tutup"><X size={20} /></button>
+        <button type="button" onClick={onClose} disabled={submitting || uploading > 0} className="new-post-close" aria-label={t("Tutup")}><X size={20} /></button>
         <div className="new-post-form">
-          <h3 id="new-post-title" className="new-post-title">{isEdit ? 'Edit Postingan' : 'Buat Postingan Baru'}</h3>
+          <h3 id="new-post-title" className="new-post-title">{isEdit ? t("Edit Postingan") : t("Buat Postingan Baru")}</h3>
           {!isEdit && <div className="new-post-types" aria-label="Jenis postingan">
-            {[{ id: 'image', label: 'Gambar', icon: ImageIcon }, { id: 'video', label: 'Video', icon: Video }, { id: 'poster', label: 'Poster', icon: FileText }, { id: 'link', label: 'Link', icon: LinkIcon }, { id: 'location', label: 'Lokasi', icon: MapPin }, { id: 'shop', label: 'Shop', icon: ShoppingBag }].map(({ id, label, icon: Icon }) => <button key={id} type="button" aria-pressed={activeType === id} className={activeType === id ? 'active' : ''} onClick={() => selectType(id)}><Icon size={19} />{label}</button>)}
+            {[{ id: 'image', label: t("Gambar"), icon: ImageIcon }, { id: 'video', label: 'Video', icon: Video }, { id: 'poster', label: t("Poster"), icon: FileText }, { id: 'link', label: t("Link"), icon: LinkIcon }, { id: 'location', label: t("Lokasi"), icon: MapPin }, { id: 'shop', label: 'Shop', icon: ShoppingBag }].map(({ id, label, icon: Icon }) => <button key={id} type="button" disabled={uploading > 0 || submitting || locating} aria-pressed={activeType === id} className={activeType === id ? 'active' : ''} onClick={() => selectType(id)}><Icon size={19} />{t(label)}</button>)}
           </div>}
-          <label className="new-post-field"><span>{isShop ? 'Nama Produk' : 'Judul Postingan'} <b>*</b></span><input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={R.titleMax} placeholder="Judul postingan" className={input} /><small>{titleLength}/{R.titleMax}</small></label>
-          <label className="new-post-field"><span>Deskripsi</span><textarea ref={descriptionInput} value={content} onChange={(e) => setContent(e.target.value)} rows={7} placeholder="Bagikan cerita Anda, tambahkan #hashtag dan @username..." className={input} /><small>{words}/{R.descriptionMaxWords} kata</small></label>
+          <label className="new-post-field"><span>{isShop ? t("Nama Produk") : t("Judul Postingan")} <b>*</b></span><input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={R.titleMax} placeholder={t("Judul postingan")} className={input} /><small>{titleLength}/{R.titleMax}</small></label>
+          <label className="new-post-field"><span>{t("Deskripsi")}</span><textarea ref={descriptionInput} value={content} onChange={(e) => { setContent(e.target.value); setError(''); }} rows={7} placeholder={t("Bagikan cerita Anda, tambahkan #hashtag dan @username...")} className={input} /><small className="new-post-description-count">{characters} {t("karakter")}</small></label>
           <div className="new-post-tools">
-            <button type="button" onClick={() => { addToken('#'); setActiveDetail('hashtag'); }}><Hash size={16} />Hashtag</button>
-            <button type="button" onClick={() => setActiveDetail(activeDetail === 'link' ? '' : 'link')}><LinkIcon size={16} />Link</button>
-            <button type="button" onClick={() => { addToken('@'); setActiveDetail('mention'); }}><AtSign size={16} />Mention</button>
-            <button type="button" onClick={() => setActiveDetail(activeDetail === 'location' ? '' : 'location')}><MapPin size={16} />Location</button>
+            <button type="button" onClick={() => {addToken('#');setActiveDetail('hashtag');}}><Hash size={16} />Hashtag</button>
+            <button type="button" onClick={() => setActiveDetail(activeDetail === 'link' ? '' : 'link')}><LinkIcon size={16} />{t("Link")}</button>
+            <button type="button" onClick={() => {setActiveDetail('mention'); requestAnimationFrame(() => document.getElementById('post-mention-entry')?.focus());}}><AtSign size={16} />Mention</button>
+            <button type="button" onClick={() => setActiveDetail(activeDetail === 'location' ? '' : 'location')}><MapPin size={16} />{t("Location")}</button>
           </div>
-          {(activeDetail === 'hashtag' || activeDetail === 'mention') && <div className="new-post-details"><label className="new-post-field"><span>Hashtag</span><input value={hashtagInput} onChange={(e) => setHashtagInput(e.target.value)} placeholder="#travel #indonesia #alam" className={input} /></label><label className="new-post-field"><span>Mention</span><input value={mentionInput} onChange={(e) => setMentionInput(e.target.value)} placeholder="@username" className={input} /></label></div>}
-          {(activeDetail === 'link' || activeType === 'link' || linkUrl) && <div className="new-post-detail-row"><LinkIcon size={17} /><input value={linkUrl} onChange={(e) => { setLinkUrl(e.target.value); setLinkPreview(null); }} placeholder="https://..." className={input} /><button type="button" onClick={previewLink} disabled={!linkUrl.trim()}>Pratinjau</button></div>}
+          {(activeDetail === 'hashtag' || activeDetail === 'mention') && <div className="new-post-details"><HashtagInput value={hashtagInput} onChange={setHashtagInput} textTags={tokensInText(content, '#')} maximum={maxTags} minimum={R.hashtagsMin} /><MentionInput value={mentionInput} onChange={setMentionInput} textMentions={tokensInText(content, '@')} maximum={R.mentionsMax} /></div>}
+          {(activeDetail === 'link' || activeType === 'link' || linkUrl) && <div className="new-post-detail-row"><LinkIcon size={17} /><input value={linkUrl} onChange={(e) => {setLinkUrl(e.target.value);setLinkPreview(null);}} placeholder="https://..." className={input} /><button type="button" onClick={previewLink} disabled={!linkUrl.trim()}>{t("Pratinjau")}</button></div>}
           {linkPreview && <div className="new-post-link-preview">{linkPreview.image && <img src={linkPreview.image} alt="" />}<div><strong>{linkPreview.title}</strong><p>{linkPreview.description}</p></div></div>}
-          {(activeDetail === 'location' || activeType === 'location' || location) && <div className="new-post-detail-row"><MapPin size={17} /><input value={location} maxLength={255} onChange={(e) => setLocation(e.target.value)} placeholder="Lokasi" className={input} /><button type="button" onClick={useMyLocation} disabled={locating}>{locating ? <Loader2 size={16} className="animate-spin" /> : <LocateFixed size={16} />}Lokasi saya</button></div>}
+          {(activeDetail === 'location' || activeType === 'location' || location) && <div className="new-post-detail-row"><MapPin size={17} /><input data-field="location" value={location} maxLength={255} onChange={(e) => setLocation(e.target.value)} placeholder={t("Lokasi")} className={input} /><button type="button" onClick={useMyLocation} disabled={locating}>{locating ? <Loader2 size={16} className="animate-spin" /> : <LocateFixed size={16} />}{t("Lokasi saya")}</button></div>}
           <section className="new-post-media"><h4>Media</h4><div className="new-post-media-grid">
-            {media.map((m) => <div key={m.url} className="new-post-thumbnail">{m.type === 'image' ? <img src={m.url} alt="Media terunggah" /> : <div><Video size={26} /><span>{formatDuration(m.duration)}</span></div>}<button type="button" onClick={() => removeMedia(m.url)} aria-label="Hapus media"><X size={14} /></button></div>)}
-            <button type="button" className="new-post-add-media" disabled={uploading > 0 || (activeType === 'video' ? videos.length > 0 || (!isShop && images.length > 0) : images.length >= R.imagesMax || (!isShop && videos.length > 0))} onClick={() => activeType === 'video' ? videoInput.current?.click() : imageInput.current?.click()}><Plus size={20} /><span>Tambah Media</span><small>{activeType === 'video' ? 'Video, maks. 30 menit' : 'JPG, PNG, GIF, WebP'}<br />{activeType === 'video' ? 'Maks. 1 video' : 'Maks. 10 MB / gambar'}</small></button>
-          </div>{images.length > 0 && <button type="button" className="new-post-crop" onClick={cropImage} disabled={uploading > 0} title="Potong gambar pertama menjadi persegi"><Crop size={15} />Crop persegi</button>}{uploading > 0 && <p className="new-post-uploading"><Loader2 size={16} className="animate-spin" />Mengunggah {uploading} file...</p>}</section>
-          <input ref={imageInput} type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple className="hidden" onChange={(e) => { upload(e.target.files, 'image'); e.target.value = ''; }} />
-          <input ref={videoInput} type="file" accept="video/*,.mkv,.flv,.wmv,.mxf,.ts" className="hidden" onChange={(e) => { upload(e.target.files, 'video'); e.target.value = ''; }} />
-          <label className="new-post-shop-toggle"><input type="checkbox" checked={isShop} disabled={isEdit} onChange={(e) => { setMode(e.target.checked ? 'shop' : 'post'); setActiveType(e.target.checked ? 'shop' : 'image'); }} /><span className="new-post-switch" /><span>Tambahkan ke Shop<small>Jika produk, akan ditampilkan di tab Shop</small></span></label>
-        {isShop && (
+            {media.map((m) => <div key={m.url} className="new-post-thumbnail">{m.type === 'image' ? <img src={m.url} alt="Media terunggah" /> : <div><Video size={26} /><span>{formatDuration(m.duration)}</span></div>}<button type="button" onClick={() => removeMedia(m.url)} aria-label={t("Hapus media")}><X size={14} /></button></div>)}
+            <button type="button" className="new-post-add-media" disabled={uploading > 0 || (activeType === 'video' ? videos.length > 0 || !isShop && images.length > 0 : images.length >= R.imagesMax || !isShop && videos.length > 0)} onClick={() => activeType === 'video' ? videoInput.current?.click() : imageInput.current?.click()}><Plus size={20} /><span>{t("Tambah Media")}</span><small>{activeType === 'video' ? 'Video, maks. 30 menit' : 'JPG, PNG, GIF, WebP'}<br />{activeType === 'video' ? 'Maks. 1 video' : 'Maks. 10 MB / gambar'}</small></button>
+          </div>{images.length > 0 && <button type="button" className="new-post-crop" onClick={cropImage} disabled={uploading > 0} title="Potong gambar pertama menjadi persegi"><Crop size={15} />{t("Crop persegi")}</button>}{uploading > 0 && <p className="new-post-uploading"><Loader2 size={16} className="animate-spin" />Mengunggah {uploading} file...</p>}</section>
+          <input ref={imageInput} type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple className="hidden" onChange={(e) => {upload(e.target.files, 'image');e.target.value = '';}} />
+          <input ref={videoInput} type="file" accept="video/*,.mkv,.flv,.wmv,.mxf,.ts" className="hidden" onChange={(e) => {upload(e.target.files, 'video');e.target.value = '';}} />
+          <label className="new-post-shop-toggle"><input type="checkbox" checked={isShop} disabled={isEdit || uploading > 0 || submitting || locating} onChange={(e) => selectType(e.target.checked ? 'shop' : 'image')} /><span className="new-post-switch" /><span>{t("Tambahkan ke Shop")}<small>{t("Jika produk, akan ditampilkan di tab Shop")}</small></span></label>
+        {isShop &&
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 rounded-xl border border-border-subtle/50 p-3">
-            <label className="flex flex-col gap-1 text-xs font-bold">Harga <span className="sr-only">wajib</span>
+            <label className="flex flex-col gap-1 text-xs font-bold">{t("Harga")}<span className="sr-only">wajib</span>
               <div className="flex gap-2">
                 <select value={shop.currency} onChange={(e) => setShop({ ...shop, currency: e.target.value })} className={`${input} w-24`}>{CURRENCIES.map((c) => <option key={c}>{c}</option>)}</select>
                 <input type="number" min="0" step={currencyDecimals(shop.currency) ? '0.01' : '1'} value={shop.price} onChange={(e) => setShop({ ...shop, price: e.target.value })} placeholder="0" className={input} />
               </div>
             </label>
-            <label className="flex flex-col gap-1 text-xs font-bold">Kategori
-              <select value={shop.category} onChange={(e) => setShop({ ...shop, category: e.target.value })} className={input}><option value="">Pilih kategori</option>{CATEGORIES.map((c) => <option key={c}>{c}</option>)}</select>
+            <label className="flex flex-col gap-1 text-xs font-bold">{t("Kategori")}
+              <select value={shop.category} onChange={(e) => setShop({ ...shop, category: e.target.value })} className={input}><option value="">{t("Pilih kategori")}</option>{CATEGORIES.map((c) => <option key={c}>{c}</option>)}</select>
             </label>
-            <fieldset className="flex flex-col gap-1 text-xs font-bold">Kondisi barang
+            <fieldset className="flex flex-col gap-1 text-xs font-bold">{t("Kondisi barang")}
               <div className="flex gap-4 font-normal text-sm py-2">
-                <label className="flex items-center gap-1"><input type="radio" name="condition" checked={shop.condition === 'new'} onChange={() => setShop({ ...shop, condition: 'new' })} />Baru</label>
-                <label className="flex items-center gap-1"><input type="radio" name="condition" checked={shop.condition === 'used'} onChange={() => setShop({ ...shop, condition: 'used' })} />Bekas</label>
+                <label className="flex items-center gap-1"><input type="radio" name="condition" checked={shop.condition === 'new'} onChange={() => setShop({ ...shop, condition: 'new' })} />{t("Baru")}</label>
+                <label className="flex items-center gap-1"><input type="radio" name="condition" checked={shop.condition === 'used'} onChange={() => setShop({ ...shop, condition: 'used' })} />{t("Bekas")}</label>
               </div>
             </fieldset>
-            <label className="flex flex-col gap-1 text-xs font-bold">Stok (opsional)<input type="number" min="0" value={shop.stock} onChange={(e) => setShop({ ...shop, stock: e.target.value })} className={input} /></label>
-            <label className="flex flex-col gap-1 text-xs font-bold">Merek (opsional)<input value={shop.brand} maxLength={100} onChange={(e) => setShop({ ...shop, brand: e.target.value })} className={input} /></label>
-            <label className="flex flex-col gap-1 text-xs font-bold">Metode pembayaran (opsional)
-              <select value={shop.payment} onChange={(e) => setShop({ ...shop, payment: e.target.value })} className={input}>{PAYMENTS.map((p) => <option key={p} value={p}>{p || 'Tidak ditentukan'}</option>)}</select>
+            <label className="flex flex-col gap-1 text-xs font-bold">{t("Stok (opsional)")}<input type="number" min="0" value={shop.stock} onChange={(e) => setShop({ ...shop, stock: e.target.value })} className={input} /></label>
+            <label className="flex flex-col gap-1 text-xs font-bold">{t("Merek (opsional)")}<input value={shop.brand} maxLength={100} onChange={(e) => setShop({ ...shop, brand: e.target.value })} className={input} /></label>
+            <label className="flex flex-col gap-1 text-xs font-bold">{t("Metode pembayaran (opsional)")}
+              <select value={shop.payment} onChange={(e) => setShop({ ...shop, payment: e.target.value })} className={input}>{PAYMENTS.map((p) => <option key={p} value={p}>{p || t("Tidak ditentukan")}</option>)}</select>
             </label>
-            <fieldset className="sm:col-span-2 text-xs font-bold">Pengambilan / pengiriman (opsional)
+            <fieldset className="sm:col-span-2 text-xs font-bold">{t("Pengambilan / pengiriman (opsional)")}
               <div className="flex flex-wrap gap-4 font-normal text-sm pt-1">
-                {FULFILLMENT.map((f) => (
-                  <label key={f.id} className="flex items-center gap-1">
+                {FULFILLMENT.map((f) =>
+                <label key={f.id} className="flex items-center gap-1">
                     <input type="checkbox" checked={shop.fulfillment.includes(f.id)} onChange={(e) => setShop({ ...shop, fulfillment: e.target.checked ? [...shop.fulfillment, f.id] : shop.fulfillment.filter((x) => x !== f.id) })} />{f.label}
                   </label>
-                ))}
+                )}
               </div>
             </fieldset>
           </div>
-        )}
+          }
 
 
-          <label className="new-post-visibility">Visibilitas<select value={visibility} onChange={(e) => setVisibility(e.target.value)}><option value="public">Publik</option><option value="followers">Hanya pengikut</option></select></label>
+          <label className="new-post-visibility">{t("Visibilitas")}<select value={visibility} onChange={(e) => setVisibility(e.target.value)}><option value="public">{t("Publik")}</option><option value="followers">{t("Hanya pengikut")}</option></select></label>
           {error && <p className="new-post-error" role="alert">{error}</p>}
           {!error && problems.length > 0 && <details className="new-post-validation"><summary>Ketentuan postingan ({problems.length} belum terpenuhi)</summary><ul>{problems.map((problem) => <li key={problem}>{problem}</li>)}</ul></details>}
-          <div className="new-post-footer">{!isEdit && <button type="button" className="new-post-draft" onClick={saveDraft} disabled={submitting || uploading > 0}><Save size={17} />Draft</button>}<button type="button" onClick={submit} disabled={submitting || uploading > 0} className="new-post-submit">{submitting ? <Loader2 size={17} className="animate-spin" /> : <Send size={17} />}{isEdit ? 'Simpan Perubahan' : 'Post Sekarang'}</button></div>
+          <div className="new-post-footer">{!isEdit && <button type="button" className="new-post-draft" onClick={saveDraft} disabled={submitting || uploading > 0}><Save size={17} />{t("Draft")}</button>}<button type="button" onClick={submit} disabled={submitting || uploading > 0} className="new-post-submit">{submitting ? <Loader2 size={17} className="animate-spin" /> : <Send size={17} />}{isEdit ? t("Simpan Perubahan") : t("Post Sekarang")}</button></div>
           {draftMessage && <p className="new-post-draft-message" role="status">{draftMessage}</p>}
         </div>
-        <aside className="new-post-preview"><h4>Pratinjau Postingan</h4><article className="new-post-preview-card"><div className="new-post-preview-menu"><MoreHorizontal size={19} /></div>
-          {media[0] ? (media[0].type === 'image' ? <img src={media[0].url} alt="Pratinjau media" className="new-post-preview-image" /> : <video src={media[0].url} controls className="new-post-preview-image" />) : linkPreview?.image ? <img src={linkPreview.image} alt="Pratinjau link" className="new-post-preview-image" /> : <div className="new-post-preview-placeholder"><ImageIcon size={36} /><span>Pratinjau media Anda</span></div>}
-          <div className="new-post-preview-copy"><h3>{title || 'Judul postingan Anda'}</h3><div className="new-post-preview-description"><RichText text={content || 'Deskripsi postingan akan muncul di sini.'} /></div>
+        <aside className="new-post-preview"><h4>{t({ image: 'Pratinjau Gambar', video: 'Pratinjau Video', poster: 'Pratinjau Poster', link: 'Pratinjau Link', location: 'Pratinjau Lokasi', shop: 'Pratinjau Produk' }[activeType])}</h4><article className="new-post-preview-card"><div className="new-post-preview-menu"><MoreHorizontal size={19} /></div>
+          {media[0] ? media[0].type === 'image' ? <img src={media[0].url} alt="Pratinjau media" className="new-post-preview-image" /> : <video src={media[0].url} controls className="new-post-preview-image" /> : linkPreview?.image ? <img src={linkPreview.image} alt="Pratinjau link" className="new-post-preview-image" /> : <div className="new-post-preview-placeholder">{activeType === 'video' ? <Video size={36} /> : activeType === 'link' ? <LinkIcon size={36} /> : activeType === 'location' ? <MapPin size={36} /> : activeType === 'shop' ? <ShoppingBag size={36} /> : activeType === 'poster' ? <FileText size={36} /> : <ImageIcon size={36} />}<span>{t({ image: 'Pratinjau gambar Anda', video: 'Pratinjau video Anda', poster: 'Pratinjau poster Anda', link: 'Pratinjau tautan Anda', location: location || 'Pratinjau lokasi Anda', shop: 'Pratinjau produk Anda' }[activeType])}</span></div>}
+          <div className="new-post-preview-copy"><h3>{title || (isShop ? t("Nama produk Anda") : t("Judul postingan Anda"))}</h3><div className="new-post-preview-description"><RichText text={content || 'Deskripsi postingan akan muncul di sini.'} /></div>
             {hashtags.length > 0 && <p className="new-post-preview-tags">{hashtags.map((tag) => <span key={tag}>#{tag} </span>)}</p>}
             {linkUrl && <p className="new-post-preview-meta"><LinkIcon size={16} /><span>{linkUrl}</span></p>}
             {mentions.length > 0 && <p className="new-post-preview-meta"><AtSign size={16} /><span>{mentions.map((name) => '@' + name).join('   ')}</span></p>}
@@ -344,6 +387,6 @@ export default function CreatePostModal({ isOpen, onClose, onSaved, editPost }: 
           </div><div className="new-post-preview-actions"><span><Heart size={18} />0</span><span><MessageCircle size={18} />0</span><span><Share2 size={18} />0</span><span><Eye size={18} />0</span></div>
         </article></aside>
       </div>
-    </div>
-  );
+    </div>);
+
 }

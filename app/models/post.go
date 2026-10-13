@@ -1,6 +1,10 @@
 package models
 
 import (
+	"crypto/rand"
+	"encoding/hex"
+	"gorm.io/gorm"
+	"strconv"
 	"time"
 )
 
@@ -15,6 +19,7 @@ const (
 )
 
 type Post struct {
+	PublicHash    *string       `gorm:"type:varchar(32);uniqueIndex" json:"public_hash"`
 	ID            int64         `gorm:"primaryKey;autoIncrement" json:"id"`
 	UserID        int64         `gorm:"not null;index:idx_posts_user_created,priority:1" json:"user_id"`
 	User          User          `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"user"`
@@ -40,4 +45,29 @@ type Post struct {
 	IsSavedByMe   bool          `gorm:"column:is_saved_by_me;->" json:"is_saved_by_me"`
 	ViewsCount    int64         `gorm:"column:views_count;->" json:"views_count"`
 	SharesCount   int64         `gorm:"column:shares_count;->" json:"shares_count"`
+}
+
+func NewPostHash() (string, error) {
+	var token [16]byte
+	if _, err := rand.Read(token[:]); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(token[:]), nil
+}
+func (p *Post) BeforeCreate(tx *gorm.DB) error {
+	if p.PublicHash != nil && *p.PublicHash != "" {
+		return nil
+	}
+	token, err := NewPostHash()
+	if err != nil {
+		return err
+	}
+	p.PublicHash = &token
+	return nil
+}
+func (p *Post) PublicToken() string {
+	if p.PublicHash != nil && *p.PublicHash != "" {
+		return *p.PublicHash
+	}
+	return strconv.FormatInt(p.ID, 10)
 }

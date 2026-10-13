@@ -13,6 +13,7 @@ import (
 
 	"goravel/app/models"
 	"goravel/pkg/db"
+	"goravel/pkg/mediatools"
 )
 
 type TranscodePostMedia struct{}
@@ -55,7 +56,11 @@ func (receiver *TranscodePostMedia) Handle(args ...any) error {
 	outputPath := filepath.Join(uploadRoot, outputName)
 	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Minute)
 	defer cancel()
-	command := exec.CommandContext(ctx, "ffmpeg", "-y", "-i", inputPath, "-map_metadata", "-1", "-vf", "scale=min(1920\\,iw):-2", "-c:v", "libx264", "-preset", "veryfast", "-crf", "28", "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", outputPath)
+	encoder, err := mediatools.Executable("ffmpeg")
+	if err != nil {
+		return err
+	}
+	command := exec.CommandContext(ctx, encoder, "-y", "-i", inputPath, "-map_metadata", "-1", "-vf", "scale=min(1920\\,iw):-2", "-c:v", "libx264", "-preset", "veryfast", "-crf", "28", "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", outputPath)
 	if output, err := command.CombinedOutput(); err != nil {
 		_ = db.DB.Model(&media).Update("processing_status", "failed").Error
 		if len(output) > 500 {

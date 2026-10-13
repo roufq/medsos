@@ -14,7 +14,7 @@ func validDraft() postDraft {
 	d := postDraft{
 		postType: models.PostTypeText,
 		title:    "Judul yang valid",
-		content:  words(DescriptionMinWords),
+		content:  strings.Repeat("a", DescriptionMinChars),
 		tags:     []string{"satu", "dua", "tiga"},
 		mentions: []string{"budi"},
 	}
@@ -38,15 +38,15 @@ func TestPostRules(t *testing.T) {
 		return &dto.ShopPostRequest{PriceMinor: 150000, Currency: "idr", Category: "Elektronik", Condition: "New", Fulfillment: "pickup, cod"}
 	}
 	cases := map[string]func(d *postDraft){
-		"title too short":         func(d *postDraft) { d.title = "abcd" },
-		"title too long":          func(d *postDraft) { d.title = strings.Repeat("a", 101) },
-		"description < 160 words": func(d *postDraft) { d.content = words(159) },
-		"description > 6000":      func(d *postDraft) { d.content = words(6001) },
-		"fewer than 3 hashtags":   func(d *postDraft) { d.tags = d.tags[:2] },
-		"more than 9 hashtags":    func(d *postDraft) { d.tags = strings.Fields("a1 a2 a3 a4 a5 a6 a7 a8 a9 a10") },
-		"no mention":              func(d *postDraft) { d.mentions = nil },
-		"more than 10 mentions":   func(d *postDraft) { d.mentions = strings.Fields("m1 m2 m3 m4 m5 m6 m7 m8 m9 m10 m11") },
-		"link without valid url":  func(d *postDraft) { d.postType = models.PostTypeLink; d.linkURL = "javascript:alert(1)" },
+		"title too short":              func(d *postDraft) { d.title = "abcd" },
+		"title too long":               func(d *postDraft) { d.title = strings.Repeat("a", 101) },
+		"description < 160 characters": func(d *postDraft) { d.content = strings.Repeat("a", 159) },
+		"description > 6000":           func(d *postDraft) { d.content = strings.Repeat("a", 6001) },
+		"fewer than 3 hashtags":        func(d *postDraft) { d.tags = d.tags[:2] },
+		"more than 9 hashtags":         func(d *postDraft) { d.tags = strings.Fields("a1 a2 a3 a4 a5 a6 a7 a8 a9 a10") },
+		"no mention":                   func(d *postDraft) { d.mentions = nil },
+		"more than 10 mentions":        func(d *postDraft) { d.mentions = strings.Fields("m1 m2 m3 m4 m5 m6 m7 m8 m9 m10 m11") },
+		"link without valid url":       func(d *postDraft) { d.postType = models.PostTypeLink; d.linkURL = "javascript:alert(1)" },
 		"link with short description": func(d *postDraft) {
 			d.postType, d.linkURL, d.content = models.PostTypeLink, "https://example.com", ""
 		},
@@ -143,5 +143,20 @@ func TestHashtagAndMentionExtraction(t *testing.T) {
 	mentions := MentionedUsernames("halo @Budi_1 dan @siti, juga email a@b.com")
 	if strings.Join(mentions, ",") != "budi_1,siti" {
 		t.Fatalf("unexpected mentions %v", mentions)
+	}
+}
+
+func TestDescriptionCountsCharactersWithoutSpaces(t *testing.T) {
+	for _, text := range []string{strings.Repeat("a", 342), strings.Repeat("?", 160), strings.Repeat("a", 6000)} {
+		d := validDraft()
+		d.content = text
+		if err := d.validate(); err != nil {
+			t.Fatalf("valid character count rejected: %v", err)
+		}
+	}
+	d := validDraft()
+	d.content = strings.Repeat("?", 6001)
+	if d.validate() == nil {
+		t.Fatal("description over 6000 characters accepted")
 	}
 }

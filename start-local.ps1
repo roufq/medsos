@@ -33,6 +33,9 @@ if ($BuildFrontend -or -not (Test-Path 'frontend/dist/index.html')) {
     }
 }
 
+$mediaBin = Join-Path $PSScriptRoot 'tmp/toolchain/ffmpeg/bin'
+if (Test-Path $mediaBin) { $env:PATH = $mediaBin + [IO.Path]::PathSeparator + $env:PATH }
+
 Write-Host 'Pastikan MySQL Laragon aktif. Buka http://localhost:3000 setelah server siap.'
 & $goExecutable run .
 exit $LASTEXITCODE

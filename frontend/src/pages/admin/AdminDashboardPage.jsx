@@ -1,3 +1,4 @@
+import { profileUrl } from '../../utils/profileUrl';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -28,7 +29,7 @@ const AdminDashboardPage = () => {
     openNotification: handleNotification,
   } = useNotifications((notification) => {
     if (notification.entity_type === "post" && notification.entity_id) navigate(`/post/${notification.entity_id}`);
-    else if (notification.actor?.id) navigate(`/profile/${notification.actor.id}`);
+    else if (notification.actor?.id) navigate(profileUrl(notification.actor));
   });
 
   const fetchAdminData = async () => {
@@ -90,13 +91,13 @@ const AdminDashboardPage = () => {
           <span className="font-headline-md text-headline-md font-black text-primary dark:text-primary-fixed">Connect Modern</span>
           <span className="font-label-md text-label-md text-text-secondary">Professional Suite</span>
         </div>
-        
+
         <nav className="flex-1 flex flex-col gap-1">
-          <button 
+          <button
             onClick={() => setActiveTab('overview')}
             className={`flex items-center gap-3 px-3 py-2 font-label-md text-label-md transition-all scale-95 active:scale-90 rounded-lg w-full text-left ${
-              activeTab === 'overview' 
-                ? 'bg-secondary-container dark:bg-on-secondary-fixed-variant text-on-secondary-container dark:text-on-secondary-fixed font-bold' 
+              activeTab === 'overview'
+                ? 'bg-secondary-container dark:bg-on-secondary-fixed-variant text-on-secondary-container dark:text-on-secondary-fixed font-bold'
                 : 'text-text-secondary dark:text-on-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container'
             }`}
           >
@@ -104,23 +105,23 @@ const AdminDashboardPage = () => {
             <span>Admin Dashboard</span>
           </button>
 
-          <button 
+          <button
             onClick={() => setActiveTab('users')}
             className={`flex items-center gap-3 px-3 py-2 font-label-md text-label-md transition-all scale-95 active:scale-90 rounded-lg w-full text-left ${
-              activeTab === 'users' 
-                ? 'bg-secondary-container dark:bg-on-secondary-fixed-variant text-on-secondary-container dark:text-on-secondary-fixed font-bold' 
+              activeTab === 'users'
+                ? 'bg-secondary-container dark:bg-on-secondary-fixed-variant text-on-secondary-container dark:text-on-secondary-fixed font-bold'
                 : 'text-text-secondary dark:text-on-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container'
             }`}
           >
             <span className="material-symbols-outlined">group</span>
             <span>User Management</span>
           </button>
-          
-          <button 
+
+          <button
             onClick={() => setActiveTab('moderation')}
             className={`flex items-center gap-3 px-3 py-2 font-label-md text-label-md transition-all scale-95 active:scale-90 rounded-lg w-full text-left ${
-              activeTab === 'moderation' 
-                ? 'bg-secondary-container dark:bg-on-secondary-fixed-variant text-on-secondary-container dark:text-on-secondary-fixed font-bold' 
+              activeTab === 'moderation'
+                ? 'bg-secondary-container dark:bg-on-secondary-fixed-variant text-on-secondary-container dark:text-on-secondary-fixed font-bold'
                 : 'text-text-secondary dark:text-on-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container'
             }`}
           >
@@ -149,15 +150,15 @@ const AdminDashboardPage = () => {
           <div className="flex justify-between items-center px-6 py-4 max-w-7xl mx-auto w-full">
             <div className="relative w-full max-w-md">
               <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">search</span>
-              <input 
-                type="text" 
-                placeholder="Search across users, teams or roles..." 
+              <input
+                type="text"
+                placeholder="Search across users, teams or roles..."
                 value={searchQuery}
                 onChange={(event) => { setSearchQuery(event.target.value); setActiveTab('users'); }}
                 className="w-full pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-full font-body-md text-body-md focus:ring-2 focus:ring-primary focus:bg-white transition-all outline-none"
               />
             </div>
-            
+
             <div className="flex items-center gap-4">
               <div className="relative">
                 <button onClick={() => { const next = !notificationsOpen; setNotificationsOpen(next); if (next) loadNotifications(); }} className="relative p-2 text-text-secondary hover:bg-surface-container-low rounded-full transition-colors" aria-label="Notifications">
@@ -177,10 +178,10 @@ const AdminDashboardPage = () => {
                 <span className="material-symbols-outlined">settings</span>
               </button>
               <div className="h-8 w-px bg-border-subtle mx-2"></div>
-              <div onClick={() => navigate(`/profile/${user?.id}`)} className="flex items-center gap-3 cursor-pointer group">
-                <img 
+              <div onClick={() => navigate(profileUrl(user))} className="flex items-center gap-3 cursor-pointer group">
+                <img
                   src={user?.avatar_url || '/favicon.svg'}
-                  alt="Admin Avatar" 
+                  alt="Admin Avatar"
                   className="w-9 h-9 rounded-full object-cover border border-border-subtle group-hover:ring-2 group-hover:ring-primary transition-all"
                 />
                 <div className="flex flex-col">

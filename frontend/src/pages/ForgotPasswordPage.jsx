@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import { useLanguage } from "../context/LanguageContext";import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { authApi } from '../api/authApi';
 
-export default function ForgotPasswordPage() {
+export default function ForgotPasswordPage() {const { t } = useLanguage();
   const [target, setTarget] = useState('');
   const [channel, setChannel] = useState('email');
   const [code, setCode] = useState('');
@@ -13,22 +13,22 @@ export default function ForgotPasswordPage() {
 
   async function requestCode(event) {
     event.preventDefault();
-    setError(''); setMessage('');
+    setError('');setMessage('');
     try {
       const result = await authApi.forgotPassword(target, channel);
       setSent(true);
       setMessage(result.dev_code ? `Kode development: ${result.dev_code}` : 'Kode verifikasi sudah dikirim.');
-    } catch (err) { setError(err.response?.data?.error || 'Gagal mengirim kode verifikasi.'); }
+    } catch (err) {setError(err.response?.data?.error || 'Gagal mengirim kode verifikasi.');}
   }
 
   async function reset(event) {
     event.preventDefault();
-    setError(''); setMessage('');
+    setError('');setMessage('');
     try {
       await authApi.resetPassword(target, code, password);
       setMessage('Password berhasil diubah. Silakan masuk kembali.');
-      setSent(false); setCode(''); setPassword('');
-    } catch (err) { setError(err.response?.data?.error || 'Kode tidak valid atau sudah kedaluwarsa.'); }
+      setSent(false);setCode('');setPassword('');
+    } catch (err) {setError(err.response?.data?.error || 'Kode tidak valid atau sudah kedaluwarsa.');}
   }
 
   return <main className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
@@ -38,16 +38,16 @@ export default function ForgotPasswordPage() {
       {error && <div className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</div>}
       {message && <div className="mt-4 rounded-lg bg-green-50 p-3 text-sm text-green-700">{message}</div>}
       <form onSubmit={requestCode} className="mt-6 space-y-4">
-        <input required value={target} onChange={e => setTarget(e.target.value)} placeholder="Email, username, atau nomor telepon" className="w-full rounded-lg border p-3" />
-        <select value={channel} onChange={e => setChannel(e.target.value)} className="w-full rounded-lg border p-3">
+        <input required value={target} onChange={(e) => setTarget(e.target.value)} placeholder="Email, username, atau nomor telepon" className="w-full rounded-lg border p-3" />
+        <select value={channel} onChange={(e) => setChannel(e.target.value)} className="w-full rounded-lg border p-3">
           <option value="email">Email</option><option value="sms">SMS</option><option value="whatsapp">WhatsApp</option>
         </select>
-        <button className="w-full rounded-lg bg-blue-600 p-3 font-semibold text-white">Kirim kode</button>
+        <button className="w-full rounded-lg bg-blue-600 p-3 font-semibold text-white">{t("Kirim kode")}</button>
       </form>
       {sent && <form onSubmit={reset} className="mt-6 space-y-4 border-t pt-6">
-        <input required value={code} onChange={e => setCode(e.target.value)} placeholder="Kode verifikasi" inputMode="numeric" className="w-full rounded-lg border p-3" />
-        <input required minLength={8} type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password baru (min. 8 karakter)" className="w-full rounded-lg border p-3" />
-        <button className="w-full rounded-lg bg-gray-900 p-3 font-semibold text-white">Ubah password</button>
+        <input required value={code} onChange={(e) => setCode(e.target.value)} placeholder="Kode verifikasi" inputMode="numeric" className="w-full rounded-lg border p-3" />
+        <input required minLength={8} type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password baru (min. 8 karakter)" className="w-full rounded-lg border p-3" />
+        <button className="w-full rounded-lg bg-gray-900 p-3 font-semibold text-white">{t("Ubah password")}</button>
       </form>}
       <Link to="/login" className="mt-6 block text-center text-sm text-blue-600">Kembali ke login</Link>
     </section>

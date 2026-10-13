@@ -657,12 +657,7 @@ func (h *SocialController) Search(c goravelhttp.Context) goravelhttp.Response {
 		return c.Response().Json(500, goravelhttp.Json{"error": "failed to search posts"})
 	}
 
-	if err := db.DB.Model(&models.JobPosting{}).Distinct("job_postings.*").
-		Joins("JOIN users ON users.id = job_postings.employer_id").
-		Where("users.account_status = 'active' AND (job_postings.title LIKE ? OR job_postings.company LIKE ? OR job_postings.location LIKE ? OR job_postings.type LIKE ? OR job_postings.description LIKE ? OR job_postings.category LIKE ?)", like, like, like, like, like, like).
-		Preload("Employer").Order("job_postings.id desc").Limit(30).Find(&jobs).Error; err != nil {
-		return c.Response().Json(500, goravelhttp.Json{"error": "failed to search jobs"})
-	}
+	// Jobs is disabled, so search returns an empty jobs list.
 
 	if err := db.DB.Model(&models.Post{}).Distinct("posts.*").
 		Joins("JOIN shop_products ON shop_products.post_id = posts.id").

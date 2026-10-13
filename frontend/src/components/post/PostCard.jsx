@@ -1,3 +1,4 @@
+import { profileUrl } from '../../utils/profileUrl';
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -15,7 +16,7 @@ const PostCard = ({ post, onDelete }) => {
       {/* Post Owner Header */}
       <div className="flex items-center justify-between p-4 pb-2">
         <div className="flex items-center gap-3">
-          <Link to={`/profile/${post.user_id}`}>
+          <Link to={profileUrl(post.user || { id: post.user_id })}>
             <img
               src={avatar}
               alt="Author"
@@ -24,7 +25,7 @@ const PostCard = ({ post, onDelete }) => {
           </Link>
           <div>
             <Link
-              to={`/profile/${post.user_id}`}
+              to={profileUrl(post.user || { id: post.user_id })}
               className="font-bold text-sm text-[#1C1E21] hover:underline block"
             >
               {post.user?.name}

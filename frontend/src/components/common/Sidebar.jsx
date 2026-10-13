@@ -1,3 +1,4 @@
+import { profileUrl } from '../../utils/profileUrl';
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -20,7 +21,7 @@ const Sidebar = () => {
     <aside className="w-64 hidden lg:block p-4 sticky top-[60px] h-[calc(100vh-60px)] overflow-y-auto space-y-4">
       {/* Profile link */}
       <Link
-        to={`/profile/${user?.id}`}
+        to={profileUrl(user)}
         className="flex items-center gap-3 p-2 hover:bg-gray-200/50 rounded-xl transition-all"
       >
         <img

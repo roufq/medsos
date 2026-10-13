@@ -1,6 +1,7 @@
 package routes
 
 import (
+	goravelhttp "github.com/goravel/framework/contracts/http"
 	"github.com/goravel/framework/contracts/route"
 	"github.com/goravel/framework/facades"
 	"time"
@@ -18,7 +19,6 @@ func Api() {
 	postRepo := repositories.NewPostRepository()
 	portfolioRepo := repositories.NewPortfolioRepository()
 	networkRepo := repositories.NewNetworkRepository()
-	jobRepo := repositories.NewJobRepository()
 	msgRepo := repositories.NewMessageRepository()
 
 	// 2. Initialize Services
@@ -34,7 +34,6 @@ func Api() {
 	postController := controllers.NewPostController(postService, userController, localStorage)
 	portfolioController := controllers.NewPortfolioController(portfolioService)
 	networkController := controllers.NewNetworkController(networkRepo)
-	jobController := controllers.NewJobController(jobRepo)
 	msgController := controllers.NewMessageController(msgRepo)
 	accountController := controllers.NewAccountController()
 	socialController := controllers.NewSocialController()
@@ -120,9 +119,12 @@ func Api() {
 		router.Post("network/accept", networkController.AcceptRequest)
 		router.Post("network/decline", networkController.DeclineRequest)
 
-		// Jobs
-		router.Get("jobs", jobController.GetAllJobs)
-		router.Post("jobs/apply", jobController.ApplyJob)
+		// Jobs is disabled; retain explicit responses for old clients.
+		jobsDisabled := func(c goravelhttp.Context) goravelhttp.Response {
+			return c.Response().Json(410, goravelhttp.Json{"error": "Fitur Jobs dinonaktifkan."})
+		}
+		router.Get("jobs", jobsDisabled)
+		router.Post("jobs/apply", jobsDisabled)
 
 		// Messages
 		router.Get("messages/conversations", msgController.GetConversations)

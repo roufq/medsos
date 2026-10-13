@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { profileUrl } from '../utils/profileUrl';
 import { Loader } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { userApi } from '../api/userApi';
@@ -11,7 +12,10 @@ const ProfilePage = () => {
   // /profile/:id or /u/:username (mention links)
   const { id, username } = useParams();
   const key = id || username;
+  const navigate = useNavigate();
+  const location = useLocation();
   const { user: authUser, updateProfileState } = useAuth();
+  const [loadedKey, setLoadedKey] = useState(null);
   const [profileUser, setProfileUser] = useState(null);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -26,6 +30,7 @@ const ProfilePage = () => {
         const user = await userApi.getProfile(key);
         if (!active) return;
         setProfileUser(user);
+        setLoadedKey(key);
         const userPosts = user.profile_locked || user.is_blocked_by_me ? [] : await postApi.getFeed(50, 0, user.id);
         if (active) setPosts(userPosts || []);
       } catch (e) {
@@ -41,6 +46,12 @@ const ProfilePage = () => {
     return () => { active = false; };
   }, [key]);
 
+  useEffect(() => {
+    if (!profileUser?.username || loading || loadedKey !== key) return;
+    const canonical = profileUrl(profileUser);
+    if (location.pathname !== canonical) navigate(canonical + location.search + location.hash, { replace: true });
+  }, [profileUser?.username, profileUser?.id, loading, loadedKey, key, location.pathname, location.search, location.hash, navigate]);
+
   const isCurrentUser = profileUser?.id === authUser?.id;
 
   const handleUserChange = (updated) => {
@@ -53,7 +64,7 @@ const ProfilePage = () => {
   };
 
   return (
-    <AppLayout currentTab={isCurrentUser ? 'profile' : ''} onPostCreated={handlePostCreated}>
+    <AppLayout wide currentTab={isCurrentUser ? 'profile' : ''} onPostCreated={handlePostCreated}>
       {loading ? (
         <div className="flex justify-center py-20"><Loader className="animate-spin text-primary" size={40} /></div>
       ) : !profileUser ? (

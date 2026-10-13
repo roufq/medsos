@@ -28,8 +28,8 @@ import (
 const (
 	TitleMinChars       = 5
 	TitleMaxChars       = 100
-	DescriptionMinWords = 160
-	DescriptionMaxWords = 6000
+	DescriptionMinChars = 160
+	DescriptionMaxChars = 6000
 	HashtagsMin         = 3
 	HashtagsMax         = 9
 	ShopHashtagsMax     = 30
@@ -50,7 +50,7 @@ type PostService interface {
 	UpdatePost(userID, postID int64, req *dto.UpdatePostRequest) (*models.Post, error)
 	ResolveMedia(userID, postID int64, urls []string) ([]dto.MediaItem, error)
 	RecordUpload(userID int64, stored *storage.StoredMedia) error
-	GetFeed(viewerID int64, limit, offset int, beforeID int64, shortsOnly bool) ([]models.Post, error)
+	GetFeed(viewerID int64, limit, offset int, beforeID int64, shortsOnly bool, kind ...string) ([]models.Post, error)
 	GetUserPosts(viewerID, userID int64) ([]models.Post, error)
 	GetPost(viewerID, postID int64) (*models.Post, error)
 	DeletePost(userID int64, postID int64) error
@@ -110,17 +110,17 @@ func (d *postDraft) validate() error {
 	if n := utf8.RuneCountInString(d.title); n < TitleMinChars || n > TitleMaxChars {
 		return fmt.Errorf("title is required and must contain %d-%d characters", TitleMinChars, TitleMaxChars)
 	}
-	words := CountWords(d.content)
-	if words > DescriptionMaxWords {
-		return fmt.Errorf("description must contain at most %d words (currently %d)", DescriptionMaxWords, words)
+	characters := utf8.RuneCountInString(d.content)
+	if characters > DescriptionMaxChars {
+		return fmt.Errorf("description must contain at most %d characters (currently %d)", DescriptionMaxChars, characters)
 	}
 	if isShop {
-		if words == 0 {
+		if characters == 0 {
 			return errors.New("product description is required")
 		}
-	} else if words < DescriptionMinWords {
+	} else if characters < DescriptionMinChars {
 		// Also covers link posts: a URL preview never replaces the description.
-		return fmt.Errorf("description must contain at least %d words (currently %d)", DescriptionMinWords, words)
+		return fmt.Errorf("description must contain at least %d characters (currently %d)", DescriptionMinChars, characters)
 	}
 
 	if d.visibility != "public" && d.visibility != "followers" {
@@ -715,8 +715,8 @@ func enqueueLinkPreview(linkID int64) error {
 	}).Dispatch()
 }
 
-func (s *postService) GetFeed(viewerID int64, limit, offset int, beforeID int64, shortsOnly bool) ([]models.Post, error) {
-	return s.postRepo.ListAll(viewerID, limit, offset, beforeID, shortsOnly)
+func (s *postService) GetFeed(viewerID int64, limit, offset int, beforeID int64, shortsOnly bool, kind ...string) ([]models.Post, error) {
+	return s.postRepo.ListAll(viewerID, limit, offset, beforeID, shortsOnly, kind...)
 }
 
 func (s *postService) GetPost(viewerID, postID int64) (*models.Post, error) {

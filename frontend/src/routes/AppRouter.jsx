@@ -11,8 +11,9 @@ import ForgotPasswordPage from '../pages/ForgotPasswordPage';
 import ThanksPage from '../pages/ThanksPage';
 import SettingsPage from '../pages/SettingsPage';
 import PostPage from '../pages/PostPage';
-import ShortsPage from '../pages/ShortsPage';
+import VideoPage from '../pages/VideoPage';
 import SearchPage from '../pages/SearchPage';
+import ShopPage from '../pages/ShopPage';
 import SavedPage from '../pages/SavedPage';
 
 const PrivateRoute = ({ children }) => {
@@ -38,7 +39,7 @@ const AdminRoute = ({ children }) => {
   }
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (user?.role !== 'admin') return <Navigate to="/" replace />;
-  
+
   return children;
 };
 
@@ -95,14 +96,17 @@ const AppRouter = () => {
         <Route path="/u/:username" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
         <Route path="/settings" element={<PrivateRoute><SettingsPage /></PrivateRoute>} />
         <Route path="/post/:id" element={<PrivateRoute><PostPage /></PrivateRoute>} />
-        <Route path="/shorts" element={<PrivateRoute><ShortsPage /></PrivateRoute>} />
+        <Route path="/shorts" element={<Navigate to="/videos" replace />} />
+        <Route path="/videos" element={<PrivateRoute><VideoPage /></PrivateRoute>} />
+        <Route path="/videos/:token" element={<PrivateRoute><VideoPage /></PrivateRoute>} />
         <Route path="/search" element={<PrivateRoute><SearchPage /></PrivateRoute>} />
+        <Route path="/shop" element={<PrivateRoute><ShopPage /></PrivateRoute>} />
         <Route path="/saved" element={<PrivateRoute><SavedPage /></PrivateRoute>} />
         <Route path="/network" element={<PrivateRoute><FeaturePage title="Network" /></PrivateRoute>} />
-        <Route path="/jobs" element={<PrivateRoute><FeaturePage title="Jobs" /></PrivateRoute>} />
+        <Route path="/jobs" element={<Navigate to="/" replace />} />
         <Route path="/messages" element={<PrivateRoute><FeaturePage title="Messages" /></PrivateRoute>} />
         <Route path="/analytics" element={<AdminRoute><FeaturePage title="Analytics" /></AdminRoute>} />
-        
+
         {/* Admin Routes */}
         <Route
           path="/admin/*"

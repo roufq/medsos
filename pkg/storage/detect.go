@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"goravel/pkg/mediatools"
 	"math"
 	"net/http"
 	"os/exec"
@@ -94,7 +95,11 @@ type probeResult struct {
 var probeVideo = func(path string) (int, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
-	output, err := exec.CommandContext(ctx, "ffprobe", "-v", "error", "-show_entries", "format=duration:stream=codec_type,codec_name", "-of", "json", path).Output()
+	probe, err := mediatools.Executable("ffprobe")
+	if err != nil {
+		return 0, err
+	}
+	output, err := exec.CommandContext(ctx, probe, "-v", "error", "-show_entries", "format=duration:stream=codec_type,codec_name", "-of", "json", path).Output()
 	if err != nil {
 		return 0, fmt.Errorf("cannot inspect video; ensure ffprobe is installed: %w", err)
 	}

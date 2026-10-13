@@ -18,6 +18,8 @@ const HomePage = () => {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
+  const [activeComposerType, setActiveComposerType] = useState('image');
+  const [composerType, setComposerType] = useState(undefined);
   const [composerOpen, setComposerOpen] = useState(false);
   const [followedUsers, setFollowedUsers] = useState([]);
 
@@ -67,15 +69,16 @@ const HomePage = () => {
   };
 
   return (
-    <AppLayout currentTab="home" onPostCreated={addPost} composerOpen={composerOpen} setComposerOpen={setComposerOpen}>
+    <AppLayout currentTab="home" onPostCreated={addPost} composerOpen={composerOpen} setComposerOpen={setComposerOpen} composerType={composerType} setComposerType={setComposerType} onComposerTypeChange={setActiveComposerType}>
       {loading && posts.length === 0 ? (
         <div className="flex justify-center py-20"><Loader className="animate-spin text-primary" size={40} /></div>
       ) : (
         <div className="poster-feed-layout">
           <Feed
+            activeComposerType={composerOpen ? activeComposerType : undefined}
             posts={posts}
             currentUser={currentUser}
-            onRequestCreatePost={() => setComposerOpen(true)}
+            onRequestCreatePost={(type) => { setComposerType(type); setActiveComposerType(type || 'image'); setComposerOpen(true); }}
             onNavigate={goTo}
             onPostDeleted={removePost}
             onPostUpdated={replacePost}

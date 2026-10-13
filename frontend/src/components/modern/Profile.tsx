@@ -1,6 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { postUrl } from '../../utils/postUrl';
+import { useLanguage } from "../../context/LanguageContext";import { profileUrl } from '../../utils/profileUrl';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Camera, MapPin, Link as LinkIcon, Calendar, LayoutGrid, Rows3, Edit3, Trash2, Lock, Ban, Search, Heart, MessageCircle, Play, Images, Settings } from 'lucide-react';
+import { Camera, MapPin, Link as LinkIcon, Calendar, LayoutGrid, Rows3, Edit3, Trash2, Lock, Ban, Search, Heart, MessageCircle, Play, Images, Settings, Eye, Flame, ArrowRight, ChevronLeft, ChevronRight, MoreHorizontal, FileText, ShoppingBag } from 'lucide-react';
+import { RichText, timeAgo } from '../../utils/postFormat';
 import { postApi } from '../../api/postApi';
 import { userApi } from '../../api/userApi';
 import AddPortfolioModal from './AddPortfolioModal';
@@ -17,7 +20,7 @@ interface ProfileProps {
 
 const errorText = (error: any, fallback: string) => error?.response?.data?.error || fallback;
 
-function FollowListModal({ userId, kind, onClose }: { userId: number; kind: 'followers' | 'following'; onClose: () => void }) {
+function FollowListModal({ userId, kind, onClose }: {userId: number;kind: 'followers' | 'following';onClose: () => void;}) {const { t } = useLanguage();
   const [query, setQuery] = useState('');
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,7 +41,7 @@ function FollowListModal({ userId, kind, onClose }: { userId: number; kind: 'fol
     return () => window.clearTimeout(timer);
   }, [userId, kind, query]);
   return (
-    <Modal title={kind === 'followers' ? 'Pengikut' : 'Mengikuti'} onClose={onClose}>
+    <Modal title={kind === 'followers' ? t("Pengikut") : t("Mengikuti")} onClose={onClose}>
       <div className="flex items-center gap-2 rounded-xl border border-border-subtle px-3 py-2 mb-3">
         <Search className="w-4 h-4 text-outline" />
         <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Cari nama atau username" className="flex-1 text-sm outline-none" autoFocus />
@@ -47,44 +50,44 @@ function FollowListModal({ userId, kind, onClose }: { userId: number; kind: 'fol
       {loading && <p className="text-xs text-text-secondary">Memuat…</p>}
       {!loading && !error && users.length === 0 && <p className="text-xs text-text-secondary">Tidak ada akun.</p>}
       <div className="flex flex-col gap-1">
-        {users.map((u) => (
-          <Link key={u.id} to={`/profile/${u.id}`} onClick={onClose} className="flex items-center gap-3 rounded-lg p-2 hover:bg-surface-container-low">
+        {users.map((u) =>
+        <Link key={u.id} to={profileUrl(u)} onClick={onClose} className="flex items-center gap-3 rounded-lg p-2 hover:bg-surface-container-low">
             <img src={u.avatar_url || '/favicon.svg'} alt="" className="w-9 h-9 rounded-full object-cover" />
             <div className="min-w-0"><div className="text-sm font-bold truncate">{u.name}</div><div className="text-xs text-text-secondary truncate">@{u.username}</div></div>
           </Link>
-        ))}
+        )}
       </div>
-    </Modal>
-  );
+    </Modal>);
+
 }
 
-function GridTile({ post }: { post: any }) {
+function ProfileMedia({ post, compact = false }: {post: any;compact?: boolean;}) {
   const source = post.original_post || post;
   const image = source.media?.find((m: any) => m.media_type === 'image');
   const video = source.media?.find((m: any) => m.media_type === 'video');
-  const imageCount = source.media?.filter((m: any) => m.media_type === 'image').length || 0;
-  return (
-    <Link to={`/post/${post.id}`} className="relative aspect-square rounded-xl overflow-hidden bg-surface-container group">
-      {image ? <img src={image.media_url} alt="" loading="lazy" className="w-full h-full object-cover" /> : (
-        <div className="w-full h-full p-3 flex flex-col justify-center bg-gradient-to-br from-primary/10 to-secondary-container">
-          <div className="text-xs font-bold line-clamp-2">{source.title}</div>
-          <div className="text-[11px] text-text-secondary line-clamp-4 mt-1">{source.content}</div>
-        </div>
-      )}
-      {video && <Play className="absolute top-2 right-2 w-5 h-5 text-white drop-shadow" />}
-      {imageCount > 1 && <Images className="absolute top-2 right-2 w-5 h-5 text-white drop-shadow" />}
-      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 text-white text-sm font-bold">
-        <span className="flex items-center gap-1"><Heart className="w-4 h-4 fill-current" />{post.likes_count || 0}</span>
-        <span className="flex items-center gap-1"><MessageCircle className="w-4 h-4" />{post.comments_count || 0}</span>
-      </div>
-    </Link>
-  );
+  const thumbnail = image?.media_url || video?.thumbnail_url || source.link?.image_url;
+  return <div className={`profile-card-media ${compact ? 'compact' : ''}`}>
+    {thumbnail ? <img src={thumbnail} alt="" loading="lazy" /> : video ? <video src={video.media_url} preload="metadata" muted playsInline /> : <div className="profile-media-placeholder"><FileText size={28} /></div>}
+    {video && <span className="profile-play"><Play size={22} fill="currentColor" /></span>}
+    {video?.duration_seconds > 0 && <span className="profile-duration">{Math.floor(video.duration_seconds / 60)}:{String(video.duration_seconds % 60).padStart(2, '0')}</span>}
+    {source.post_type === 'shop' && <span className="profile-shop-badge"><ShoppingBag size={11} />Shop</span>}
+  </div>;
+}
+function GridTile({ post }: {post: any;}) {const { t } = useLanguage();
+  const source = post.original_post || post;
+  return <Link to={postUrl(post)} className="profile-grid-card">
+    <ProfileMedia post={post} />
+    <div className="profile-grid-copy"><h3>{source.title || t("Postingan")}</h3><p>{source.content || ''}</p>{source.location && <span className="profile-card-location"><MapPin size={11} />{source.location}</span>}<div className="profile-card-tags">{(source.hashtags || []).slice(0, 4).map((tag: any) => <span key={tag.tag}>#{tag.tag} </span>)}</div></div>
+    <div className="profile-grid-stats"><span><Heart size={12} fill={post.is_liked_by_me ? 'currentColor' : 'none'} />{post.likes_count || 0}</span><span><Eye size={12} />{post.views_count || 0}</span><time>{timeAgo(post.created_at)}</time></div>
+  </Link>;
 }
 
-export default function Profile({ user, posts, isCurrentUser, onUserChange, onPostsChange }: ProfileProps) {
+export default function Profile({ user, posts, isCurrentUser, onUserChange, onPostsChange }: ProfileProps) {const { t } = useLanguage();
   const navigate = useNavigate();
   const [layout, setLayout] = useState<'grid' | 'long'>(user.profile_layout === 'long' ? 'long' : 'grid');
-  const [tab, setTab] = useState<'posts' | 'saved'>('posts');
+  const [tab, setTab] = useState<'posts' | 'reels' | 'tagged' | 'shop' | 'location' | 'saved'>('posts');
+  const [page, setPage] = useState(1);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [saved, setSaved] = useState<any[] | null>(null);
   const [followList, setFollowList] = useState<'' | 'followers' | 'following'>('');
   const [editOpen, setEditOpen] = useState(false);
@@ -95,11 +98,13 @@ export default function Profile({ user, posts, isCurrentUser, onUserChange, onPo
   const avatarInput = useRef<HTMLInputElement>(null);
   const coverInput = useRef<HTMLInputElement>(null);
 
-  useEffect(() => { setLayout(user.profile_layout === 'long' ? 'long' : 'grid'); setTab('posts'); setSaved(null); }, [user.id, user.profile_layout]);
+  useEffect(() => {setLayout(user.profile_layout === 'long' ? 'long' : 'grid');}, [user.id, user.profile_layout]);
+  useEffect(() => {setTab('posts');setSaved(null);setMenuOpen(false);}, [user.id]);
   useEffect(() => {
-    if (user.profile_locked) return;
+    setPortfolios([]);
+    if (user.profile_locked || user.is_blocked_by_me) return;
     userApi.getPortfolios(user.id).then((data) => setPortfolios(data || [])).catch(() => setPortfolios([]));
-  }, [user.id, user.profile_locked]);
+  }, [user.id, user.profile_locked, user.is_blocked_by_me]);
   useEffect(() => {
     if (tab === 'saved' && saved === null) userApi.getSavedPosts().then((data) => setSaved(data || [])).catch(() => setSaved([]));
   }, [tab, saved]);
@@ -165,138 +170,85 @@ export default function Profile({ user, posts, isCurrentUser, onUserChange, onPo
     }
   };
 
-  const shownPosts = tab === 'saved' ? saved || [] : posts;
-  const replace = (post: any) => (tab === 'saved' ? setSaved((list) => (list || []).map((p) => (p.id === post.id ? post : p))) : onPostsChange(posts.map((p) => (p.id === post.id ? post : p))));
-  const remove = (id: number) => (tab === 'saved' ? setSaved((list) => (list || []).filter((p) => p.id !== id)) : onPostsChange(posts.filter((p) => p.id !== id)));
+  const shownPosts = useMemo(() => {
+    if (tab === 'saved') return saved || [];
+    if (tab === 'reels') return posts.filter((p) => (p.original_post || p).media?.some((m: any) => m.media_type === 'video'));
+    if (tab === 'shop') return posts.filter((p) => (p.original_post || p).post_type === 'shop');
+    if (tab === 'location') return posts.filter((p) => (p.original_post || p).location);
+    if (tab === 'tagged') return posts.filter((p) => (p.mentions || []).some((m: any) => String(m.mentioned_user_id || m.user?.id) === String(user.id)));
+    return posts;
+  }, [tab, saved, posts, user.id]);
+  useEffect(() => {setPage(1);}, [tab, user.id]);
+  const pages = Math.max(1, Math.ceil(shownPosts.length / 9));
+  const currentPage = Math.min(page, pages);
+  const pagePosts = shownPosts.slice((currentPage - 1) * 9, currentPage * 9);
+  const latest = useMemo(() => [...posts].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5), [posts]);
+  const trending = useMemo(() => {
+    const groups = new Map<string, {title: string;post: any;count: number;score: number;}>();
+    posts.forEach((post) => {
+      const source = post.original_post || post;
+      const title = source.location || source.hashtags?.[0]?.tag;
+      if (!title) return;
+      const item = groups.get(title) || { title, post, count: 0, score: 0 };
+      item.count++;item.score += (post.likes_count || 0) + (post.views_count || 0);
+      groups.set(title, item);
+    });
+    return [...groups.values()].sort((a, b) => b.score - a.score).slice(0, 4);
+  }, [posts]);
+  const chooseLayout = async (next: 'grid' | 'long') => {
+    setLayout(next);
+    if (isCurrentUser) {
+      try {const updated = await userApi.updateSettings({ profile_layout: next });onUserChange({ ...user, ...updated });}
+      catch {/* Local layout remains available when preferences cannot be saved. */}
+    }
+  };
+  const totalLikes = posts.reduce((sum, post) => sum + (post.likes_count || 0), 0);
+  const totalViews = posts.reduce((sum, post) => sum + (post.views_count || 0), 0);
+  const replace = (post: any) => tab === 'saved' ? setSaved((list) => (list || []).map((p) => p.id === post.id ? post : p)) : onPostsChange(posts.map((p) => p.id === post.id ? post : p));
+  const remove = (id: number) => tab === 'saved' ? setSaved((list) => (list || []).filter((p) => p.id !== id)) : onPostsChange(posts.filter((p) => p.id !== id));
   const field = 'w-full border border-border-subtle px-3 py-2 rounded-xl text-sm outline-none focus:border-primary';
 
   return (
-    <div className="max-w-[1000px] mx-auto">
-      <div className="relative mb-6">
-        <div className="h-48 md:h-72 w-full rounded-2xl overflow-hidden relative bg-surface-container">
-          {user.cover_url && <img src={user.cover_url} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />}
-          {isCurrentUser && (
-            <button type="button" onClick={() => coverInput.current?.click()} disabled={uploading} className="absolute bottom-3 right-3 rounded-full bg-white/90 px-3 py-1.5 text-xs font-bold flex items-center gap-1 shadow"><Camera className="w-4 h-4" />Ubah header</button>
-          )}
+    <div className="profile-dashboard">
+      <div className="profile-main-column">
+        <section className="profile-summary">
+          <div className="profile-identity"><div className="profile-avatar">
+            {user.avatar_url ? <img src={user.avatar_url} alt={user.name} /> : <span>{user.name?.slice(0, 1).toUpperCase()}</span>}
+            {isCurrentUser && <button type="button" disabled={uploading} onClick={() => avatarInput.current?.click()} aria-label="Ubah foto profil"><Camera size={18} /></button>}
+            <input ref={avatarInput} type="file" accept="image/*" className="hidden" onChange={(e) => uploadImage(e.target.files?.[0], 'avatar_url')} />
+          </div><div><h2>{user.name}{user.is_private && <Lock size={13} aria-label="Akun private" />}</h2><p>@{user.username || 'user'}</p><p className="profile-bio">{user.bio || user.title || t("Belum ada bio.")}</p>{user.website && <a href={user.website} target="_blank" rel="noopener noreferrer nofollow"><LinkIcon size={12} />{user.website.replace(/^https?:\/\//, '')}</a>}</div></div>
+          <div className="profile-summary-right"><div className="profile-summary-top"><div className="profile-numbers"><span>Post<strong>{posts.length}</strong></span><button disabled={user.profile_locked} onClick={() => setFollowList('followers')}>{t("Followers")}<strong>{user.followers_count || 0}</strong></button><button disabled={user.profile_locked} onClick={() => setFollowList('following')}>{t("Following")}<strong>{user.following_count || 0}</strong></button></div>
+            {isCurrentUser ? <button className="profile-primary" onClick={openEdit}>{t("Edit Profile")}</button> : !user.is_blocked_by_me && <button className="profile-primary" onClick={toggleFollow}>{user.follow_status === 'accepted' ? t("Mengikuti") : user.follow_status === 'pending' ? t("Diminta") : t("Ikuti")}</button>}
+            <div className="profile-options"><button aria-label="Menu profil" onClick={() => setMenuOpen(!menuOpen)}><MoreHorizontal size={20} /></button>{menuOpen && <div className="profile-options-menu">{isCurrentUser ? <><button onClick={() => navigate('/settings')}><Settings size={15} />{t("Pengaturan")}</button><button onClick={() => coverInput.current?.click()} disabled={uploading}><Camera size={15} />Ubah gambar sampul</button><button onClick={() => {setPortfolioOpen(true);setMenuOpen(false);}}>Tambah karya</button></> : <><button onClick={() => navigate(`/messages?user_id=${user.id}`)}>{t("Pesan")}</button><button onClick={toggleBlock}><Ban size={15} />{user.is_blocked_by_me ? t("Buka blokir") : t("Blokir")}</button></>}</div>}</div>
+          </div><div className="profile-engagement"><span><Heart size={22} /><div>{totalLikes.toLocaleString()}<small>{t("Likes")}</small></div></span><span><Eye size={22} /><div>{totalViews.toLocaleString()}<small>Views</small></div></span></div></div>
           <input ref={coverInput} type="file" accept="image/*" className="hidden" onChange={(e) => uploadImage(e.target.files?.[0], 'cover_url')} />
-        </div>
-        <div className="px-4 md:px-8 -mt-14 flex flex-col md:flex-row md:items-end justify-between gap-4 relative z-10">
-          <div className="flex flex-col md:flex-row items-center md:items-end gap-4">
-            <div className="w-28 h-28 md:w-36 md:h-36 rounded-full border-4 border-background bg-background overflow-hidden relative group flex-shrink-0">
-              {user.avatar_url ? <img src={user.avatar_url} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" /> : <div className="w-full h-full flex items-center justify-center text-4xl font-bold text-primary bg-secondary-container">{user.name?.slice(0, 1).toUpperCase()}</div>}
-              {isCurrentUser && <button type="button" onClick={() => avatarInput.current?.click()} className="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100" aria-label="Ubah foto profil"><Camera className="w-6 h-6" /></button>}
-              <input ref={avatarInput} type="file" accept="image/*" className="hidden" onChange={(e) => uploadImage(e.target.files?.[0], 'avatar_url')} />
-            </div>
-            <div className="text-center md:text-left pb-1">
-              <div className="flex items-center justify-center md:justify-start gap-2">
-                <h2 className="font-bold text-2xl md:text-3xl text-text-primary">{user.name}</h2>
-                {user.is_private && <Lock className="w-4 h-4 text-text-secondary" aria-label="Akun private" />}
-                {isCurrentUser && <button type="button" onClick={openEdit} className="p-1 text-text-secondary hover:text-primary" aria-label="Edit profil"><Edit3 className="w-4 h-4" /></button>}
-              </div>
-              <p className="text-sm text-text-secondary">@{user.username}{user.title && ` · ${user.title}`}{user.company && ` @ ${user.company}`}</p>
-              <div className="flex gap-4 justify-center md:justify-start mt-1 text-sm">
-                <span><strong>{posts.length}</strong> postingan</span>
-                <button type="button" disabled={user.profile_locked} onClick={() => setFollowList('followers')} className="hover:underline disabled:no-underline"><strong>{user.followers_count || 0}</strong> pengikut</button>
-                <button type="button" disabled={user.profile_locked} onClick={() => setFollowList('following')} className="hover:underline disabled:no-underline"><strong>{user.following_count || 0}</strong> mengikuti</button>
-              </div>
-            </div>
-          </div>
-          <div className="flex gap-2 justify-center pb-1">
-            {isCurrentUser ? (
-              <button type="button" onClick={() => navigate('/settings')} className="rounded-full bg-secondary-container px-5 py-2 text-xs font-bold flex items-center gap-1"><Settings className="w-4 h-4" />Pengaturan</button>
-            ) : (
-              <>
-                {!user.is_blocked_by_me && (
-                  <button type="button" onClick={toggleFollow} className={`rounded-full px-6 py-2 text-xs font-bold ${user.follow_status === 'accepted' ? 'bg-success text-white' : user.follow_status === 'pending' ? 'bg-surface-container text-text-primary' : 'bg-primary text-white'}`}>
-                    {user.follow_status === 'accepted' ? 'Mengikuti' : user.follow_status === 'pending' ? 'Diminta' : 'Ikuti'}
-                  </button>
-                )}
-                {!user.is_blocked_by_me && <button type="button" onClick={() => navigate(`/messages?user_id=${user.id}`)} className="rounded-full bg-secondary-container px-5 py-2 text-xs font-bold">Pesan</button>}
-                <button type="button" onClick={toggleBlock} className={`rounded-full px-4 py-2 text-xs font-bold flex items-center gap-1 ${user.is_blocked_by_me ? 'bg-error text-white' : 'bg-surface-container text-error'}`}><Ban className="w-4 h-4" />{user.is_blocked_by_me ? 'Buka blokir' : 'Blokir'}</button>
-              </>
-            )}
-          </div>
-        </div>
+        </section>
+        {user.is_blocked_by_me || user.profile_locked ? <section className="profile-post-panel profile-empty"><Lock size={28} /><h3>{user.is_blocked_by_me ? 'Anda memblokir akun ini' : 'Akun ini private'}</h3><p>{user.is_blocked_by_me ? 'Buka blokir untuk melihat postingannya.' : 'Ikuti akun ini untuk melihat postingannya.'}</p></section> : <section className="profile-post-panel">
+          <div className="profile-toolbar"><div className="profile-tabs" aria-label="Jenis postingan">{[['posts', t("Posts")], ['reels', 'Reels'], ['tagged', 'Tagged'], ['shop', 'Shop'], ['location', t("Location")], ...(isCurrentUser ? [['saved', t("Tersimpan")]] : [])].map(([id, label]) => <button key={id} onClick={() => setTab(id as typeof tab)} className={tab === id ? 'active' : ''} aria-pressed={tab === id}>{label}</button>)}</div><div className="profile-layout-buttons"><button className={layout === 'grid' ? 'active' : ''} aria-label={t("Tampilan grid")} aria-pressed={layout === 'grid'} onClick={() => chooseLayout('grid')}><LayoutGrid size={13} />Grid</button><button className={layout === 'long' ? 'active' : ''} aria-label={t("Tampilan list")} aria-pressed={layout === 'long'} onClick={() => chooseLayout('long')}><Rows3 size={13} />List</button></div></div>
+          {shownPosts.length === 0 && <div className="profile-empty"><FileText size={32} /><p>{tab === 'saved' && saved === null ? 'Memuat postingan tersimpan...' : 'Belum ada postingan untuk kategori ini.'}</p></div>}
+          {layout === 'grid' ? <div className="profile-post-grid">{pagePosts.map((post) => <GridTile key={post.id} post={post} />)}</div> : <div className="profile-post-list">{pagePosts.map((post) => <PostCard key={post.id} post={post} onUpdated={replace} onDeleted={remove} />)}</div>}
+          {pages > 1 && <nav className="profile-pagination" aria-label="Halaman postingan"><button disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)} aria-label={t("Halaman sebelumnya")}><ChevronLeft size={14} /></button>{Array.from({ length: pages }, (_, index) => <button key={index} className={currentPage === index + 1 ? 'active' : ''} onClick={() => setPage(index + 1)} aria-current={currentPage === index + 1 ? 'page' : undefined}>{index + 1}</button>)}<button disabled={currentPage === pages} onClick={() => setPage(currentPage + 1)} aria-label={t("Halaman berikutnya")}><ChevronRight size={14} /></button></nav>}
+        </section>}
+        {!user.profile_locked && !user.is_blocked_by_me && portfolios.length > 0 && <details className="profile-portfolio"><summary>Karya unggulan ({portfolios.length})</summary>{portfolios.map((item) => <div key={item.id}><a href={item.link_url || undefined} target="_blank" rel="noopener noreferrer">{item.title}</a>{isCurrentUser && <button aria-label="Hapus karya" onClick={async () => {if (window.confirm('Hapus karya ini?')) {await userApi.deletePortfolio(item.id);setPortfolios((list) => list.filter((p) => p.id !== item.id));}}}><Trash2 size={14} /></button>}</div>)}</details>}
       </div>
-
-      {user.is_blocked_by_me ? (
-        <div className="bg-white rounded-2xl p-10 text-center text-sm text-text-secondary">Anda memblokir akun ini. Buka blokir untuk melihat postingannya.</div>
-      ) : user.profile_locked ? (
-        <div className="bg-white rounded-2xl p-10 text-center">
-          <Lock className="w-10 h-10 mx-auto text-text-secondary mb-3" />
-          <p className="font-bold">Akun ini private</p>
-          <p className="text-sm text-text-secondary">Ikuti akun ini untuk melihat postingannya{user.follow_status === 'pending' ? ' — permintaan Anda menunggu persetujuan.' : '.'}</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-1 flex flex-col gap-4">
-            <div className="bg-white rounded-2xl p-5 border border-border-subtle/50">
-              <h3 className="font-bold mb-3">Tentang</h3>
-              {user.bio ? <p className="text-sm text-text-secondary whitespace-pre-wrap mb-3">{user.bio}</p> : <p className="text-xs text-text-secondary mb-3">Belum ada bio.</p>}
-              <div className="space-y-2 text-xs text-text-secondary">
-                {user.location && <div className="flex items-center gap-2"><MapPin className="w-4 h-4 text-primary" />{user.location}</div>}
-                {user.website && <div className="flex items-center gap-2"><LinkIcon className="w-4 h-4 text-primary" /><a href={user.website} target="_blank" rel="noopener noreferrer nofollow" className="text-primary font-semibold hover:underline break-all">{user.website}</a></div>}
-                {user.created_at && <div className="flex items-center gap-2"><Calendar className="w-4 h-4 text-primary" />Bergabung {new Date(user.created_at).toLocaleDateString()}</div>}
-              </div>
-              {(user.interests || []).length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mt-3">{user.interests.map((tag: string) => <span key={tag} className="rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary">{tag}</span>)}</div>
-              )}
-            </div>
-            <div className="bg-white rounded-2xl p-5 border border-border-subtle/50">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-bold">Featured Work</h3>
-                {isCurrentUser && <button type="button" onClick={() => setPortfolioOpen(true)} className="text-xs font-bold text-primary">+ Tambah</button>}
-              </div>
-              {portfolios.length === 0 && <p className="text-xs text-text-secondary">Belum ada karya unggulan.</p>}
-              <div className="flex flex-col gap-2">
-                {portfolios.map((item) => (
-                  <div key={item.id} className="flex gap-3 items-center group">
-                    {item.image_url && <img src={item.image_url} alt="" className="w-12 h-12 rounded-lg object-cover" />}
-                    <a href={item.link_url || undefined} target="_blank" rel="noopener noreferrer" className="flex-1 min-w-0"><div className="text-xs font-bold truncate">{item.title}</div><div className="text-[11px] text-text-secondary truncate">{item.project_type}</div></a>
-                    {isCurrentUser && <button type="button" onClick={async () => { if (window.confirm('Hapus karya ini?')) { await userApi.deletePortfolio(item.id); setPortfolios((list) => list.filter((p) => p.id !== item.id)); } }} className="opacity-0 group-hover:opacity-100 text-error" aria-label="Hapus"><Trash2 className="w-4 h-4" /></button>}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="lg:col-span-2">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex gap-1 rounded-xl bg-white p-1 border border-border-subtle/50 text-sm font-bold">
-                <button type="button" onClick={() => setTab('posts')} className={`rounded-lg px-4 py-1.5 ${tab === 'posts' ? 'bg-secondary-container text-primary' : 'text-text-secondary'}`}>Postingan</button>
-                {isCurrentUser && <button type="button" onClick={() => setTab('saved')} className={`rounded-lg px-4 py-1.5 ${tab === 'saved' ? 'bg-secondary-container text-primary' : 'text-text-secondary'}`}>Tersimpan</button>}
-              </div>
-              <div className="flex gap-1 bg-white p-1 rounded-xl border border-border-subtle/50">
-                <button type="button" onClick={() => setLayout('grid')} className={`p-1.5 rounded-lg ${layout === 'grid' ? 'bg-secondary-container text-primary' : 'text-text-secondary'}`} aria-label="Tampilan grid"><LayoutGrid className="w-4 h-4" /></button>
-                <button type="button" onClick={() => setLayout('long')} className={`p-1.5 rounded-lg ${layout === 'long' ? 'bg-secondary-container text-primary' : 'text-text-secondary'}`} aria-label="Tampilan long card"><Rows3 className="w-4 h-4" /></button>
-              </div>
-            </div>
-            {tab === 'saved' && saved === null && <p className="text-sm text-text-secondary">Memuat…</p>}
-            {shownPosts.length === 0 && (tab === 'posts' || saved !== null) && <div className="bg-white rounded-2xl p-8 text-center text-sm text-text-secondary">{tab === 'saved' ? 'Belum ada postingan tersimpan.' : 'Belum ada postingan.'}</div>}
-            {layout === 'grid' ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">{shownPosts.map((post) => <GridTile key={post.id} post={post} />)}</div>
-            ) : (
-              <div className="flex flex-col gap-4">{shownPosts.map((post) => <PostCard key={post.id} post={post} onUpdated={replace} onDeleted={remove} />)}</div>
-            )}
-          </div>
-        </div>
-      )}
-
+      {!user.profile_locked && !user.is_blocked_by_me && <aside className="profile-right-column"><section className="profile-side-panel"><div className="profile-panel-heading"><h3><FileText size={15} />{t("Postingan Terbaru")}</h3><button onClick={() => {setTab('posts');setPage(1);chooseLayout('long');}}>{t("Lihat Semua")}<ArrowRight size={13} /></button></div><div className="profile-latest">{latest.map((post) => <Link key={post.id} to={postUrl(post)} className="profile-latest-row"><ProfileMedia post={post} compact /><div className="profile-latest-copy"><div className="profile-latest-author">{user.avatar_url ? <img src={user.avatar_url} alt="" /> : <span>{user.name?.slice(0, 1)}</span>}<div>{user.name}<small>{timeAgo(post.created_at)}</small></div></div><h4>{post.title || t("Postingan")}</h4><p>{post.content}</p>{post.location && <span className="profile-card-location"><MapPin size={11} />{post.location}</span>}<div className="profile-latest-stats"><span><Heart size={14} />{post.likes_count || 0}</span><span><Eye size={14} />{post.views_count || 0}</span></div></div></Link>)}{!latest.length && <p className="profile-side-empty">Belum ada postingan terbaru.</p>}</div></section>
+        <section className="profile-side-panel"><div className="profile-panel-heading"><h3><Flame size={16} />Trending</h3><Link to="/search">{t("Lihat Semua")}<ArrowRight size={13} /></Link></div><div className="profile-trending">{trending.map((item, index) => <Link key={item.title} to={`/search?q=${encodeURIComponent(item.title)}`}><div><ProfileMedia post={item.post} compact /><span className="profile-trending-rank">{index + 1}</span></div><h4>{item.title}</h4><p>{item.count} posts</p></Link>)}</div>{!trending.length && <p className="profile-side-empty">Lokasi dan hashtag dari postingan akan muncul di sini.</p>}</section>
+      </aside>}
       {followList && <FollowListModal userId={user.id} kind={followList} onClose={() => setFollowList('')} />}
 
-      {editOpen && (
-        <Modal title="Edit profil" onClose={() => setEditOpen(false)}>
+      {editOpen &&
+      <Modal title={t("Edit profil")} onClose={() => setEditOpen(false)}>
           <div className="flex flex-col gap-3">
-            {([['name', 'Nama lengkap'], ['title', 'Jabatan / peran'], ['company', 'Perusahaan'], ['location', 'Lokasi'], ['website', 'Website (https://…)']] as const).map(([key, label]) => (
-              <label key={key} className="text-xs font-semibold flex flex-col gap-1">{label}<input value={(form as any)[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })} className={field} /></label>
-            ))}
-            <label className="text-xs font-semibold flex flex-col gap-1">Bio<textarea value={form.bio} maxLength={500} rows={3} onChange={(e) => setForm({ ...form, bio: e.target.value })} className={field} /><span className="text-right text-[10px] text-text-secondary">{form.bio.length}/500</span></label>
-            <button type="button" onClick={async () => { if (await updateProfile(form)) setEditOpen(false); }} className="rounded-full bg-primary py-2 text-sm font-bold text-white">Simpan</button>
+            {([['name', t("Nama lengkap")], ['title', t("Jabatan / peran")], ['company', t("Perusahaan")], ['location', t("Lokasi")], ['website', 'Website (https://…)']] as const).map(([key, label]) =>
+          <label key={key} className="text-xs font-semibold flex flex-col gap-1">{label}<input value={(form as any)[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })} className={field} /></label>
+          )}
+            <label className="text-xs font-semibold flex flex-col gap-1">{t("Bio")}<textarea value={form.bio} maxLength={500} rows={3} onChange={(e) => setForm({ ...form, bio: e.target.value })} className={field} /><span className="text-right text-[10px] text-text-secondary">{form.bio.length}/500</span></label>
+            <button type="button" onClick={async () => {if (await updateProfile(form)) setEditOpen(false);}} className="rounded-full bg-primary py-2 text-sm font-bold text-white">{t("Simpan")}</button>
           </div>
         </Modal>
-      )}
+      }
 
       <AddPortfolioModal isOpen={portfolioOpen} onClose={() => setPortfolioOpen(false)} onSuccess={(item: any) => userApi.createPortfolio(item).then((saved) => setPortfolios((list) => [saved, ...list])).catch((e) => alert(errorText(e, 'Gagal menyimpan')))} />
-    </div>
-  );
+    </div>);
+
 }

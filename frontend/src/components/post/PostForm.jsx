@@ -35,8 +35,8 @@ const PostForm = ({ onPostCreated }) => {
   const avatar = user?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=100';
 
   // Word counter
-  const wordCount = content.trim() ? content.trim().split(/\s+/).length : 0;
-  const isDescriptionValid = isShopMode ? (wordCount > 0 && wordCount <= 6000) : (wordCount >= 160 && wordCount <= 6000);
+  const characterCount = [...content.trim()].length;
+  const isDescriptionValid = isShopMode ? (characterCount > 0 && characterCount <= 6000) : (characterCount >= 160 && characterCount <= 6000);
   const isTitleValid = title.trim().length >= 5 && title.trim().length <= 100;
 
   const handleFileChange = (e) => {
@@ -103,7 +103,7 @@ const PostForm = ({ onPostCreated }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!isTitleValid || !isDescriptionValid) {
-       alert('Pastikan Judul (5-100 karakter) dan Deskripsi (minimal 160 kata) sudah sesuai syarat.');
+       alert('Pastikan Judul (5-100 karakter) dan Deskripsi (minimal 160 karakter) sudah sesuai syarat.');
        return;
     }
 
@@ -188,14 +188,14 @@ const PostForm = ({ onPostCreated }) => {
           />
           <div className="flex-grow flex flex-col">
             <textarea
-              placeholder={isShopMode ? `Deskripsi produk Anda secara lengkap...` : `Deskripsi postingan Anda (minimal 160 kata), gunakan #hashtag atau @mention...`}
+              placeholder={isShopMode ? `Deskripsi produk Anda secara lengkap...` : `Deskripsi postingan Anda (minimal 160 karakter), gunakan #hashtag atau @mention...`}
               value={content}
               onChange={(e) => setContent(e.target.value)}
               rows={4}
               className="text-sm placeholder-gray-500 text-gray-800 border-none focus:ring-0 resize-none outline-none py-1.5 w-full bg-transparent"
             />
             <div className={`text-xs text-right mt-1 font-medium ${isDescriptionValid ? 'text-green-500' : 'text-red-400'}`}>
-              {wordCount} / 6000 kata {isShopMode ? "" : "(Min. 160 kata)"}
+              {characterCount} / 6000 karakter {isShopMode ? "" : "(Min. 160 karakter)"}
             </div>
           </div>
         </div>

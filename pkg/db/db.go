@@ -135,6 +135,23 @@ func InitDB() {
 	} else if result.RowsAffected > 0 {
 		log.Printf("Released %d stale queue jobs", result.RowsAffected)
 	}
+	// Give existing posts the same opaque public IDs as newly created posts.
+	var oldPosts []models.Post
+	backfill := DB.Select("id", "public_hash").Where("public_hash IS NULL OR public_hash = ''").FindInBatches(&oldPosts, 200, func(tx *gorm.DB, batch int) error {
+		for _, post := range oldPosts {
+			token, err := models.NewPostHash()
+			if err != nil {
+				return err
+			}
+			if err := DB.Model(&models.Post{}).Where("id = ? AND (public_hash IS NULL OR public_hash = '')", post.ID).UpdateColumn("public_hash", token).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if backfill.Error != nil {
+		log.Fatalf("Failed to assign public post IDs: %v", backfill.Error)
+	}
 	log.Println("Database AutoMigrate completed successfully.")
 
 	// Account deletion has a 30-day recovery window. Expired accounts are

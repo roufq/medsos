@@ -2,17 +2,23 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Signup from '../components/modern/Signup';
+import { userApi } from '../api/userApi';
 import { authApi } from '../api/authApi';
 
 const RegisterPage = () => {
-  const { register } = useAuth();
+  const { register, updateProfileState } = useAuth();
   const navigate = useNavigate();
   const [error, setError] = useState('');
 
   const handleRegister = async (email, fullName, password, extra) => {
     setError('');
     try {
-      await register(fullName, email, password, extra);
+      const { profile, ...account } = extra || {};
+      await register(fullName, email, password, account);
+      if (profile) {
+        try { updateProfileState(await userApi.updateSettings(profile)); }
+        catch { navigate('/settings'); return; }
+      }
       navigate('/');
     } catch (err) {
       setError(err.response?.data?.error || 'Pendaftaran gagal. Coba lagi.');

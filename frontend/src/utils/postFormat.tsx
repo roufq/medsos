@@ -5,8 +5,8 @@ import { Link } from 'react-router-dom';
 export const POST_RULES = {
   titleMin: 5,
   titleMax: 100,
-  descriptionMinWords: 160,
-  descriptionMaxWords: 6000,
+  descriptionMinChars: 160,
+  descriptionMaxChars: 6000,
   hashtagsMin: 3,
   hashtagsMax: 9,
   shopHashtagsMax: 30,
@@ -94,7 +94,7 @@ export function RichText({ text }: { text?: string | null }) {
       nodes.push(text.slice(last, index) + lead);
       const symbol = match[3];
       const token = match[4];
-      const target = symbol === '#' ? `/search?q=${encodeURIComponent('#' + token)}` : `/u/${encodeURIComponent(token.toLowerCase())}`;
+      const target = symbol === '#' ? `/search?q=${encodeURIComponent('#' + token)}` : `/profile/${encodeURIComponent(token.toLowerCase())}`;
       nodes.push(<Link key={index} to={target} className="text-primary font-semibold hover:underline">{symbol}{token}</Link>);
       last = index + match[0].length;
     }

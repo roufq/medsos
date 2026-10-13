@@ -2,10 +2,13 @@ package controllers
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
+	"goravel/app/facades"
 	"html/template"
 	"net/url"
-	"os"
+	"regexp"
+	"strconv"
 	"strings"
 	"unicode/utf8"
 
@@ -19,14 +22,36 @@ import (
 // configuration (not the request's Origin header) keeps generated codes
 // absolute and stable when pasted into another website.
 func appBaseURL() string {
-	if base := strings.TrimRight(os.Getenv("FRONTEND_URL"), "/"); base != "" {
+	if base := strings.TrimRight(fmt.Sprint(facades.Config().Env("FRONTEND_URL", "")), "/"); base != "" {
 		return base
 	}
-	return strings.TrimRight(os.Getenv("APP_URL"), "/")
+	return strings.TrimRight(fmt.Sprint(facades.Config().Env("APP_URL", "http://localhost:3000")), "/")
 }
 
 func publicPostURL(postID int64) string {
-	return fmt.Sprintf("%s/p/%d", appBaseURL(), postID)
+	var post models.Post
+	if db.DB.Select("id", "public_hash").First(&post, postID).Error != nil {
+		return ""
+	}
+	return fmt.Sprintf("%s/p/%s", appBaseURL(), post.PublicToken())
+}
+
+var postHashPattern = regexp.MustCompile(`^[a-f0-9]{32}$`)
+
+func routePostID(c goravelhttp.Context) (int64, error) {
+	token := c.Request().Route("id")
+	if postHashPattern.MatchString(token) {
+		var post models.Post
+		if err := db.DB.Select("id").Where("public_hash = ?", token).First(&post).Error; err != nil {
+			return 0, err
+		}
+		return post.ID, nil
+	}
+	id, err := strconv.ParseInt(token, 10, 64)
+	if err != nil || id <= 0 {
+		return 0, errors.New("invalid post ID")
+	}
+	return id, nil
 }
 
 // shareLinks returns web share-intent URLs. Instagram and TikTok offer no
@@ -68,7 +93,7 @@ type publicPostView struct {
 }
 
 func loadPublicPost(c goravelhttp.Context) (*publicPostView, bool) {
-	postID, err := routeID(c, "id")
+	postID, err := routePostID(c)
 	if err != nil {
 		return nil, false
 	}
@@ -76,7 +101,7 @@ func loadPublicPost(c goravelhttp.Context) (*publicPostView, bool) {
 	if db.DB.Preload("User").Preload("Media").Preload("Link").Preload("Shop").First(&post, postID).Error != nil || !canViewPost(0, &post) {
 		return nil, false
 	}
-	view := &publicPostView{ID: post.ID, AuthorName: post.User.Name, PostURL: publicPostURL(post.ID), AppURL: appBaseURL(), ViewInApp: fmt.Sprintf("%s/post/%d", appBaseURL(), post.ID)}
+	view := &publicPostView{ID: post.ID, AuthorName: post.User.Name, PostURL: publicPostURL(post.ID), AppURL: appBaseURL(), ViewInApp: fmt.Sprintf("%s/post/%s", appBaseURL(), post.PublicToken())}
 	if post.Title != nil {
 		view.Title = *post.Title
 	}
@@ -162,6 +187,13 @@ func (h *SocialController) EmbedPost(c goravelhttp.Context) goravelhttp.Response
 // PublicPostPage is the share target: OpenGraph tags let Facebook, WhatsApp,
 // LinkedIn, X, etc. show a rich preview; only public posts are rendered.
 func (h *SocialController) PublicPostPage(c goravelhttp.Context) goravelhttp.Response {
+	if !postHashPattern.MatchString(c.Request().Route("id")) {
+		view, ok := loadPublicPost(c)
+		if !ok {
+			return c.Response().String(404, "Post not found")
+		}
+		return c.Response().Redirect(302, view.PostURL)
+	}
 	return renderPublic(c, publicPageTemplate)
 }
 
@@ -170,7 +202,7 @@ func (h *SocialController) EmbedCode(c goravelhttp.Context) goravelhttp.Response
 	if err != nil {
 		return c.Response().Json(401, goravelhttp.Json{"error": "Unauthorized"})
 	}
-	postID, err := routeID(c, "id")
+	postID, err := routePostID(c)
 	if err != nil {
 		return c.Response().Json(400, goravelhttp.Json{"error": "invalid post"})
 	}
@@ -181,7 +213,7 @@ func (h *SocialController) EmbedCode(c goravelhttp.Context) goravelhttp.Response
 	if !canViewPost(0, &post) {
 		return c.Response().Json(400, goravelhttp.Json{"error": "only public posts can be embedded"})
 	}
-	src := fmt.Sprintf("%s/embed/posts/%d", appBaseURL(), postID)
+	src := fmt.Sprintf("%s/embed/posts/%s", appBaseURL(), post.PublicToken())
 	code := fmt.Sprintf(`<iframe src="%s" width="100%%" height="520" style="border:0;max-width:640px" loading="lazy" sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox" title="Embedded post"></iframe>`, template.HTMLEscapeString(src))
 	return c.Response().Json(200, goravelhttp.Json{"embed_code": code, "embed_url": src, "post_url": publicPostURL(postID)})
 }

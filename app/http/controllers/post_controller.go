@@ -188,7 +188,7 @@ func (h *PostController) GetFeedAPI(c goravelhttp.Context) goravelhttp.Response 
 	}
 
 	shortsOnly := c.Request().Query("kind", "") == "shorts"
-	posts, err := h.postService.GetFeed(viewerID, limit, offset, beforeID, shortsOnly)
+	posts, err := h.postService.GetFeed(viewerID, limit, offset, beforeID, shortsOnly, c.Request().Query("kind", ""))
 	if err != nil {
 		return c.Response().Json(http.StatusInternalServerError, goravelhttp.Json{"error": err.Error()})
 	}
@@ -201,7 +201,7 @@ func (h *PostController) GetPostAPI(c goravelhttp.Context) goravelhttp.Response 
 	if err != nil {
 		return c.Response().Json(http.StatusUnauthorized, goravelhttp.Json{"error": "Unauthorized"})
 	}
-	postID, err := routeID(c, "id")
+	postID, err := routePostID(c)
 	if err != nil {
 		return c.Response().Json(http.StatusBadRequest, goravelhttp.Json{"error": "Invalid post ID"})
 	}

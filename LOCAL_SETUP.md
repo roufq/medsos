@@ -33,4 +33,4 @@ npm run dev
 
 Buka http://localhost:5173. Vite meneruskan `/api`, `/uploads`, dan `/web` ke backend port 3000. Hentikan proses terminal dengan Ctrl+C.
 
-Upload video memerlukan `ffprobe` di PATH (sudah tersedia pada mesin ini). Email SMTP dan login OAuth memerlukan konfigurasi layanan tersendiri apabila fitur tersebut digunakan.
+Upload dan pemrosesan video memakai `ffprobe.exe` serta `ffmpeg.exe` portable di `tmp/toolchain/ffmpeg/bin`. Backend mencari folder tersebut otomatis; `start-local.ps1` juga menambahkannya ke PATH proses. Untuk instalasi lain, gunakan PATH atau variabel `FFPROBE_PATH` / `FFMPEG_PATH`. Email SMTP dan login OAuth memerlukan konfigurasi layanan tersendiri apabila fitur tersebut digunakan.

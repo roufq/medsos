@@ -1,3 +1,4 @@
+import { profileUrl } from '../../utils/profileUrl';
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -43,7 +44,7 @@ const Navbar = () => {
           <Home size={22} />
         </Link>
         <Link
-          to={`/profile/${user?.id}`}
+          to={profileUrl(user)}
           className="p-2 hover:bg-[#f0f2f5] rounded-xl text-[#65676B] hover:text-[#0866ff] transition-all"
           title="Profile"
         >
@@ -65,7 +66,7 @@ const Navbar = () => {
       {/* Right Profile Actions */}
       <div className="flex items-center gap-3">
         <Link
-          to={`/profile/${user?.id}`}
+          to={profileUrl(user)}
           className="flex items-center gap-2 hover:bg-[#f0f2f5] p-1.5 rounded-full pr-3 transition-all"
         >
           <img
