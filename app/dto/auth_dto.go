@@ -13,6 +13,12 @@ type RegisterRequest struct {
 	PhoneCountry string `form:"phone_country" json:"phone_country"`
 	AccountType string `form:"account_type" json:"account_type"`
 	Password    string `form:"password" json:"password" binding:"required,min=8,max=72"`
+
+	Gender      string   `form:"gender" json:"gender"`
+	BirthDate   string   `form:"birth_date" json:"birth_date"`
+	Country     string   `form:"country" json:"country"`
+	City        string   `form:"city" json:"city"`
+	Interests   string   `form:"interests" json:"interests"` // comma separated from frontend FormData
 }
 
 // LoginRequest defines the credentials payload for log in
