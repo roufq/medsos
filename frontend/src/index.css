@@ -339,6 +339,18 @@ body { background-color: rgb(var(--app-bg)); color: rgb(var(--text-main)); }
 [data-theme="dark"] .auth-benefits > div > span, [data-theme="dark"] .auth-eyebrow { background: #35465b; color: #c2d3e9; }
 [data-theme="dark"] .auth-primary { background: #e1eaf5; color: #111c2b; }
 [data-theme="dark"] .auth-divider::before, [data-theme="dark"] .auth-divider::after { background: #344459; }
+
+/* Keep both auth pages readable against their selected theme. */
+.auth-layout { --text-muted: 75 85 99; --border: 125 137 153; --auth-link: 8 82 187; }
+[data-theme="dark"] .auth-layout { --text-muted: 180 192 210; --border: 115 130 150; --auth-link: 147 197 253; }
+.auth-layout input:not([type="checkbox"]), .auth-layout select { background-color: transparent; color: rgb(var(--text-main)); caret-color: rgb(var(--text-main)); }
+.auth-layout input::placeholder { color: rgb(var(--text-muted)); opacity: 1; }
+.auth-layout select option { background-color: rgb(var(--card-bg)); color: rgb(var(--text-main)); }
+.auth-layout input:-webkit-autofill { -webkit-text-fill-color: rgb(var(--text-main)); box-shadow: 0 0 0 1000px rgb(var(--card-bg)) inset; }
+.auth-layout .auth-link { color: rgb(var(--auth-link)); }
+.auth-layout .auth-oauth-button { color: rgb(var(--text-main)); border-color: rgb(var(--border)); }
+.auth-layout .auth-oauth-button:hover { background-color: rgb(var(--surface-low)); }
+.auth-layout button:focus-visible, .auth-layout a:focus-visible { outline: 2px solid rgb(var(--auth-link)); outline-offset: 3px; }
 @media (max-width: 1200px) { .auth-scene { padding: 35px 24px; } .auth-scene-inner, .auth-signup .auth-scene-inner { gap: 26px; } .auth-art { height: 580px; } .auth-signup .auth-art { height: 540px; } .auth-form-panel { padding: 28px 22px; } .auth-intro h1 { font-size: 37px; } .auth-intro-description { font-size: 14px; } .auth-benefits { gap: 23px; } .auth-benefits > div { gap: 12px; } .auth-benefits > div > span { height: 44px; width: 44px; } }
 @media (max-width: 1000px) { .auth-scene-inner, .auth-signup .auth-scene-inner { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); max-width: 850px; } .auth-art { display: none; } .auth-intro h1 { font-size: 42px; } }
 @media (max-width: 640px) { .auth-scene { padding: 28px 16px; align-items: flex-start; } .auth-scene-inner, .auth-signup .auth-scene-inner { grid-template-columns: minmax(0, 1fr); gap: 24px; max-width: 500px; } .auth-intro h1 { font-size: 34px; margin-bottom: 12px; } .auth-intro h1 br { display: none; } .auth-eyebrow { margin-bottom: 12px; } .auth-intro-description { max-width: none; } .auth-benefits, .auth-intro blockquote { display: none; } .auth-form-panel, .auth-signup .auth-form-panel { padding: 24px 20px; } .auth-interests { grid-template-columns: repeat(3, minmax(0, 1fr)); } .auth-signup .auth-oauth { grid-template-columns: repeat(3, minmax(0, 1fr)); } }

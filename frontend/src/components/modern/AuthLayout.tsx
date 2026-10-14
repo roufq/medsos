@@ -34,7 +34,7 @@ export default function AuthLayout({ children, isLogin = true }: AuthLayoutProps
   ];
 
   return (
-    <div className="min-h-screen bg-[#F0F2F5] flex items-center justify-center font-sans overflow-hidden">
+    <div className="auth-layout text-text-primary min-h-screen bg-background flex items-center justify-center font-sans overflow-hidden">
       <div className="w-full max-w-[1400px] grid lg:grid-cols-2 min-h-screen lg:min-h-[900px] h-full p-4 sm:p-8 gap-12">
 
         {/* LEFT COLUMN */}
@@ -57,11 +57,11 @@ export default function AuthLayout({ children, isLogin = true }: AuthLayoutProps
                   <div className="w-24 h-3 bg-white/60 rounded-full" />
                 </div>
                 <div>
-                  <div className="w-48 h-4 bg-white font-bold rounded-full mb-2" />
+                  <div className="w-48 h-4 bg-[#ffffff] font-bold rounded-full mb-2" />
                   <div className="w-32 h-3 bg-white/70 rounded-full mb-4" />
                   <div className="flex items-center justify-between">
                     <div className="w-3/4 h-1 bg-white/30 rounded-full overflow-hidden">
-                      <div className="w-1/3 h-full bg-white" />
+                      <div className="w-1/3 h-full bg-[#ffffff]" />
                     </div>
                   </div>
                 </div>
@@ -71,36 +71,36 @@ export default function AuthLayout({ children, isLogin = true }: AuthLayoutProps
 
           {/* Text Content Area */}
           <div className="ml-[320px] max-w-[420px] z-20">
-            <span className="inline-block px-4 py-1.5 rounded-full bg-gray-200/60 text-gray-700 text-sm font-medium mb-6 backdrop-blur-sm">
+            <span className="inline-block px-4 py-1.5 rounded-full bg-surface-container-highest text-text-primary text-sm font-medium mb-6 backdrop-blur-sm">
               {t(badgeText)}
             </span>
-            <h1 className="text-5xl font-extrabold text-gray-900 mb-6 leading-tight tracking-tight">
+            <h1 className="text-5xl font-extrabold text-text-primary mb-6 leading-tight tracking-tight">
               {t(title)}
             </h1>
-            <p className="text-gray-600 text-lg mb-10 leading-relaxed">
+            <p className="text-text-secondary text-lg mb-10 leading-relaxed">
               {t(subtitle)}
             </p>
 
             <div className="space-y-6">
               {features.map((f, i) => (
                 <div key={i} className="flex gap-4 items-start">
-                  <div className="w-12 h-12 rounded-xl bg-gray-200/50 flex items-center justify-center shrink-0 text-gray-700">
+                  <div className="w-12 h-12 rounded-xl bg-surface-container-highest flex items-center justify-center shrink-0 text-text-primary">
                     {f.icon}
                   </div>
                   <div>
-                    <h3 className="font-bold text-gray-900 mb-1">{t(f.title)}</h3>
-                    <p className="text-sm text-gray-500 leading-relaxed">{t(f.description)}</p>
+                    <h3 className="font-bold text-text-primary mb-1">{t(f.title)}</h3>
+                    <p className="text-sm text-text-secondary leading-relaxed">{t(f.description)}</p>
                   </div>
                 </div>
               ))}
             </div>
 
             {!isLogin && (
-              <div className="mt-12 opacity-70 transform -rotate-2">
-                <p className="font-serif italic text-xl text-gray-500">
+              <div className="mt-12 transform -rotate-2">
+                <p className="font-serif italic text-xl text-text-secondary">
                   {t("\"Lebih dari sekadar media sosial,")}<br/>{t("ini adalah tempat untuk menemukan")}<br/>{t("dunia baru.\"")}
                 </p>
-                <div className="w-32 h-px bg-gray-400 mt-4 ml-8" />
+                <div className="w-32 h-px bg-text-secondary mt-4 ml-8" />
               </div>
             )}
           </div>
