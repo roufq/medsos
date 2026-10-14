@@ -1,6 +1,7 @@
 import { useState, FormEvent } from 'react';
-import { Mail, Lock, Eye, EyeOff, ShieldCheck, Zap, Globe, ArrowRight } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import OAuthButtons from './OAuthButtons';
+import AuthLayout from './AuthLayout';
 
 interface LoginProps {
 	onLogin: (identifier: string, password?: string) => void;
@@ -14,7 +15,6 @@ export default function Login({ onLogin, onNavigateToSignup, onNavigateToForgot,
 	const [email, setEmail] = useState(defaultEmail);
 	const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [remember, setRemember] = useState(true);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -22,171 +22,88 @@ export default function Login({ onLogin, onNavigateToSignup, onNavigateToForgot,
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-6 relative">
-      {/* Background Atmospheric Effect */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden z-0 opacity-40">
-        <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] rounded-full bg-primary/10 blur-[120px]" />
-        <div className="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] rounded-full bg-secondary/10 blur-[120px]" />
-      </div>
-
-      <main className="w-full max-w-[480px] z-10 flex flex-col gap-8 select-none">
-        {/* Logo and Header info */}
-        <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center bg-white p-3 rounded-2xl shadow-sm border border-border-subtle/20 mb-2">
-            <div className="w-12 h-12 bg-primary/10 text-primary rounded-xl flex items-center justify-center">
-              {/* Custom interconnect logo */}
-              <svg className="w-8 h-8 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-                <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-              </svg>
-            </div>
-          </div>
-          <h1 className="font-bold text-3xl text-text-primary tracking-tight">Connect Modern</h1>
-          <p className="text-sm font-medium text-text-secondary">
-            Secure access to your professional suite.
-          </p>
+    <AuthLayout isLogin={true}>
+      <div className="bg-white rounded-[2rem] p-8 sm:p-12 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100/50">
+        <div className="mb-10">
+          <h2 className="text-4xl font-bold text-gray-900 mb-3 tracking-tight">Sign In</h2>
+          <p className="text-gray-500 text-base">Welcome back! Please sign in to your Postterest account.</p>
         </div>
 
-        {/* Core Login Card */}
-        <div className="bg-white rounded-2xl border border-border-subtle shadow-md p-8 flex flex-col gap-6">
-          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-            {/* Professional Email field */}
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="email" className="font-bold text-xs pl-1 text-on-surface-variant">
-				Email or Username
-              </label>
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-3.5 flex items-center pointer-events-none text-outline group-focus-within:text-primary">
-                  <Mail className="w-5 h-5 transition-colors" />
-                </div>
-                <input 
-                  id="email"
-					type="text"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-					placeholder="name@company.com or username"
-                  className="w-full pl-11 pr-4 py-3 bg-surface-container-low border border-transparent rounded-xl text-xs font-medium focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-text-primary placeholder:text-outline"
-                />
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="space-y-1">
+            <div className="flex items-center w-full bg-gray-50/50 border border-gray-200 rounded-xl focus-within:border-gray-900 focus-within:bg-white transition-all overflow-hidden group">
+              <div className="pl-4 pr-3 flex items-center justify-center text-gray-400 group-focus-within:text-gray-900 transition-colors">
+                <Mail size={18} strokeWidth={1.25} />
               </div>
-            </div>
-
-            {/* Password input field */}
-            <div className="flex flex-col gap-1.5">
-              <div className="flex justify-between items-center px-1">
-                <label htmlFor="password" className="font-bold text-xs text-on-surface-variant">
-                  Password
-                </label>
-				<button type="button" onClick={onNavigateToForgot} className="font-bold text-xs text-primary hover:underline transition-all">
-				  Forgot password?
-				</button>
-              </div>
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-3.5 flex items-center pointer-events-none text-outline group-focus-within:text-primary">
-                  <Lock className="w-5 h-5 transition-colors" />
-                </div>
-                <input 
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full pl-11 pr-12 py-3 bg-surface-container-low border border-transparent rounded-xl text-xs font-medium focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-text-primary"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-3.5 flex items-center text-outline hover:text-text-primary transition-colors cursor-pointer"
-                >
-                  {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
-                </button>
-              </div>
-            </div>
-
-            {/* Remember me checkbox */}
-            <div className="flex items-center gap-2 px-1">
-              <input 
-                id="remember"
-                type="checkbox"
-                checked={remember}
-                onChange={(e) => setRemember(e.target.checked)}
-                className="w-4 h-4 text-primary bg-surface-container border-border-subtle rounded focus:ring-primary/20 cursor-pointer"
+              <input
+                type="text"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="flex-1 w-0 bg-transparent py-3.5 pr-4 text-sm text-gray-900 outline-none placeholder:text-gray-400 border-none focus:ring-0"
+                placeholder="Email address"
+                required
               />
-              <label htmlFor="remember" className="text-xs font-semibold text-text-secondary cursor-pointer">
-                Remember this device for 30 days
-              </label>
-            </div>
-
-            {/* Submit log in action */}
-            <button 
-              type="submit"
-              className="w-full py-3.5 bg-primary text-white rounded-xl font-bold text-sm hover:brightness-110 active:scale-[0.98] transition-all shadow-md shadow-primary/25 mt-2 flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <span>Log In</span>
-              <ArrowRight className="w-4.5 h-4.5" />
-            </button>
-          </form>
-
-          <div className="relative py-2">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border-subtle/50" />
-            </div>
-            <div className="relative flex justify-center text-xs">
-              <span className="px-3 bg-white text-text-secondary font-bold uppercase tracking-widest text-[9px]">
-                Trusted Partner
-              </span>
             </div>
           </div>
 
-          <OAuthButtons onOAuth={onOAuth} />
-
-          <div className="text-center">
-            <p className="text-xs text-text-secondary">
-              Don't have an account?{' '}
-              <button 
+          <div className="space-y-1">
+            <div className="flex items-center w-full bg-gray-50/50 border border-gray-200 rounded-xl focus-within:border-gray-900 focus-within:bg-white transition-all overflow-hidden group">
+              <div className="pl-4 pr-3 flex items-center justify-center text-gray-400 group-focus-within:text-gray-900 transition-colors">
+                <Lock size={18} strokeWidth={1.25} />
+              </div>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="flex-1 w-0 bg-transparent py-3.5 pr-2 text-sm text-gray-900 outline-none placeholder:text-gray-400 border-none focus:ring-0"
+                placeholder="Password"
+                required
+              />
+              <button
                 type="button"
-                onClick={onNavigateToSignup}
-                className="text-primary font-bold hover:underline cursor-pointer"
+                onClick={() => setShowPassword(!showPassword)}
+                className="w-12 h-full flex-shrink-0 flex items-center justify-center text-gray-400 hover:text-gray-600 focus:outline-none"
               >
-                Sign up instead
+                {showPassword ? <EyeOff size={18} strokeWidth={1.25} /> : <Eye size={18} strokeWidth={1.25} />}
               </button>
-            </p>
-          </div>
-        </div>
-
-        {/* Security badges and legal support footer */}
-        <div className="flex flex-col items-center gap-6">
-          <div className="flex flex-wrap justify-center gap-x-8 gap-y-3.5 select-none text-xs">
-            <div className="flex items-center gap-2 text-text-secondary">
-              <ShieldCheck className="w-4.5 h-4.5 text-success fill-success/10" />
-              <span className="font-semibold">Enterprise Security</span>
-            </div>
-            <div className="flex items-center gap-2 text-text-secondary">
-              <Zap className="w-4.5 h-4.5 text-success fill-success/10" />
-              <span className="font-semibold">99.9% Uptime</span>
-            </div>
-            <div className="flex items-center gap-2 text-text-secondary">
-              <Globe className="w-4.5 h-4.5 text-success fill-success/10" />
-              <span className="font-semibold">Global CDN</span>
             </div>
           </div>
 
-          <footer className="flex flex-col items-center gap-4 border-t border-border-subtle/50 pt-6 w-full">
-            <div className="flex gap-6 justify-center text-xs font-semibold text-text-secondary">
-              <a href="#" className="hover:text-primary transition-colors">Privacy Policy</a>
-              <a href="#" className="hover:text-primary transition-colors">Terms of Service</a>
-              <a href="#" className="hover:text-primary transition-colors">Contact Support</a>
-            </div>
-            <p className="text-[10px] text-outline font-medium">
-              © 2026 Connect Modern Suite. All rights reserved.
-            </p>
-          </footer>
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={onNavigateToForgot}
+              className="text-sm font-semibold text-[#0866ff] hover:underline"
+            >
+              Forgot password?
+            </button>
+          </div>
+
+          <button
+            type="submit"
+            className="w-full py-3.5 px-4 bg-[#111111] hover:bg-black text-white text-sm font-bold rounded-xl transition-all active:scale-[0.98] shadow-md"
+          >
+            Sign In
+          </button>
+        </form>
+
+        <div className="mt-8 flex items-center">
+          <div className="flex-1 border-t border-gray-200"></div>
+          <span className="px-4 text-xs text-gray-400 font-medium">or</span>
+          <div className="flex-1 border-t border-gray-200"></div>
         </div>
 
-      </main>
-    </div>
+        <div className="mt-8 space-y-3">
+          <OAuthButtons onOAuth={onOAuth} verb="Sign in" />
+        </div>
+
+        <div className="mt-10 text-center text-sm text-gray-500">
+          Don't have an account?{' '}
+          <button onClick={onNavigateToSignup} className="text-[#0866ff] font-semibold hover:underline">
+            Sign Up
+          </button>
+        </div>
+      </div>
+    </AuthLayout>
   );
 }

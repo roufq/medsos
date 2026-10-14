@@ -1,6 +1,8 @@
 package services
 
 import (
+	"time"
+
 	"crypto/rand"
 	"errors"
 	"fmt"
@@ -118,6 +120,24 @@ func (s *authService) Register(req *dto.RegisterRequest) (*dto.AuthResponse, err
 		}
 		phoneCountry = &country
 	}
+	
+	var birthDate *time.Time
+	if req.BirthDate != "" {
+		if t, err := time.Parse("2006-01-02", req.BirthDate); err == nil {
+			birthDate = &t
+		}
+	}
+	
+	var gender *string
+	if req.Gender != "" {
+		gender = &req.Gender
+	}
+	
+	var interests []string
+	if req.Interests != "" {
+		interests = strings.Split(req.Interests, ",")
+	}
+
 	user := &models.User{
 		Name:          req.Name,
 		Username:      &username,
@@ -128,7 +148,7 @@ func (s *authService) Register(req *dto.RegisterRequest) (*dto.AuthResponse, err
 		Role:          models.RoleUser, // Default is standard user
 		AccountType:   accountType,
 		AccountStatus: "active",
-		ProfileLayout: "grid",
+		ProfileLayout: "grid", Country: &req.Country, City: &req.City, Gender: gender, BirthDate: birthDate, Interests: interests,
 	}
 
 	if err := s.userRepo.Create(user); err != nil {

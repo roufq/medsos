@@ -1,239 +1,384 @@
-import { useState, FormEvent } from 'react';
-import { Eye, EyeOff, ArrowRight, Shield, Zap, Users, BarChart3, HelpCircle, CheckCircle } from 'lucide-react';
+import { useState, FormEvent, useEffect } from 'react';
+import { Eye, EyeOff, Mail, Lock, Phone, User, Calendar, MapPin, ChevronDown } from 'lucide-react';
 import OAuthButtons from './OAuthButtons';
+import AuthLayout from './AuthLayout';
 
 interface SignupProps {
-	onRegister: (email: string, fullName: string, password?: string, extra?: Record<string, string>) => void;
+	onRegister: (email: string, fullName: string, password?: string, extra?: Record<string, any>) => void;
 	onNavigateToLogin: () => void;
 	onOAuth: (provider: string) => void;
 }
 
+const INTERESTS = [
+  'Teknologi', 'Olahraga', 'Musik', 'Film & TV', 'Travel',
+  'Kuliner', 'Fashion', 'Game', 'Bisnis', 'Lainnya'
+];
+
+const COUNTRIES = ["Indonesia", "Malaysia", "Singapore"];
+
+const REGION_DATA: Record<string, Record<string, string[]>> = {
+  "Malaysia": {
+    "Kuala Lumpur": ["Kuala Lumpur"],
+    "Selangor": ["Petaling Jaya", "Shah Alam", "Klang", "Subang Jaya"]
+  },
+  "Singapore": {
+    "Singapore": ["Central", "East", "North", "North-East", "West"]
+  }
+};
+
 export default function Signup({ onRegister, onNavigateToLogin, onOAuth }: SignupProps) {
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
-  const [username, setUsername] = useState('');
-  const [accountType, setAccountType] = useState('personal');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
+  const [phoneCode, setPhoneCode] = useState('+62');
+  const [phoneLocal, setPhoneLocal] = useState('');
+  const [gender, setGender] = useState('');
+  const [birthDate, setBirthDate] = useState('');
+  
+  const [country, setCountry] = useState('Indonesia');
+  const [province, setProvince] = useState('');
+  const [city, setCity] = useState('');
+  const [postalCode, setPostalCode] = useState('');
+  
+  const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+  const [agree, setAgree] = useState(false);
+
+  const [provinces, setProvinces] = useState<{id: string, name: string}[]>([]);
+  const [cities, setCities] = useState<{id: string, name: string}[]>([]);
+  const [isLoadingRegions, setIsLoadingRegions] = useState(false);
+
+  useEffect(() => {
+    if (country === 'Indonesia') {
+      setIsLoadingRegions(true);
+      fetch('https://ibnux.github.io/data-indonesia/provinsi.json')
+        .then(res => res.json())
+        .then(data => {
+          setProvinces(data.map((p: any) => ({ id: p.id, name: p.nama })));
+          setIsLoadingRegions(false);
+        })
+        .catch(err => {
+          console.error(err);
+          setIsLoadingRegions(false);
+        });
+    } else {
+      setProvinces([]);
+      setCities([]);
+    }
+  }, [country]);
+
+  useEffect(() => {
+    if (country === 'Indonesia' && province) {
+      const selectedProv = provinces.find(p => p.name === province);
+      if (selectedProv) {
+        setIsLoadingRegions(true);
+        fetch(`https://ibnux.github.io/data-indonesia/kabupaten/${selectedProv.id}.json`)
+          .then(res => res.json())
+          .then(data => {
+            setCities(data.map((c: any) => ({ id: c.id, name: c.nama })));
+            setIsLoadingRegions(false);
+          })
+          .catch(err => {
+            console.error(err);
+            setIsLoadingRegions(false);
+          });
+      }
+    } else {
+      setCities([]);
+    }
+  }, [province, country, provinces]);
+
+  const toggleInterest = (interest: string) => {
+    setSelectedInterests(prev => 
+      prev.includes(interest) ? prev.filter(i => i !== interest) : [...prev, interest]
+    );
+  };
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
+    if (!agree) {
+      alert("Anda harus menyetujui Syarat dan Ketentuan.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      alert("Password tidak cocok!");
+      return;
+    }
     if (!email) return;
-    const fullName = `${firstName} ${lastName}`.trim();
-    onRegister(email, fullName, password, { username, account_type: accountType });
+
+    // Generate fullName from email as it's not in the UI but required by backend
+    let fullName = email.split('@')[0];
+    if (fullName.length < 2) fullName = fullName + " User";
+
+    const extra = {
+      phone: `${phoneCode}${phoneLocal.replace(/^0+/, '')}`,
+      gender,
+      birth_date: birthDate,
+      country,
+      city,
+      interests: selectedInterests
+    };
+
+    onRegister(email, fullName, password, extra);
   };
 
   return (
-    <div className="min-h-screen flex items-stretch select-none">
-      
-      {/* Left Column: Brand Benefits & Testimonial testimonials */}
-      <aside className="hidden lg:flex flex-col justify-between w-1/2 p-12 bg-primary relative overflow-hidden text-white">
-        {/* Background visual geometry pattern */}
-        <div className="absolute inset-0 pointer-events-none opacity-30 select-none">
-          <div className="absolute top-[20%] right-[-10%] w-[320px] h-[320px] rounded-full border border-white/20" />
-          <div className="absolute bottom-[-10%] left-[-10%] w-[280px] h-[280px] rounded-full border border-white/20" />
+    <AuthLayout isLogin={false}>
+      <div className="bg-white rounded-[2rem] p-8 sm:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100/50 w-full lg:max-h-[85vh] lg:overflow-y-auto custom-scrollbar">
+        
+        <div className="mb-8">
+          <h2 className="text-3xl font-bold text-gray-900 mb-2 tracking-tight">Daftar Akun Baru</h2>
+          <p className="text-gray-500 text-sm">Isi data di bawah ini untuk membuat akun Postterest.</p>
         </div>
 
-        <div className="relative z-10">
-          {/* Logo brand details header */}
-          <div className="flex items-center gap-3 mb-12">
-            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center">
-              <svg className="w-6 h-6 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-                <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-              </svg>
-            </div>
-            <h1 className="text-xl font-bold tracking-tight">Connect Modern</h1>
-          </div>
-
-          <h2 className="text-4xl lg:text-5xl font-black leading-tight max-w-md mb-6 tracking-tight">
-            Elevate your professional trajectory.
-          </h2>
-          <p className="text-white/80 text-base max-w-sm mb-12 font-medium leading-relaxed">
-            Join a curated network of 50,000+ industry specialists and unlock tools designed for modern career growth.
-          </p>
-
-          {/* Social Benefit Cards */}
-          <div className="space-y-6 max-w-md">
-            <div className="flex items-start gap-4 p-5 bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 transition-transform hover:scale-102 cursor-default">
-              <div className="p-2.5 bg-white/20 rounded-xl">
-                <Users className="w-5 h-5" />
-              </div>
-              <div>
-                <h4 className="font-bold text-sm">Strategic Alliances</h4>
-                <p className="text-xs text-white/70 mt-1">Connect with decision-makers using our AI-driven matchmaking algorithm.</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-4 p-5 bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 transition-transform hover:scale-102 cursor-default">
-              <div className="p-2.5 bg-white/20 rounded-xl">
-                <BarChart3 className="w-5 h-5" />
-              </div>
-              <div>
-                <h4 className="font-bold text-sm">Growth Insights</h4>
-                <p className="text-xs text-white/70 mt-1">Access exclusive market data and career sentiment analytics for your niche.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Product statement */}
-        <div className="relative z-10 mt-auto max-w-md">
-          <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-6">
-            <p className="text-sm leading-relaxed text-white/90">Create an account to connect with real users, publish posts, manage portfolios, and discover opportunities stored in this application's database.</p>
-          </div>
-        </div>
-      </aside>
-
-      {/* Right Column: Registration Form layout stream */}
-      <main className="flex-grow flex flex-col justify-center items-center p-6 sm:p-12 lg:p-20 bg-background min-h-screen">
-        <div className="w-full max-w-[480px]">
+        <form onSubmit={handleSubmit} className="space-y-8">
           
-          {/* Mobile adaptive landing header logo */}
-          <div className="lg:hidden flex items-center gap-3 mb-10">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white">
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-              </svg>
+          {/* Informasi Akun */}
+          <div>
+            <h3 className="text-[15px] font-bold text-gray-900 mb-4">Informasi Akun</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+              <div className="col-span-1 md:col-span-2">
+                <div className="flex items-center w-full bg-white border border-gray-200 rounded-xl focus-within:border-gray-900 transition-colors overflow-hidden group">
+                  <div className="pl-3.5 pr-2.5 flex items-center justify-center text-gray-400 group-focus-within:text-gray-900">
+                    <Mail size={18} strokeWidth={1.25} />
+                  </div>
+                  <input type="email" required value={email} onChange={e => setEmail(e.target.value)}
+                    className="flex-1 w-0 bg-transparent py-2.5 pr-4 text-[13px] text-gray-900 outline-none placeholder:text-gray-400 border-none focus:ring-0"
+                    placeholder="Email address"
+                  />
+                </div>
+                <p className="text-[10px] text-gray-400 mt-1.5 ml-1">Gunakan email aktif kamu</p>
+              </div>
+
+              <div className="col-span-1">
+                <div className="flex items-center w-full bg-white border border-gray-200 rounded-xl focus-within:border-gray-900 transition-colors overflow-hidden group">
+                  <div className="pl-3.5 pr-2.5 flex items-center justify-center text-gray-400 group-focus-within:text-gray-900">
+                    <Lock size={18} strokeWidth={1.25} />
+                  </div>
+                  <input type={showPassword ? 'text' : 'password'} required value={password} onChange={e => setPassword(e.target.value)}
+                    className="flex-1 w-0 bg-transparent py-2.5 pr-2 text-[13px] text-gray-900 outline-none placeholder:text-gray-400 border-none focus:ring-0"
+                    placeholder="Password"
+                  />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="w-10 h-full flex-shrink-0 flex items-center justify-center text-gray-400 hover:text-gray-600">
+                    {showPassword ? <EyeOff size={18} strokeWidth={1.25} /> : <Eye size={18} strokeWidth={1.25} />}
+                  </button>
+                </div>
+                <p className="text-[10px] text-gray-400 mt-1.5 ml-1">Minimal 8 karakter, kombinasi huruf & angka</p>
+              </div>
+
+              <div className="col-span-1">
+                <div className="flex items-center w-full bg-white border border-gray-200 rounded-xl focus-within:border-gray-900 transition-colors overflow-hidden group">
+                  <div className="pl-3.5 pr-2.5 flex items-center justify-center text-gray-400 group-focus-within:text-gray-900">
+                    <Lock size={18} strokeWidth={1.25} />
+                  </div>
+                  <input type={showConfirmPassword ? 'text' : 'password'} required value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
+                    className="flex-1 w-0 bg-transparent py-2.5 pr-2 text-[13px] text-gray-900 outline-none placeholder:text-gray-400 border-none focus:ring-0"
+                    placeholder="Konfirmasi Password"
+                  />
+                  <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="w-10 h-full flex-shrink-0 flex items-center justify-center text-gray-400 hover:text-gray-600">
+                    {showConfirmPassword ? <EyeOff size={18} strokeWidth={1.25} /> : <Eye size={18} strokeWidth={1.25} />}
+                  </button>
+                </div>
+                <p className="text-[10px] text-gray-400 mt-1.5 ml-1">Masukkan kembali password kamu</p>
+              </div>
             </div>
-            <h2 className="text-lg font-bold text-text-primary">Connect Modern</h2>
           </div>
 
-          <div className="mb-8">
-            <h2 className="text-2xl md:text-3xl font-black text-text-primary mb-1.5 tracking-tight">Create Your Account</h2>
-            <p className="text-xs text-text-secondary">
-              Already have an account?{' '}
-              <button 
-                type="button"
-                onClick={onNavigateToLogin}
-                className="text-primary font-bold hover:underline cursor-pointer"
-              >
-                Log in
-              </button>
+          {/* Informasi Pribadi */}
+          <div>
+            <h3 className="text-[15px] font-bold text-gray-900 mb-4">Informasi Pribadi</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+              <div className="col-span-1 md:col-span-2">
+                <div className="relative flex items-center bg-white border border-gray-200 rounded-xl overflow-hidden focus-within:border-gray-900">
+                  <div className="pl-3.5 pr-2 flex items-center text-gray-400">
+                    <Phone size={18} strokeWidth={1.25} />
+                  </div>
+                  <select value={phoneCode} onChange={e => setPhoneCode(e.target.value)} className="bg-transparent text-[13px] text-gray-900 py-2.5 outline-none font-medium appearance-none border-r border-gray-200 pr-2">
+                    <option value="+62">+62</option>
+                    <option value="+1">+1</option>
+                    <option value="+44">+44</option>
+                  </select>
+                  <input type="text" value={phoneLocal} onChange={e => setPhoneLocal(e.target.value.replace(/\D/g, ''))}
+                    className="flex-1 px-3 py-2.5 bg-transparent text-[13px] outline-none placeholder:text-gray-400"
+                    placeholder="812 3456 7890"
+                  />
+                </div>
+                <p className="text-[10px] text-gray-400 mt-1.5 ml-1">Gunakan nomor HP aktif (contoh: 0812 3456 7890)</p>
+              </div>
+
+              <div className="col-span-1">
+                <div className="flex items-center w-full bg-white border border-gray-200 rounded-xl focus-within:border-gray-900 transition-colors overflow-hidden group">
+                  <div className="pl-3.5 pr-2 flex items-center justify-center text-gray-400">
+                    <User size={18} strokeWidth={1.25} />
+                  </div>
+                  <select value={gender} onChange={e => setGender(e.target.value)} className="flex-1 w-0 bg-transparent py-2.5 pr-2 text-[13px] text-gray-900 outline-none appearance-none border-none focus:ring-0 cursor-pointer">
+                    <option value="" disabled>Pilih jenis kelamin</option>
+                    <option value="male">Laki-laki</option>
+                    <option value="female">Perempuan</option>
+                    <option value="other">Lainnya</option>
+                  </select>
+                  <div className="pr-3.5 pl-2 flex items-center pointer-events-none text-gray-400">
+                    <ChevronDown size={16} strokeWidth={1.5} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="col-span-1">
+                <div className="flex items-center w-full bg-white border border-gray-200 rounded-xl focus-within:border-gray-900 transition-colors overflow-hidden group">
+                  <div className="pl-3.5 pr-2 flex items-center justify-center text-gray-400">
+                    <Calendar size={18} strokeWidth={1.25} />
+                  </div>
+                  <input type="date" value={birthDate} onChange={e => setBirthDate(e.target.value)}
+                    className="flex-1 w-0 bg-transparent py-2.5 pr-4 text-[13px] text-gray-900 outline-none border-none focus:ring-0"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Lokasi */}
+          <div>
+            <h3 className="text-[15px] font-bold text-gray-900 mb-4">Lokasi</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+              <div>
+                <div className="flex items-center w-full bg-white border border-gray-200 rounded-xl focus-within:border-gray-900 transition-colors overflow-hidden group">
+                  <div className="pl-3.5 pr-2 flex items-center justify-center text-gray-400">
+                    <MapPin size={18} strokeWidth={1.25} />
+                  </div>
+                  <select value={country} onChange={e => {
+                    setCountry(e.target.value);
+                    setProvince("");
+                    setCity("");
+                  }} className="flex-1 w-0 bg-transparent py-2.5 pr-2 text-[13px] text-gray-900 outline-none appearance-none border-none focus:ring-0 cursor-pointer">
+                    <option value="" disabled>Pilih negara</option>
+                    {COUNTRIES.map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                  <div className="pr-3.5 pl-2 flex items-center pointer-events-none text-gray-400">
+                    <ChevronDown size={16} strokeWidth={1.5} />
+                  </div>
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center w-full bg-white border border-gray-200 rounded-xl focus-within:border-gray-900 transition-colors overflow-hidden group">
+                  <div className="pl-3.5 pr-2 flex items-center justify-center text-gray-400">
+                    <MapPin size={18} strokeWidth={1.25} />
+                  </div>
+                  <select value={province} onChange={e => {
+                    setProvince(e.target.value);
+                    setCity("");
+                  }} className="flex-1 w-0 bg-transparent py-2.5 pr-2 text-[13px] text-gray-900 outline-none appearance-none border-none focus:ring-0 cursor-pointer"
+                  disabled={!country || (country === 'Indonesia' ? provinces.length === 0 : !REGION_DATA[country])}>
+                    <option value="" disabled>{isLoadingRegions ? 'Memuat...' : 'Pilih provinsi'}</option>
+                    {country === 'Indonesia' ? (
+                      provinces.map(p => <option key={p.id} value={p.name}>{p.name}</option>)
+                    ) : (
+                      country && REGION_DATA[country] && Object.keys(REGION_DATA[country]).map(p => (
+                        <option key={p} value={p}>{p}</option>
+                      ))
+                    )}
+                  </select>
+                  <div className="pr-3.5 pl-2 flex items-center pointer-events-none text-gray-400">
+                    <ChevronDown size={16} strokeWidth={1.5} />
+                  </div>
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center w-full bg-white border border-gray-200 rounded-xl focus-within:border-gray-900 transition-colors overflow-hidden group">
+                  <div className="pl-3.5 pr-2 flex items-center justify-center text-gray-400">
+                    <MapPin size={18} strokeWidth={1.25} />
+                  </div>
+                  <select value={city} onChange={e => setCity(e.target.value)} className="flex-1 w-0 bg-transparent py-2.5 pr-2 text-[13px] text-gray-900 outline-none appearance-none border-none focus:ring-0 cursor-pointer"
+                  disabled={!province || (country === 'Indonesia' ? cities.length === 0 : (!REGION_DATA[country] || !REGION_DATA[country][province]))}>
+                    <option value="" disabled>{isLoadingRegions ? 'Memuat...' : 'Pilih kota/kabupaten'}</option>
+                    {country === 'Indonesia' ? (
+                      cities.map(c => <option key={c.id} value={c.name}>{c.name}</option>)
+                    ) : (
+                      country && province && REGION_DATA[country] && REGION_DATA[country][province] && REGION_DATA[country][province].map(c => (
+                        <option key={c} value={c}>{c}</option>
+                      ))
+                    )}
+                  </select>
+                  <div className="pr-3.5 pl-2 flex items-center pointer-events-none text-gray-400">
+                    <ChevronDown size={16} strokeWidth={1.5} />
+                  </div>
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center w-full bg-white border border-gray-200 rounded-xl focus-within:border-gray-900 transition-colors overflow-hidden group">
+                  <div className="pl-3.5 pr-2 flex items-center justify-center text-gray-400">
+                    <MapPin size={18} strokeWidth={1.25} />
+                  </div>
+                  <input type="text" value={postalCode} onChange={e => setPostalCode(e.target.value.replace(/\D/g, ''))}
+                    className="flex-1 w-0 bg-transparent py-2.5 pr-4 text-[13px] text-gray-900 outline-none placeholder:text-gray-400 border-none focus:ring-0"
+                    placeholder="Masukkan kode pos"
+                  />
+                </div>
+                <p className="text-[10px] text-gray-400 mt-1.5 ml-1 text-right">Contoh: 12345</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Minat */}
+          <div>
+            <h3 className="text-[15px] font-bold text-gray-900 mb-1">Minat (Interest)</h3>
+            <p className="text-[10px] text-gray-500 mb-3">Pilih minat kamu (bisa lebih dari satu)</p>
+            <div className="flex flex-wrap gap-2">
+              {INTERESTS.map(interest => {
+                const selected = selectedInterests.includes(interest);
+                return (
+                  <button type="button" key={interest} onClick={() => toggleInterest(interest)}
+                    className={`px-3 py-1.5 rounded-lg border text-xs flex items-center gap-2 transition-colors ${selected ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'}`}
+                  >
+                    <div className={`w-3.5 h-3.5 rounded-[3px] border flex items-center justify-center transition-colors ${selected ? 'bg-white border-white' : 'bg-white border-gray-300'}`}>
+                      {selected && <svg className="w-2.5 h-2.5 text-gray-900" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+                    </div>
+                    {interest}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Agreement */}
+          <div className="flex items-center gap-2.5 pt-2">
+            <button type="button" onClick={() => setAgree(!agree)} className="flex-shrink-0">
+              <div className={`w-[15px] h-[15px] rounded-[3px] border flex items-center justify-center transition-colors ${agree ? 'bg-gray-900 border-gray-900' : 'bg-white border-gray-300'}`}>
+                {agree && <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+              </div>
+            </button>
+            <p className="text-[11px] text-gray-500 leading-tight">
+              Saya menyetujui <a href="#" className="text-[#0866ff] font-semibold hover:underline">Syarat dan Ketentuan</a> serta <a href="#" className="text-[#0866ff] font-semibold hover:underline">Kebijakan Privasi</a> Postterest.
             </p>
           </div>
 
-          {/* Social signup quick routes */}
-          <div className="mb-8"><OAuthButtons onOAuth={onOAuth} verb="Daftar" /></div>
+          {/* Submit */}
+          <button type="submit" className="w-full py-3.5 px-4 bg-[#111111] hover:bg-black text-white text-sm font-bold rounded-xl transition-all active:scale-[0.98] shadow-md flex items-center justify-center gap-2">
+            Daftar Sekarang
+            <span className="text-lg leading-none">&rarr;</span>
+          </button>
+        </form>
 
-          <div className="relative flex items-center mb-8 select-none">
-            <div className="flex-grow border-t border-outline-variant/60" />
-            <span className="flex-shrink mx-4 text-[9px] font-bold text-outline uppercase tracking-widest">Or continue with email</span>
-            <div className="flex-grow border-t border-outline-variant/60" />
-          </div>
-
-          {/* Real interactive Registration Form details */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-text-primary pl-0.5">First Name</label>
-                <input 
-                  type="text"
-                  required
-                  placeholder="John" 
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  className="w-full h-11 px-4 bg-white border border-outline-variant rounded-xl focus:ring-1 focus:ring-primary focus:border-primary transition-all outline-none text-xs text-text-primary"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-text-primary pl-0.5">Last Name</label>
-                <input 
-                  type="text"
-                  required
-                  placeholder="Doe" 
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  className="w-full h-11 px-4 bg-white border border-outline-variant rounded-xl focus:ring-1 focus:ring-primary focus:border-primary transition-all outline-none text-xs text-text-primary"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-text-primary pl-0.5">Email Address</label>
-              <input 
-                type="email"
-                required
-                placeholder="john.doe@company.com" 
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full h-11 px-4 bg-white border border-outline-variant rounded-xl focus:ring-1 focus:ring-primary focus:border-primary transition-all outline-none text-xs text-text-primary"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-text-primary pl-0.5">Username (opsional)</label>
-                <input
-                  type="text"
-                  placeholder="john_doe"
-                  pattern="[a-z0-9_]{3,40}"
-                  title="3–40 huruf kecil, angka, atau garis bawah"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value.toLowerCase())}
-                  className="w-full h-11 px-4 bg-white border border-outline-variant rounded-xl focus:ring-1 focus:ring-primary focus:border-primary transition-all outline-none text-xs text-text-primary"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-text-primary pl-0.5">Jenis akun</label>
-                <select
-                  value={accountType}
-                  onChange={(e) => setAccountType(e.target.value)}
-                  className="w-full h-11 px-4 bg-white border border-outline-variant rounded-xl focus:ring-1 focus:ring-primary focus:border-primary transition-all outline-none text-xs text-text-primary"
-                >
-                  <option value="personal">Pribadi</option>
-                  <option value="business">Bisnis</option>
-                  <option value="team">Tim</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="space-y-1.5 relative">
-              <label className="text-xs font-bold text-text-primary pl-0.5">Create Password</label>
-              <input 
-                type={showPassword ? 'text' : 'password'}
-                required
-                placeholder="••••••••" 
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full h-11 px-4 pr-11 bg-white border border-outline-variant rounded-xl focus:ring-1 focus:ring-primary focus:border-primary transition-all outline-none text-xs text-text-primary"
-              />
-              <button 
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3.5 top-8.5 text-outline hover:text-text-primary transition-colors cursor-pointer"
-              >
-                {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
-              </button>
-              <p className="text-[10px] text-text-secondary pl-0.5 mt-1">Must be at least 8 characters with one number.</p>
-            </div>
-
-            <div className="pt-4">
-              <button 
-                type="submit"
-                className="w-full h-12 bg-primary text-white font-bold rounded-xl shadow-lg shadow-primary/20 hover:bg-primary-container transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer text-xs"
-              >
-                <span>Get Started</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-
-            <p className="text-[10px] text-center text-outline leading-relaxed px-4 pt-2">
-              By clicking "Get Started", you agree to our{' '}
-              <a href="#" className="font-semibold text-text-primary hover:underline">Terms of Service</a>{' '}
-              and{' '}
-              <a href="#" className="font-semibold text-text-primary hover:underline">Privacy Policy</a>.
-            </p>
-
-          </form>
-
+        <div className="mt-8 flex items-center">
+          <div className="flex-1 border-t border-gray-200"></div>
+          <span className="px-4 text-[10px] text-gray-400 font-medium">atau daftar dengan</span>
+          <div className="flex-1 border-t border-gray-200"></div>
         </div>
-      </main>
 
-    </div>
+        <div className="mt-6">
+          <OAuthButtons onOAuth={onOAuth} verb="Daftar" />
+        </div>
+
+        <div className="mt-8 text-center text-[11px] text-gray-500">
+          Sudah punya akun?{' '}
+          <button onClick={onNavigateToLogin} className="text-[#0866ff] font-bold hover:underline">
+            Login sekarang
+          </button>
+        </div>
+      </div>
+    </AuthLayout>
   );
 }
