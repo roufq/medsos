@@ -40,7 +40,7 @@ const PLATFORMS: {id: string;label: string;color: string;}[] = [
 // Instagram and TikTok have no web share intent: copy the link, then open the app.
 const APP_ONLY: Record<string, string> = { instagram: 'https://www.instagram.com/', tiktok: 'https://www.tiktok.com/' };
 
-export function ShareModal({ postId, onClose, onShared }: {postId: number;onClose: () => void;onShared?: () => void;}) {const { t } = useLanguage();
+export function ShareModal({ postId, onClose, onShared }: {postId: number | string;onClose: () => void;onShared?: () => void;}) {const { t } = useLanguage();
   const [message, setMessage] = useState('');
   const [query, setQuery] = useState('');
   const [users, setUsers] = useState<any[]>([]);
@@ -126,7 +126,7 @@ export function ShareModal({ postId, onClose, onShared }: {postId: number;onClos
 
 }
 
-export function EmbedModal({ postId, onClose }: {postId: number;onClose: () => void;}) {const { t } = useLanguage();
+export function EmbedModal({ postId, onClose }: {postId: number | string;onClose: () => void;}) {const { t } = useLanguage();
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
@@ -155,7 +155,7 @@ export function EmbedModal({ postId, onClose }: {postId: number;onClose: () => v
 
 const REPORT_REASONS = ['Spam', 'Penipuan', 'Ujaran kebencian', 'Pelecehan atau perundungan', 'Kekerasan', 'Konten seksual', 'Informasi palsu', 'Pelanggaran hak cipta', 'Barang terlarang', 'Lainnya'];
 
-export function ReportModal({ postId, onClose }: {postId: number;onClose: () => void;}) {
+export function ReportModal({ postId, onClose }: {postId: number | string;onClose: () => void;}) {
   const { t } = useLanguage();
   const [sending, setSending] = useState(false);
   const [reason, setReason] = useState('');
@@ -195,7 +195,7 @@ export function ReportModal({ postId, onClose }: {postId: number;onClose: () => 
 
 }
 
-export function RepostModal({ postId, onClose, onReposted }: {postId: number;onClose: () => void;onReposted?: (post: any) => void;}) {
+export function RepostModal({ postId, onClose, onReposted }: {postId: number | string;onClose: () => void;onReposted?: (post: any) => void;}) {
   const [commentary, setCommentary] = useState('');
   const [error, setError] = useState('');
   const submit = async () => {

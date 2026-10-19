@@ -251,7 +251,7 @@ func (h *SocialController) ToggleSave(c goravelhttp.Context) goravelhttp.Respons
 	if err != nil {
 		return c.Response().Json(401, goravelhttp.Json{"error": "Unauthorized"})
 	}
-	postID, err := routeID(c, "id")
+	postID, err := routePostID(c)
 	if err != nil {
 		return c.Response().Json(400, goravelhttp.Json{"error": "invalid post"})
 	}
@@ -304,7 +304,7 @@ func (h *SocialController) Repost(c goravelhttp.Context) goravelhttp.Response {
 	if err != nil {
 		return c.Response().Json(401, goravelhttp.Json{"error": "Unauthorized"})
 	}
-	originalID, err := routeID(c, "id")
+	originalID, err := routePostID(c)
 	if err != nil {
 		return c.Response().Json(400, goravelhttp.Json{"error": "invalid post"})
 	}
@@ -345,7 +345,7 @@ func (h *SocialController) Comments(c goravelhttp.Context) goravelhttp.Response 
 	if err != nil {
 		return c.Response().Json(401, goravelhttp.Json{"error": "Unauthorized"})
 	}
-	postID, err := routeID(c, "id")
+	postID, err := routePostID(c)
 	if err != nil {
 		return c.Response().Json(400, goravelhttp.Json{"error": "invalid post"})
 	}
@@ -391,7 +391,7 @@ func (h *SocialController) ReplyComment(c goravelhttp.Context) goravelhttp.Respo
 	if err != nil {
 		return c.Response().Json(401, goravelhttp.Json{"error": "Unauthorized"})
 	}
-	postID, err := routeID(c, "id")
+	postID, err := routePostID(c)
 	if err != nil {
 		return c.Response().Json(400, goravelhttp.Json{"error": "invalid post"})
 	}
@@ -483,7 +483,7 @@ func (h *SocialController) Share(c goravelhttp.Context) goravelhttp.Response {
 	if err != nil {
 		return c.Response().Json(401, goravelhttp.Json{"error": "Unauthorized"})
 	}
-	postID, err := routeID(c, "id")
+	postID, err := routePostID(c)
 	if err != nil {
 		return c.Response().Json(400, goravelhttp.Json{"error": "invalid post"})
 	}
@@ -537,7 +537,7 @@ func (h *SocialController) Report(c goravelhttp.Context) goravelhttp.Response {
 	if err != nil {
 		return c.Response().Json(401, goravelhttp.Json{"error": "Unauthorized"})
 	}
-	postID, err := routeID(c, "id")
+	postID, err := routePostID(c)
 	if err != nil {
 		return c.Response().Json(400, goravelhttp.Json{"error": "invalid post"})
 	}
@@ -567,7 +567,7 @@ func (h *SocialController) RecordView(c goravelhttp.Context) goravelhttp.Respons
 	if err != nil {
 		return c.Response().Json(401, goravelhttp.Json{"error": "Unauthorized"})
 	}
-	postID, err := routeID(c, "id")
+	postID, err := routePostID(c)
 	if err != nil {
 		return c.Response().Json(400, goravelhttp.Json{"error": "invalid post"})
 	}
@@ -627,9 +627,7 @@ func (h *SocialController) Search(c goravelhttp.Context) goravelhttp.Response {
 	like := "%" + term + "%"
 	tag := strings.TrimPrefix(strings.ToLower(term), "#")
 	users := make([]models.User, 0)
-	posts := make([]models.Post, 0)
 	jobs := make([]models.JobPosting, 0)
-	products := make([]models.Post, 0)
 
 	if err := db.DB.Where("id <> ? AND account_status = 'active' AND (name LIKE ? OR username LIKE ? OR title LIKE ? OR company LIKE ? OR location LIKE ?)", userID, like, like, like, like, like).
 		Order("name").Limit(30).Find(&users).Error; err != nil {
@@ -648,28 +646,34 @@ func (h *SocialController) Search(c goravelhttp.Context) goravelhttp.Response {
 		}
 	}
 
-	if err := db.DB.Model(&models.Post{}).Distinct("posts.*").
+	postIDs := make([]int64, 0, 50)
+	if err := db.DB.Model(&models.Post{}).Distinct("posts.id").
 		Joins("LEFT JOIN post_hashtags ON post_hashtags.post_id = posts.id").
 		Joins("LEFT JOIN users ON users.id = posts.user_id").
 		Where("posts.post_type <> ? AND (posts.title LIKE ? OR posts.content LIKE ? OR posts.location LIKE ? OR post_hashtags.tag = ? OR users.name LIKE ? OR users.username LIKE ?)", models.PostTypeShop, like, like, like, tag, like, like).
-		Preload("User").Preload("Media").Preload("Link").Preload("Hashtags").Preload("Shop").
-		Order("posts.id desc").Limit(50).Find(&posts).Error; err != nil {
+		Order("posts.id desc").Limit(50).Pluck("posts.id", &postIDs).Error; err != nil {
 		return c.Response().Json(500, goravelhttp.Json{"error": "failed to search posts"})
 	}
 
-	// Jobs is disabled, so search returns an empty jobs list.
-
-	if err := db.DB.Model(&models.Post{}).Distinct("posts.*").
+	productIDs := make([]int64, 0, 30)
+	if err := db.DB.Model(&models.Post{}).Distinct("posts.id").
 		Joins("JOIN shop_products ON shop_products.post_id = posts.id").
 		Joins("LEFT JOIN users ON users.id = posts.user_id").
 		Where("posts.post_type = ? AND (posts.title LIKE ? OR posts.content LIKE ? OR shop_products.category LIKE ? OR shop_products.brand LIKE ? OR users.name LIKE ? OR users.username LIKE ?)", models.PostTypeShop, like, like, like, like, like, like).
-		Preload("User").Preload("Media").Preload("Hashtags").Preload("Shop").
-		Order("posts.id desc").Limit(30).Find(&products).Error; err != nil {
+		Order("posts.id desc").Limit(30).Pluck("posts.id", &productIDs).Error; err != nil {
 		return c.Response().Json(500, goravelhttp.Json{"error": "failed to search products"})
 	}
 
-	// Batch the block/employer/author checks for posts, jobs, and products in one
-	// pair of queries instead of one query per row (was an N+1 query storm).
+	posts, err := postsWithCounters.GetManyForViewer(userID, postIDs)
+	if err != nil {
+		return c.Response().Json(500, goravelhttp.Json{"error": "failed to search posts"})
+	}
+
+	products, err := postsWithCounters.GetManyForViewer(userID, productIDs)
+	if err != nil {
+		return c.Response().Json(500, goravelhttp.Json{"error": "failed to search products"})
+	}
+
 	postAuthorIDs := make([]int64, 0, len(posts)+len(products))
 	for i := range posts {
 		postAuthorIDs = append(postAuthorIDs, posts[i].UserID)
@@ -677,45 +681,26 @@ func (h *SocialController) Search(c goravelhttp.Context) goravelhttp.Response {
 	for i := range products {
 		postAuthorIDs = append(postAuthorIDs, products[i].UserID)
 	}
-	for i := range jobs {
-		postAuthorIDs = append(postAuthorIDs, jobs[i].EmployerID)
-	}
 	blockedAuthors := blockedBetweenBatch(userID, postAuthorIDs)
 	followingAuthors := acceptedFollowingBatch(userID, postAuthorIDs)
 
-	visibleIDs := make([]int64, 0, len(posts))
+	visiblePosts := posts[:0]
 	for i := range posts {
 		if canViewPreloadedPost(userID, &posts[i], blockedAuthors, followingAuthors) {
-			visibleIDs = append(visibleIDs, posts[i].ID)
-		}
-	}
-	visible, err := postsWithCounters.GetManyForViewer(userID, visibleIDs)
-	if err != nil {
-		return c.Response().Json(500, goravelhttp.Json{"error": "failed to search posts"})
-	}
-
-	accessibleJobs := jobs[:0]
-	for i := range jobs {
-		if !blockedAuthors[jobs[i].EmployerID] {
-			jobs[i].Employer = publicUsers([]models.User{jobs[i].Employer})[0]
-			accessibleJobs = append(accessibleJobs, jobs[i])
+			visiblePosts = append(visiblePosts, posts[i])
 		}
 	}
 
-	productIDs := make([]int64, 0, len(products))
+	visibleProducts := products[:0]
 	for i := range products {
 		if canViewPreloadedPost(userID, &products[i], blockedAuthors, followingAuthors) {
-			productIDs = append(productIDs, products[i].ID)
+			visibleProducts = append(visibleProducts, products[i])
 		}
-	}
-	visibleProducts, err := postsWithCounters.GetManyForViewer(userID, productIDs)
-	if err != nil {
-		return c.Response().Json(500, goravelhttp.Json{"error": "failed to search products"})
 	}
 
 	return c.Response().Json(200, goravelhttp.Json{
-		"users": publicUsers(accessibleUsers), "posts": visible,
-		"jobs": accessibleJobs, "products": visibleProducts,
+		"users": publicUsers(accessibleUsers), "posts": visiblePosts,
+		"jobs": jobs, "products": visibleProducts,
 	})
 }
 

@@ -70,7 +70,7 @@ export default function ShortsPage() {const { t } = useLanguage();
   useEffect(() => {load();}, []);
 
   const like = async (post) => {
-    const { liked } = await postApi.toggleLike(post.id);
+    const { liked } = await postApi.toggleLike(post.public_hash || post.id);
     setPosts((current) => current.map((p) => p.id === post.id ? { ...p, is_liked_by_me: liked, likes_count: Math.max(0, (p.likes_count || 0) + (liked ? 1 : -1)) } : p));
   };
 
@@ -78,7 +78,7 @@ export default function ShortsPage() {const { t } = useLanguage();
     <AppLayout currentTab="shorts">
       <div className="h-[calc(100vh-110px)] overflow-y-auto snap-y snap-mandatory flex flex-col gap-4 pb-6">
         {posts.map((post) =>
-        <ShortItem key={post.id} post={post} muted={muted} onToggleMute={() => setMuted((m) => !m)} onLike={() => like(post)} onShare={() => setSharing(post.id)} />
+        <ShortItem key={post.id} post={post} muted={muted} onToggleMute={() => setMuted((m) => !m)} onLike={() => like(post)} onShare={() => setSharing(post.public_hash || post.id)} />
         )}
         {loading && <div className="flex justify-center py-10"><Loader className="animate-spin text-primary" size={36} /></div>}
         {!loading && posts.length === 0 && <div className="bg-white rounded-2xl p-10 text-center text-text-secondary">Belum ada Shorts. Unggah video berdurasi 1–1,5 menit untuk tampil di sini.</div>}

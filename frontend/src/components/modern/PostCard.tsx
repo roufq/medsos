@@ -166,6 +166,7 @@ export default function PostCard({ post: initialPost, onDeleted, onUpdated, onRe
 
   const isMine = post.user_id === user?.id;
   const isRepost = Boolean(post.repost_of_id);
+  const postToken = post.public_hash || post.id;
 
   // Count a view once the post has been at least half visible for a second.
   useEffect(() => {
@@ -178,7 +179,7 @@ export default function PostCard({ post: initialPost, onDeleted, onUpdated, onRe
           observer.disconnect();
           markViewed(post.id);
           try {
-            const { views_count } = await postApi.recordView(post.id);
+            const { views_count } = await postApi.recordView(postToken);
             setPost((current: any) => ({ ...current, views_count }));
           } catch {/* best effort */}
         }, 1000);
@@ -188,7 +189,7 @@ export default function PostCard({ post: initialPost, onDeleted, onUpdated, onRe
     }, { threshold: 0.5 });
     observer.observe(node);
     return () => {observer.disconnect();if (timer) window.clearTimeout(timer);};
-  }, [post.id]);
+  }, [post.id, postToken]);
 
   const update = (changes: any) => {
     const next = { ...post, ...changes };
@@ -201,7 +202,7 @@ export default function PostCard({ post: initialPost, onDeleted, onUpdated, onRe
     const otherLikes = Math.max(0, (post.likes_count || 0) - (wasLiked ? 1 : 0));
     update({ is_liked_by_me: !wasLiked, likes_count: otherLikes + (wasLiked ? 0 : 1) });
     try {
-      const result = await postApi.toggleLike(post.id);
+      const result = await postApi.toggleLike(postToken);
       update({ is_liked_by_me: result.liked, likes_count: otherLikes + (result.liked ? 1 : 0) });
     } catch (err: any) {
       update({ is_liked_by_me: wasLiked, likes_count: otherLikes + (wasLiked ? 1 : 0) });
@@ -213,7 +214,7 @@ export default function PostCard({ post: initialPost, onDeleted, onUpdated, onRe
     if (actionBusy) return;
     setMenuOpen(false); setActionBusy(true); setActionNotice(''); setActionError('');
     try {
-      const { saved } = await postApi.toggleSave(post.id);
+      const { saved } = await postApi.toggleSave(postToken);
       update({ is_saved_by_me: saved });
       setActionNotice(saved ? 'Postingan disimpan.' : 'Postingan dihapus dari tersimpan.');
     } catch (err: any) {
@@ -225,7 +226,7 @@ export default function PostCard({ post: initialPost, onDeleted, onUpdated, onRe
     setMenuOpen(false);
     if (!window.confirm('Hapus postingan ini? Tindakan ini tidak bisa dibatalkan.')) return;
     try {
-      await postApi.deletePost(post.id);
+      await postApi.deletePost(postToken);
       onDeleted?.(post.id);
     } catch (err: any) {
       alert(err?.response?.data?.error || 'Gagal menghapus postingan');
@@ -236,7 +237,7 @@ export default function PostCard({ post: initialPost, onDeleted, onUpdated, onRe
     if (actionBusy) return;
     setMenuOpen(false); setActionBusy(true); setActionNotice(''); setActionError('');
     try {
-      const result = await postApi.share(post.id, 'copy');
+      const result = await postApi.share(postToken, 'copy');
       await copyToClipboard(result.share_url);
       setActionNotice('Link berhasil disalin.');
     } catch (err: any) { setActionError(err?.response?.data?.error || 'Gagal menyalin link.'); }
@@ -340,12 +341,12 @@ export default function PostCard({ post: initialPost, onDeleted, onUpdated, onRe
         </button>
       </div>
 
-      {commentsOpen && <CommentThread postId={post.id} postOwnerId={post.user_id} onCountChange={(delta) => update({ comments_count: Math.max(0, (post.comments_count || 0) + delta) })} />}
+      {commentsOpen && <CommentThread postId={postToken} postOwnerId={post.user_id} onCountChange={(delta) => update({ comments_count: Math.max(0, (post.comments_count || 0) + delta) })} />}
 
-      {modal === 'share' && <ShareModal postId={isRepost && post.original_post ? post.original_post.id : post.id} onClose={() => setModal('')} onShared={() => update({ shares_count: (post.shares_count || 0) + 1 })} />}
-      {modal === 'embed' && <EmbedModal postId={post.id} onClose={() => setModal('')} />}
-      {modal === 'report' && <ReportModal postId={post.id} onClose={() => setModal('')} />}
-      {modal === 'repost' && <RepostModal postId={isRepost && post.original_post ? post.original_post.id : post.id} onClose={() => setModal('')} onReposted={(created) => onReposted ? onReposted(created) : navigate(postUrl(created))} />}
+      {modal === 'share' && <ShareModal postId={isRepost && post.original_post ? (post.original_post.public_hash || post.original_post.id) : postToken} onClose={() => setModal('')} onShared={() => update({ shares_count: (post.shares_count || 0) + 1 })} />}
+      {modal === 'embed' && <EmbedModal postId={postToken} onClose={() => setModal('')} />}
+      {modal === 'report' && <ReportModal postId={postToken} onClose={() => setModal('')} />}
+      {modal === 'repost' && <RepostModal postId={isRepost && post.original_post ? (post.original_post.public_hash || post.original_post.id) : postToken} onClose={() => setModal('')} onReposted={(created) => onReposted ? onReposted(created) : navigate(postUrl(created))} />}
       {modal === 'edit' && <CreatePostModal isOpen editPost={post} onClose={() => setModal('')} onSaved={(saved: any) => {setPost(saved);onUpdated?.(saved);setModal('');}} />}
       {lightbox !== null && <Lightbox images={images} index={lightbox} onClose={() => setLightbox(null)} />}
     </article>);

@@ -8,7 +8,6 @@ import (
 	"html/template"
 	"net/url"
 	"regexp"
-	"strconv"
 	"strings"
 	"unicode/utf8"
 
@@ -47,11 +46,7 @@ func routePostID(c goravelhttp.Context) (int64, error) {
 		}
 		return post.ID, nil
 	}
-	id, err := strconv.ParseInt(token, 10, 64)
-	if err != nil || id <= 0 {
-		return 0, errors.New("invalid post ID")
-	}
-	return id, nil
+	return 0, errors.New("invalid post ID: only hash tokens are allowed")
 }
 
 // shareLinks returns web share-intent URLs. Instagram and TikTok offer no
@@ -188,11 +183,7 @@ func (h *SocialController) EmbedPost(c goravelhttp.Context) goravelhttp.Response
 // LinkedIn, X, etc. show a rich preview; only public posts are rendered.
 func (h *SocialController) PublicPostPage(c goravelhttp.Context) goravelhttp.Response {
 	if !postHashPattern.MatchString(c.Request().Route("id")) {
-		view, ok := loadPublicPost(c)
-		if !ok {
-			return c.Response().String(404, "Post not found")
-		}
-		return c.Response().Redirect(302, view.PostURL)
+		return c.Response().String(404, "Post not found")
 	}
 	return renderPublic(c, publicPageTemplate)
 }

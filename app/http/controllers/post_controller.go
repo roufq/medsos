@@ -122,7 +122,7 @@ func (h *PostController) UpdatePostAPI(c goravelhttp.Context) goravelhttp.Respon
 	if err != nil {
 		return c.Response().Json(http.StatusUnauthorized, goravelhttp.Json{"error": "Unauthorized"})
 	}
-	postID, err := routeID(c, "id")
+	postID, err := routePostID(c)
 	if err != nil {
 		return c.Response().Json(http.StatusBadRequest, goravelhttp.Json{"error": "Invalid post ID"})
 	}
@@ -219,7 +219,7 @@ func (h *PostController) DeletePostAPI(c goravelhttp.Context) goravelhttp.Respon
 	}
 	userID := ctxID.(int64)
 
-	postID, err := strconv.ParseInt(c.Request().Route("id"), 10, 64)
+	postID, err := routePostID(c)
 	if err != nil {
 		return c.Response().Json(http.StatusBadRequest, goravelhttp.Json{"error": "Invalid post ID"})
 	}
@@ -288,7 +288,7 @@ func (h *PostController) LikePostAPI(c goravelhttp.Context) goravelhttp.Response
 	}
 	userID := ctxID.(int64)
 
-	postID, err := strconv.ParseInt(c.Request().Route("id"), 10, 64)
+	postID, err := routePostID(c)
 	if err != nil {
 		return c.Response().Json(http.StatusBadRequest, goravelhttp.Json{"error": "Invalid post ID"})
 	}
@@ -314,7 +314,7 @@ func (h *PostController) CommentPostAPI(c goravelhttp.Context) goravelhttp.Respo
 	}
 	userID := ctxID.(int64)
 
-	postID, err := strconv.ParseInt(c.Request().Route("id"), 10, 64)
+	postID, err := routePostID(c)
 	if err != nil {
 		return c.Response().Json(http.StatusBadRequest, goravelhttp.Json{"error": "Invalid post ID"})
 	}

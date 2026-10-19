@@ -229,7 +229,7 @@ export default function CreatePostModal({ isOpen, onClose, onSaved, editPost, in
     try {
       let saved;
       if (isEdit) {
-        saved = await postApi.updatePost(editPost.id, {
+        saved = await postApi.updatePost(editPost.public_hash || editPost.id, {
           title: title.trim(), content: content.trim(), hashtags, mentions, location: location.trim(), visibility,
           ...(editPost.post_type === 'link' ? { link_url: linkUrl.trim() } : {}),
           ...(mediaTouched.current ? { media_urls: media.map((m) => m.url) } : {}),

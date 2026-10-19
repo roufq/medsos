@@ -22,6 +22,7 @@ export default function VideoPage() {
     const load = async () => {
       try {
         if (token) {
+          if (!/^[a-f0-9]{32}$/i.test(token)) throw new Error(t('Video tidak ditemukan.'));
           const post = await postApi.getPost(token);
           if (!post.media?.some((item) => item.media_type === 'video')) throw new Error(t('Video tidak ditemukan.'));
           if (active) { setWatching(post); if (String(token) !== post.public_hash && post.public_hash) navigate(watchUrl(post), { replace: true }); }

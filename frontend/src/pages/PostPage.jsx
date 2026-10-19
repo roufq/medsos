@@ -16,12 +16,16 @@ export default function PostPage() {
   useEffect(() => {
     setPost(null);
     setError('');
+    if (!/^[a-f0-9]{32}$/i.test(id || '')) {
+      setError('Postingan tidak ditemukan.');
+      return;
+    }
     postApi.getPost(id).then(setPost).catch((e) => setError(e.response?.data?.error || 'Postingan tidak ditemukan.'));
   }, [id]);
 
   useEffect(() => {
-    if (post?.public_hash && (String(post.id) === id || post.public_hash === id) && location.pathname !== postUrl(post)) navigate(postUrl(post), { replace: true });
-  }, [post, id, location.pathname, navigate]);
+    if (post?.public_hash && location.pathname !== postUrl(post)) navigate(postUrl(post), { replace: true });
+  }, [post, location.pathname, navigate]);
 
   return (
     <AppLayout currentTab="">
