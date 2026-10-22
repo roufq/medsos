@@ -10,9 +10,26 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"github.com/goravel/framework/facades"
 )
 
 var webhookClient = &http.Client{Timeout: 8 * time.Second}
+
+func configOrEnv(key string, fallback ...string) string {
+	if val := strings.TrimSpace(os.Getenv(key)); val != "" {
+		return val
+	}
+	if facades.Config() != nil {
+		if val := strings.TrimSpace(fmt.Sprint(facades.Config().Env(key, ""))); val != "" && val != "<nil>" {
+			return val
+		}
+	}
+	if len(fallback) > 0 {
+		return fallback[0]
+	}
+	return ""
+}
 
 func SendVerification(channel, target, code, purpose string) error {
 	switch strings.ToLower(channel) {
@@ -28,11 +45,11 @@ func SendVerification(channel, target, code, purpose string) error {
 }
 
 func sendEmail(target, code, purpose string) error {
-	host := strings.TrimSpace(os.Getenv("MAIL_HOST"))
-	port := strings.TrimSpace(os.Getenv("MAIL_PORT"))
-	username := os.Getenv("MAIL_USERNAME")
-	password := os.Getenv("MAIL_PASSWORD")
-	from := strings.TrimSpace(os.Getenv("MAIL_FROM_ADDRESS"))
+	host := configOrEnv("MAIL_HOST")
+	port := configOrEnv("MAIL_PORT", "587")
+	username := configOrEnv("MAIL_USERNAME")
+	password := configOrEnv("MAIL_PASSWORD")
+	from := configOrEnv("MAIL_FROM_ADDRESS")
 	if host == "" || port == "" || from == "" {
 		return errors.New("SMTP is not configured")
 	}
@@ -51,7 +68,7 @@ func sendEmail(target, code, purpose string) error {
 }
 
 func sendWebhook(urlEnv, tokenEnv, channel, target, code, purpose string) error {
-	endpoint := strings.TrimSpace(os.Getenv(urlEnv))
+	endpoint := configOrEnv(urlEnv)
 	if endpoint == "" {
 		return fmt.Errorf("%s is not configured", urlEnv)
 	}
@@ -66,7 +83,7 @@ func sendWebhook(urlEnv, tokenEnv, channel, target, code, purpose string) error 
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	if token := strings.TrimSpace(os.Getenv(tokenEnv)); token != "" {
+	if token := configOrEnv(tokenEnv); token != "" {
 		req.Header.Set("Authorization", "Bearer "+token)
 	}
 	response, err := webhookClient.Do(req)
