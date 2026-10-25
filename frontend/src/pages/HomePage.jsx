@@ -8,7 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { postApi } from '../api/postApi';
 import { userApi } from '../api/userApi';
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 50;
 
 const HomePage = () => {
   const { user } = useAuth();

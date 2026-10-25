@@ -1,7 +1,7 @@
 import { useLanguage } from "../context/LanguageContext";import LanguageSwitch from '../components/common/LanguageSwitch';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle2, AlertCircle, LogOut } from 'lucide-react';
+import { CheckCircle2, AlertCircle, LogOut, BadgeCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { userApi } from '../api/userApi';
 import { authApi } from '../api/authApi';
@@ -19,6 +19,18 @@ const COUNTRIES = [
 
 const INTERESTS = ['Teknologi', 'Bisnis', 'Desain', 'Fotografi', 'Travel', 'Kuliner', 'Fashion', 'Olahraga', 'Musik', 'Film', 'Game', 'Pendidikan', 'Kesehatan', 'Otomotif', 'Properti', 'Keuangan', 'Seni', 'Parenting'];
 const SHOP_CATEGORIES = ['', 'Elektronik', 'Fashion', 'Kecantikan', 'Rumah & Dapur', 'Otomotif', 'Olahraga', 'Hobi & Koleksi', 'Makanan & Minuman', 'Jasa', 'Lainnya'];
+
+const SUBSCRIPTION_PLANS = [
+  { id: 'free', quota: '1x Postingan', features: 'Poster, Video, Shop, Link, Hashtags', price: 'Gratis (Free Account)', blue: false, badge: 'Free Account' },
+  { id: 'tier_3', quota: '3x Postingan', features: 'Poster, Video, Shop, Link, Hashtags, Location', price: 'Rp 69.000 / Month', blue: false, badge: 'Berlangganan 🌏' },
+  { id: 'tier_6', quota: '6x Postingan', features: 'Poster, Video, Shop, Link', price: 'Rp 1.299.000 / Month', blue: true, badge: 'Centang Biru • Berlangganan 🌎' },
+  { id: 'tier_9', quota: '9x Postingan', features: 'Poster, Video, Shop, Link', price: 'Rp 1.599.000 / Month', blue: true, badge: 'Centang Biru • Berlangganan 🌎' },
+  { id: 'tier_12', quota: '12x Postingan', features: 'Poster, Video, Shop, Link, Location', price: 'Rp 299.000 / Month', blue: true, badge: 'Centang Biru • Berlangganan 🌎' },
+  { id: 'tier_15', quota: '15x Postingan', features: 'Poster, Video, Shop, Link, Hashtags, Location', price: 'Rp 366.000 / Month', blue: true, badge: 'Centang Biru • Berlangganan 🌎' },
+  { id: 'tier_18', quota: '18x Postingan', features: 'Poster, Video, Shop, Link, Hashtags, Location', price: 'Rp 599.000 / Month', blue: true, badge: 'Centang Biru • Berlangganan 🌎' },
+  { id: 'tier_21', quota: '21x Postingan', features: 'Poster, Video, Shop, Link, Hashtags, Location', price: 'Rp 699.000 / Month', blue: true, badge: 'Centang Biru • Berlangganan 🌎' },
+  { id: 'tier_24', quota: '24x Postingan', features: 'Poster, Video, Shop, Link, Hashtags, Location', price: 'Rp 799.000 / Month', blue: true, badge: 'Centang Biru • Berlangganan 🌎' },
+];
 
 const errorText = (error, fallback) => error?.response?.data?.error || fallback;
 const dialCode = (iso) => COUNTRIES.find((c) => c[0] === iso)?.[2] || '';
@@ -48,7 +60,7 @@ export default function SettingsPage() {const { t } = useLanguage();
   const handleLogout = async () => {
     if (loggingOut) return;
     setLoggingOut(true);
-    try {await logout();navigate('/login', { replace: true });} finally {setLoggingOut(false);}
+    try {await logout();navigate('/thanks', { replace: true });} finally {setLoggingOut(false);}
   };
   const [saving, setSaving] = useState(false);
   const [codes, setCodes] = useState({ email: '', phone: '' });
@@ -58,6 +70,23 @@ export default function SettingsPage() {const { t } = useLanguage();
   const [blocked, setBlocked] = useState([]);
   const [deletion, setDeletion] = useState({ password: '', confirm: '' });
   const [deleteNotice, setDeleteNotice] = useState({});
+  const [subBusy, setSubBusy] = useState('');
+  const [subNotice, setSubNotice] = useState({});
+
+  const selectPlan = async (planId) => {
+    if (subBusy) return;
+    setSubBusy(planId);
+    setSubNotice({});
+    try {
+      const updated = await userApi.updateSettings({ subscription_plan: planId });
+      updateProfileState(updated);
+      setSubNotice({ type: 'ok', text: planId === 'free' ? 'Paket diubah ke Free Account.' : 'Paket berlangganan berhasil diaktifkan (siap diintegrasikan ke Payment Gateway).' });
+    } catch (err) {
+      setSubNotice({ type: 'error', text: errorText(err, 'Gagal memperbarui paket berlangganan.') });
+    } finally {
+      setSubBusy('');
+    }
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -241,6 +270,37 @@ export default function SettingsPage() {const { t } = useLanguage();
             <Notice state={notice} />
           </div>
         </form>
+
+        <Section title="Paket Berlangganan & Centang Biru" description="Pilih paket kuota posting harian dan fitur Centang Biru. Ke depannya pembayaran langganan akan terhubung otomatis dengan Payment Gateway.">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {SUBSCRIPTION_PLANS.map((plan, idx) => {
+              const currentPlan = user.subscription_plan || 'free';
+              const isCurrent = currentPlan === plan.id;
+              return (
+                <div key={plan.id} className={`flex flex-col justify-between rounded-xl border-2 p-4 ${isCurrent ? 'border-primary bg-primary/5' : 'border-border-subtle'}`}>
+                  <div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm font-bold">{idx + 1}. {plan.quota}</span>
+                      {plan.blue && <span className="inline-flex items-center gap-1 rounded-full bg-sky-500/10 px-2 py-0.5 text-[11px] font-bold text-sky-600"><BadgeCheck className="w-3.5 h-3.5 text-sky-500" />Centang Biru</span>}
+                    </div>
+                    <p className="mt-1 text-xs text-text-secondary">Fitur: {plan.features}</p>
+                    <p className="mt-2 text-sm font-extrabold text-primary">{plan.price}</p>
+                    <p className="text-[11px] text-text-secondary">{plan.badge}</p>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={isCurrent || Boolean(subBusy)}
+                    onClick={() => selectPlan(plan.id)}
+                    className={`mt-3 w-full rounded-full py-2 text-xs font-bold transition-colors ${isCurrent ? 'bg-success/15 text-success cursor-default' : 'bg-primary text-white hover:opacity-90 disabled:opacity-50'}`}
+                  >
+                    {isCurrent ? '✓ Paket Aktif Saat Ini' : subBusy === plan.id ? 'Memproses...' : plan.id === 'free' ? 'Beralih ke Free Account' : 'Upgrade & Berlangganan'}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+          <Notice state={subNotice} />
+        </Section>
 
         <Section title={t("Verifikasi kontak")} description="Kode berlaku 10 menit.">
           <div className="flex flex-col gap-3">

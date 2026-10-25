@@ -177,7 +177,7 @@ func (h *PostController) GetFeedAPI(c goravelhttp.Context) goravelhttp.Response 
 		}
 	}
 
-	limitStr := c.Request().Query("limit", "10")
+	limitStr := c.Request().Query("limit", "50")
 	offsetStr := c.Request().Query("offset", "0")
 	beforeIDStr := c.Request().Query("before_id", "0")
 	limit, limitErr := strconv.Atoi(limitStr)
@@ -349,7 +349,7 @@ func (h *PostController) ShowBerandaWeb(c goravelhttp.Context) goravelhttp.Respo
 		return resp
 	}
 
-	posts, _ := h.postService.GetFeed(user.ID, 30, 0, 0, false)
+	posts, _ := h.postService.GetFeed(user.ID, 50, 0, 0, false)
 
 	var buf bytes.Buffer
 	data := backend.BerandaData{

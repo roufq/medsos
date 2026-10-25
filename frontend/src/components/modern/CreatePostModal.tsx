@@ -4,7 +4,7 @@ import { X, Image as ImageIcon, Video, Link as LinkIcon, MapPin, Loader2, Shoppi
 import HashtagInput from './HashtagInput';
 import { postApi } from '../../api/postApi';
 import { useAuth } from '../../context/AuthContext';
-import { RichText, formatPrice, POST_RULES as R, currencyDecimals, mergeTokens, parseTokens, toMinorUnits, tokensInText } from '../../utils/postFormat';
+import { RichText, formatPrice, POST_RULES as R, countWords, currencyDecimals, mergeTokens, parseTokens, toMinorUnits, tokensInText } from '../../utils/postFormat';
 
 interface CreatePostModalProps {
   isOpen: boolean;
@@ -146,7 +146,7 @@ export default function CreatePostModal({ isOpen, onClose, onSaved, editPost, in
   const isShop = mode === 'shop';
   const images = media.filter((m) => m.type === 'image');
   const videos = media.filter((m) => m.type === 'video');
-  const characters = [...content.trim()].length;
+  const words = countWords(content);
   const hashtags = useMemo(() => mergeTokens(parseTokens(hashtagInput, '#'), tokensInText(content, '#')), [hashtagInput, content]);
   const mentions = useMemo(() => mergeTokens(parseTokens(mentionInput, '@'), tokensInText(content, '@')), [mentionInput, content]);
   const maxTags = isShop ? R.shopHashtagsMax : R.hashtagsMax;
@@ -156,8 +156,8 @@ export default function CreatePostModal({ isOpen, onClose, onSaved, editPost, in
   const problems: string[] = [];
   const titleLength = [...title.trim()].length;
   if (titleLength < R.titleMin || titleLength > R.titleMax) problems.push(`Judul wajib ${R.titleMin}–${R.titleMax} karakter.`);
-  if (isShop ? characters === 0 : characters < R.descriptionMinChars) problems.push(isShop ? 'Deskripsi produk wajib diisi.' : language === 'en' ? `Description requires at least ${R.descriptionMinChars} characters (currently ${characters}).` : `Deskripsi minimal ${R.descriptionMinChars} karakter (sekarang ${characters}).`);
-  if (characters > R.descriptionMaxChars) problems.push(language === 'en' ? `Description allows at most ${R.descriptionMaxChars} characters.` : `Deskripsi maksimal ${R.descriptionMaxChars} karakter.`);
+  if (isShop ? words === 0 : words < R.descriptionMinWords) problems.push(isShop ? 'Deskripsi produk wajib diisi.' : language === 'en' ? `Description requires at least ${R.descriptionMinWords} words (currently ${words}).` : `Deskripsi minimal ${R.descriptionMinWords} kata (sekarang ${words}).`);
+  if (words > R.descriptionMaxWords) problems.push(language === 'en' ? `Description allows at most ${R.descriptionMaxWords} words.` : `Deskripsi maksimal ${R.descriptionMaxWords} kata.`);
   if (hashtags.length < R.hashtagsMin || hashtags.length > maxTags) problems.push(`Hashtag wajib ${R.hashtagsMin}–${maxTags} (sekarang ${hashtags.length}).`);
   if (mentions.length < minMentions || mentions.length > R.mentionsMax) problems.push(`Mention ${minMentions}–${R.mentionsMax} akun dengan @username (sekarang ${mentions.length}).`);
   if (!isShop && media.length > 0 && linkUrl.trim()) problems.push('Pilih salah satu: media atau link URL.');
@@ -317,7 +317,7 @@ export default function CreatePostModal({ isOpen, onClose, onSaved, editPost, in
             {[{ id: 'image', label: t("Gambar"), icon: ImageIcon }, { id: 'video', label: 'Video', icon: Video }, { id: 'poster', label: t("Poster"), icon: FileText }, { id: 'link', label: t("Link"), icon: LinkIcon }, { id: 'location', label: t("Lokasi"), icon: MapPin }, { id: 'shop', label: 'Shop', icon: ShoppingBag }].map(({ id, label, icon: Icon }) => <button key={id} type="button" disabled={uploading > 0 || submitting || locating} aria-pressed={activeType === id} className={activeType === id ? 'active' : ''} onClick={() => selectType(id)}><Icon size={19} />{t(label)}</button>)}
           </div>}
           <label className="new-post-field"><span>{isShop ? t("Nama Produk") : t("Judul Postingan")} <b>*</b></span><input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={R.titleMax} placeholder={t("Judul postingan")} className={input} /><small>{titleLength}/{R.titleMax}</small></label>
-          <label className="new-post-field"><span>{t("Deskripsi")}</span><textarea ref={descriptionInput} value={content} onChange={(e) => { setContent(e.target.value); setError(''); }} rows={7} placeholder={t("Bagikan cerita Anda, tambahkan #hashtag dan @username...")} className={input} /><small className="new-post-description-count">{characters} {t("karakter")}</small></label>
+          <label className="new-post-field"><span>{t("Deskripsi")}</span><textarea ref={descriptionInput} value={content} onChange={(e) => { setContent(e.target.value); setError(''); }} rows={7} placeholder={t("Bagikan cerita Anda, tambahkan #hashtag dan @username...")} className={input} /><small className="new-post-description-count">{words} {t("kata")}</small></label>
           <div className="new-post-tools">
             <button type="button" onClick={() => {addToken('#');setActiveDetail('hashtag');}}><Hash size={16} />Hashtag</button>
             <button type="button" onClick={() => setActiveDetail(activeDetail === 'link' ? '' : 'link')}><LinkIcon size={16} />{t("Link")}</button>

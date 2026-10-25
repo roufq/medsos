@@ -36,7 +36,10 @@ type User struct {
 	Gender              *string    `gorm:"type:varchar(20)" json:"gender,omitempty"`
 	Interests           []string   `gorm:"serializer:json;type:text" json:"interests,omitempty"`
 	ShopCategory        *string    `gorm:"type:varchar(100)" json:"shop_category,omitempty"`
-	IsPrivate           bool       `gorm:"not null;default:false;index" json:"is_private"`
+	IsPrivate             bool       `gorm:"not null;default:false;index" json:"is_private"`
+	SubscriptionPlan      string     `gorm:"type:varchar(20);not null;default:'free'" json:"subscription_plan"`
+	IsBlueVerified        bool       `gorm:"not null;default:false" json:"is_blue_verified"`
+	SubscriptionExpiresAt *time.Time `json:"subscription_expires_at,omitempty"`
 	ProfileLayout       string     `gorm:"type:varchar(10);not null;default:'grid'" json:"profile_layout"`
 	EmailVerifiedAt     *time.Time `json:"email_verified_at,omitempty"`
 	PhoneVerifiedAt     *time.Time `json:"phone_verified_at,omitempty"`
@@ -80,4 +83,5 @@ func (u *User) HidePrivateData() {
 	u.PhoneVerifiedAt = nil
 	u.PasswordChangedAt = nil
 	u.DeletionRequestedAt = nil
+	u.SubscriptionExpiresAt = nil
 }

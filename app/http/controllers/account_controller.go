@@ -58,7 +58,8 @@ func (h *AccountController) UpdateSettings(c goravelhttp.Context) goravelhttp.Re
 		Company       *string  `json:"company"`
 		Location      *string  `json:"location"`
 		BirthPlace    *string  `json:"birth_place"`
-		PhoneCountry  *string  `json:"phone_country"`
+		PhoneCountry     *string  `json:"phone_country"`
+		SubscriptionPlan *string  `json:"subscription_plan"`
 	}
 	if err := c.Request().Bind(&input); err != nil {
 		return c.Response().Json(http.StatusBadRequest, goravelhttp.Json{"error": err.Error()})
@@ -202,6 +203,21 @@ func (h *AccountController) UpdateSettings(c goravelhttp.Context) goravelhttp.Re
 			return c.Response().Json(400, goravelhttp.Json{"error": "profile_layout must be grid or long"})
 		}
 		updates["profile_layout"] = layout
+	}
+	if input.SubscriptionPlan != nil {
+		// shortcut: activates subscription directly without payment gateway, hook Midtrans/Xendit webhook here when payment gateway is added
+		planKey := strings.ToLower(strings.TrimSpace(*input.SubscriptionPlan))
+		plan, ok := services.SubscriptionPlans[planKey]
+		if !ok {
+			return c.Response().Json(400, goravelhttp.Json{"error": "invalid subscription_plan"})
+		}
+		updates["subscription_plan"] = planKey
+		updates["is_blue_verified"] = plan.BlueVerified
+		if planKey == "free" {
+			updates["subscription_expires_at"] = nil
+		} else {
+			updates["subscription_expires_at"] = time.Now().Add(30 * 24 * time.Hour)
+		}
 	}
 	if len(updates) == 0 {
 		return c.Response().Json(400, goravelhttp.Json{"error": "no settings supplied"})

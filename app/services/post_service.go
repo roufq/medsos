@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"github.com/goravel/framework/contracts/queue"
@@ -28,8 +29,8 @@ import (
 const (
 	TitleMinChars       = 5
 	TitleMaxChars       = 100
-	DescriptionMinChars = 160
-	DescriptionMaxChars = 6000
+	DescriptionMinWords = 160
+	DescriptionMaxWords = 6000
 	HashtagsMin         = 3
 	HashtagsMax         = 9
 	ShopHashtagsMax     = 30
@@ -44,6 +45,23 @@ const (
 
 // ErrForbidden is returned when a user edits or deletes someone else's post.
 var ErrForbidden = errors.New("forbidden: you can only change your own posts")
+
+// SubscriptionPlans defines the 9 user tiers: daily post quota, blue check, and location feature access.
+var SubscriptionPlans = map[string]struct {
+	MaxPostsPerDay int
+	BlueVerified   bool
+	AllowLocation  bool
+}{
+	"free":    {1, false, false},
+	"tier_3":  {3, false, true},
+	"tier_6":  {6, true, false},
+	"tier_9":  {9, true, false},
+	"tier_12": {12, true, true},
+	"tier_15": {15, true, true},
+	"tier_18": {18, true, true},
+	"tier_21": {21, true, true},
+	"tier_24": {24, true, true},
+}
 
 type PostService interface {
 	CreatePost(userID int64, req *dto.CreatePostRequest) (*models.Post, error)
@@ -110,17 +128,17 @@ func (d *postDraft) validate() error {
 	if n := utf8.RuneCountInString(d.title); n < TitleMinChars || n > TitleMaxChars {
 		return fmt.Errorf("title is required and must contain %d-%d characters", TitleMinChars, TitleMaxChars)
 	}
-	characters := utf8.RuneCountInString(d.content)
-	if characters > DescriptionMaxChars {
-		return fmt.Errorf("description must contain at most %d characters (currently %d)", DescriptionMaxChars, characters)
+	words := CountWords(d.content)
+	if words > DescriptionMaxWords || len(d.content) > 64000 {
+		return fmt.Errorf("description must contain at most %d words (currently %d)", DescriptionMaxWords, words)
 	}
 	if isShop {
-		if characters == 0 {
+		if words == 0 {
 			return errors.New("product description is required")
 		}
-	} else if characters < DescriptionMinChars {
+	} else if words < DescriptionMinWords {
 		// Also covers link posts: a URL preview never replaces the description.
-		return fmt.Errorf("description must contain at least %d characters (currently %d)", DescriptionMinChars, characters)
+		return fmt.Errorf("description must contain at least %d words (currently %d)", DescriptionMinWords, words)
 	}
 
 	if d.visibility != "public" && d.visibility != "followers" {
@@ -259,6 +277,34 @@ func validateShop(shop *dto.ShopPostRequest) error {
 
 // resolveMentions loads the mentioned users, rejecting unknown, inactive, or
 // blocked accounts (a blocked user must not be reachable through mentions).
+func checkSubscriptionQuota(userID int64, location string, existingPostID ...int64) error {
+	if db.DB == nil {
+		return nil
+	}
+	var author models.User
+	if err := db.DB.First(&author, userID).Error; err != nil || author.Role == models.RoleAdmin {
+		return nil
+	}
+	plan, ok := SubscriptionPlans[author.SubscriptionPlan]
+	if !ok {
+		plan = SubscriptionPlans["free"]
+	}
+	if location != "" && !plan.AllowLocation {
+		return errors.New("fitur Location hanya tersedia pada paket berlangganan yang mencakup Location")
+	}
+	if len(existingPostID) > 0 {
+		return nil
+	}
+	now := time.Now()
+	startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	var todayCount int64
+	db.DB.Model(&models.Post{}).Where("user_id = ? AND created_at >= ?", userID, startOfDay).Count(&todayCount)
+	if int(todayCount) >= plan.MaxPostsPerDay {
+		return fmt.Errorf("kuota posting harian paket Anda (%dx postingan) telah habis; silakan upgrade paket di Pengaturan", plan.MaxPostsPerDay)
+	}
+	return nil
+}
+
 func resolveMentions(authorID int64, usernames []string) ([]models.User, error) {
 	users := make([]models.User, 0, len(usernames))
 	for _, username := range usernames {
@@ -377,6 +423,9 @@ func (s *postService) CreatePost(userID int64, req *dto.CreatePostRequest) (*mod
 		return nil, err
 	}
 
+	if err := checkSubscriptionQuota(userID, draft.location); err != nil {
+		return nil, err
+	}
 	post := &models.Post{
 		UserID:     userID,
 		PostType:   draft.postType,
@@ -509,6 +558,9 @@ func (s *postService) UpdatePost(userID, postID int64, req *dto.UpdatePostReques
 		return nil, err
 	}
 
+	if err := checkSubscriptionQuota(userID, draft.location, postID); err != nil {
+		return nil, err
+	}
 	var newLink *models.PostLink
 	var newMedia []models.PostMedia
 	err = db.DB.Transaction(func(tx *gorm.DB) error {

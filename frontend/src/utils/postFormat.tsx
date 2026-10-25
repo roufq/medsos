@@ -5,8 +5,8 @@ import { Link } from 'react-router-dom';
 export const POST_RULES = {
   titleMin: 5,
   titleMax: 100,
-  descriptionMinChars: 160,
-  descriptionMaxChars: 6000,
+  descriptionMinWords: 160,
+  descriptionMaxWords: 6000,
   hashtagsMin: 3,
   hashtagsMax: 9,
   shopHashtagsMax: 30,

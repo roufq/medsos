@@ -23,6 +23,16 @@ var DB *gorm.DB
 
 var safeDatabaseName = regexp.MustCompile(`^[A-Za-z0-9_]+$`)
 
+func configEnv(name, fallback string) string {
+	if v := strings.TrimSpace(os.Getenv(name)); v != "" {
+		return v
+	}
+	if v := strings.TrimSpace(fmt.Sprint(facades.Config().Env(name, fallback))); v != "" && v != "<nil>" {
+		return v
+	}
+	return fallback
+}
+
 func envInt(name string, fallback int) int {
 	value, err := strconv.Atoi(os.Getenv(name))
 	if err != nil || value <= 0 {
@@ -169,11 +179,13 @@ func InitDB() {
 
 	// 4. Seed Default Admin if the database is empty
 	var userCount int64
-	DB.Model(&models.User{}).Count(&userCount)
-	seedAdmin := strings.EqualFold(os.Getenv("SEED_DEFAULT_ADMIN"), "true")
+	DB.Model(&models.User{}).Where("role = ?", models.RoleAdmin).Count(&userCount)
+	seedAdmin := strings.EqualFold(configEnv("SEED_DEFAULT_ADMIN", "false"), "true")
 	if userCount == 0 && seedAdmin {
-		adminEmail := strings.TrimSpace(os.Getenv("ADMIN_EMAIL"))
-		adminPassword := os.Getenv("ADMIN_PASSWORD")
+		adminEmail := configEnv("ADMIN_EMAIL", "admin@medsos.local")
+		adminPassword := configEnv("ADMIN_PASSWORD", "")
+		adminUsername := configEnv("ADMIN_USERNAME", "admin")
+		now := time.Now()
 		if adminEmail == "" || len(adminPassword) < 12 {
 			log.Fatal("ADMIN_EMAIL and ADMIN_PASSWORD (minimum 12 characters) are required when SEED_DEFAULT_ADMIN=true")
 		}
@@ -184,7 +196,12 @@ func InitDB() {
 		title := "System Administrator"
 		company := "Connect Modern"
 		admin := models.User{
-			Name:     "Admin Connect",
+			Name:            "Admin Connect",
+			Username:        &adminUsername,
+			AccountType:     "personal",
+			AccountStatus:   "active",
+			ProfileLayout:   "grid",
+			EmailVerifiedAt: &now,
 			Email:    adminEmail,
 			Password: string(hashedPassword),
 			Role:     models.RoleAdmin,

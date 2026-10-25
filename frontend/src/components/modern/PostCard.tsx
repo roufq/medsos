@@ -260,7 +260,7 @@ export default function PostCard({ post: initialPost, onDeleted, onUpdated, onRe
             <img src={post.user?.avatar_url || `${import.meta.env.BASE_URL}favicon.svg`} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
           </Link>
           <div className="min-w-0">
-            <Link to={profileUrl(post.user || { id: post.user_id })} className="font-bold text-text-primary text-sm hover:underline">{post.user?.name || 'Pengguna'}</Link>
+            <Link to={profileUrl(post.user || { id: post.user_id })} className="font-bold text-text-primary text-sm hover:underline inline-flex items-center gap-1">{post.user?.name || 'Pengguna'}{post.user?.is_blue_verified && <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-sky-500 text-white text-[10px] leading-none" title="Terverifikasi Centang Biru" aria-label="Centang Biru">✓</span>}</Link>
             {post.user?.username && <span className="ml-1 text-xs text-text-secondary">@{post.user.username}</span>}
             <div className="flex flex-wrap items-center text-xs text-text-secondary gap-1 mt-0.5">
               <Link to={postUrl(post)} className="hover:underline">{timeAgo(post.created_at)}</Link>

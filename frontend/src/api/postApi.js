@@ -1,7 +1,7 @@
 import api from './axios';
 
 export const postApi = {
-  getFeed: async (limit = 10, offset = 0, userId = null, beforeId = null, kind = '') => {
+  getFeed: async (limit = 50, offset = 0, userId = null, beforeId = null, kind = '') => {
     let url = `/posts?limit=${limit}&offset=${offset}`;
     if (kind) {
       url += `&kind=${encodeURIComponent(kind)}`;

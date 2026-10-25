@@ -14,7 +14,7 @@ func validDraft() postDraft {
 	d := postDraft{
 		postType: models.PostTypeText,
 		title:    "Judul yang valid",
-		content:  strings.Repeat("a", DescriptionMinChars),
+		content:  words(DescriptionMinWords),
 		tags:     []string{"satu", "dua", "tiga"},
 		mentions: []string{"budi"},
 	}
@@ -40,8 +40,8 @@ func TestPostRules(t *testing.T) {
 	cases := map[string]func(d *postDraft){
 		"title too short":              func(d *postDraft) { d.title = "abcd" },
 		"title too long":               func(d *postDraft) { d.title = strings.Repeat("a", 101) },
-		"description < 160 characters": func(d *postDraft) { d.content = strings.Repeat("a", 159) },
-		"description > 6000":           func(d *postDraft) { d.content = strings.Repeat("a", 6001) },
+		"description < 160 words":      func(d *postDraft) { d.content = words(159) },
+		"description > 6000":           func(d *postDraft) { d.content = words(6001) },
 		"fewer than 3 hashtags":        func(d *postDraft) { d.tags = d.tags[:2] },
 		"more than 9 hashtags":         func(d *postDraft) { d.tags = strings.Fields("a1 a2 a3 a4 a5 a6 a7 a8 a9 a10") },
 		"no mention":                   func(d *postDraft) { d.mentions = nil },
@@ -146,8 +146,8 @@ func TestHashtagAndMentionExtraction(t *testing.T) {
 	}
 }
 
-func TestDescriptionCountsCharactersWithoutSpaces(t *testing.T) {
-	for _, text := range []string{strings.Repeat("a", 342), strings.Repeat("?", 160), strings.Repeat("a", 6000)} {
+func TestDescriptionCountsWords(t *testing.T) {
+	for _, text := range []string{words(160), words(342), words(6000)} {
 		d := validDraft()
 		d.content = text
 		if err := d.validate(); err != nil {
@@ -155,8 +155,22 @@ func TestDescriptionCountsCharactersWithoutSpaces(t *testing.T) {
 		}
 	}
 	d := validDraft()
-	d.content = strings.Repeat("?", 6001)
+	d.content = words(6001)
 	if d.validate() == nil {
 		t.Fatal("description over 6000 characters accepted")
+	}
+}
+
+func TestSubscriptionPlans(t *testing.T) {
+	if len(SubscriptionPlans) != 9 || SubscriptionPlans["free"].MaxPostsPerDay != 1 || SubscriptionPlans["free"].BlueVerified {
+		t.Fatalf("unexpected free plan: %+v", SubscriptionPlans["free"])
+	}
+	if !SubscriptionPlans["tier_6"].BlueVerified || SubscriptionPlans["tier_24"].MaxPostsPerDay != 24 {
+		t.Fatalf("unexpected paid plans: %+v %+v", SubscriptionPlans["tier_6"], SubscriptionPlans["tier_24"])
+	}
+}
+
+func noop() {
+	if false {
 	}
 }
