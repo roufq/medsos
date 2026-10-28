@@ -22,6 +22,12 @@ func NewPortfolioService(repo repositories.PortfolioRepository) PortfolioService
 }
 
 func (s *portfolioService) CreatePortfolio(userID int64, req dto.CreatePortfolioRequest) (*models.Portfolio, error) {
+	if err := ValidateWebsite(req.LinkURL); err != nil {
+		return nil, errors.New("link_url must use http:// or https://")
+	}
+	if err := ValidateOwnImage(userID, req.ImageURL); err != nil && ValidateWebsite(req.ImageURL) != nil {
+		return nil, errors.New("image_url must be your uploaded image or http(s) URL")
+	}
 	portfolio := &models.Portfolio{
 		UserID:      userID,
 		Title:       req.Title,

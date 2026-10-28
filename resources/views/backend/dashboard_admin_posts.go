@@ -51,7 +51,7 @@ func RenderDashboardAdminPosts(w io.Writer, posts []models.Post, user *models.Us
 				[]dom.Attr{dom.Class("px-6 py-4 text-right")},
 				dom.Form(
 					[]dom.Attr{
-						dom.CustomAttr("action", fmt.Sprintf("/web/admin/posts/%d/delete", p.ID)),
+						dom.CustomAttr("action", fmt.Sprintf("/web/admin/posts/%s/delete", p.PublicToken())),
 						dom.CustomAttr("method", "POST"),
 						dom.Style("display:inline;"),
 					},

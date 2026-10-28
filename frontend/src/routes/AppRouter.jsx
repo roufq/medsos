@@ -92,6 +92,7 @@ const AppRouter = () => {
           <Route path="/u/:username" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
           <Route path="/settings" element={<PrivateRoute><SettingsPage /></PrivateRoute>} />
           <Route path="/post/:id" element={<PrivateRoute><PostPage /></PrivateRoute>} />
+          <Route path="/posts/:id" element={<PrivateRoute><PostPage /></PrivateRoute>} />
           <Route path="/shorts" element={<Navigate to="/videos" replace />} />
           <Route path="/videos" element={<PrivateRoute><VideoPage /></PrivateRoute>} />
           <Route path="/videos/:token" element={<PrivateRoute><VideoPage /></PrivateRoute>} />

@@ -43,7 +43,7 @@ func (h *PortfolioController) CreatePortfolio(c goravelhttp.Context) goravelhttp
 
 	portfolio, err := h.portfolioService.CreatePortfolio(userID, req)
 	if err != nil {
-		return c.Response().Json(http.StatusInternalServerError, goravelhttp.Json{"error": "Failed to create portfolio"})
+		return c.Response().Json(http.StatusBadRequest, goravelhttp.Json{"error": err.Error()})
 	}
 
 	return c.Response().Json(http.StatusCreated, portfolio)

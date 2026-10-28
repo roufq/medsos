@@ -204,11 +204,12 @@ func validateURL(targetURL string) error {
 }
 
 func isPrivateIP(ip net.IP) bool {
-	if ip.IsLoopback() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() || ip.IsUnspecified() {
+	if ip.IsPrivate() || ip.IsLoopback() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() || ip.IsUnspecified() {
 		return true
 	}
 	if ip4 := ip.To4(); ip4 != nil {
-		return ip4[0] == 10 ||
+		return ip4[0] == 0 || ip4[0] == 10 ||
+			(ip4[0] == 100 && ip4[1]&0xc0 == 64) ||
 			(ip4[0] == 172 && ip4[1] >= 16 && ip4[1] <= 31) ||
 			(ip4[0] == 192 && ip4[1] == 168)
 	}

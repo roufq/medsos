@@ -95,6 +95,7 @@ func (r *postRepo) ListAll(viewerID int64, limit, offset int, beforeID int64, sh
 			(SELECT COUNT(*) FROM post_shares WHERE post_shares.post_id = posts.id) AS shares_count`, viewerID, viewerID).
 		Where(`EXISTS (SELECT 1 FROM users author WHERE author.id = posts.user_id AND author.account_status = 'active')`).
 		Where(`NOT EXISTS (SELECT 1 FROM user_blocks b WHERE (b.blocker_id = ? AND b.blocked_id = posts.user_id) OR (b.blocker_id = posts.user_id AND b.blocked_id = ?))`, viewerID, viewerID).
+		Where(`(posts.repost_of_id IS NULL OR EXISTS (SELECT 1 FROM posts orig JOIN users orig_author ON orig_author.id = orig.user_id WHERE orig.id = posts.repost_of_id AND orig.visibility = 'public' AND orig_author.account_status = 'active' AND orig_author.is_private = 0 AND NOT EXISTS (SELECT 1 FROM user_blocks b WHERE (b.blocker_id = ? AND b.blocked_id = orig.user_id) OR (b.blocker_id = orig.user_id AND b.blocked_id = ?))))`, viewerID, viewerID).
 		Where(`(posts.user_id = ? OR (posts.visibility = 'public' AND EXISTS (SELECT 1 FROM users author WHERE author.id = posts.user_id AND author.is_private = 0)) OR EXISTS (SELECT 1 FROM follows f WHERE f.follower_id = ? AND f.followed_id = posts.user_id AND f.status = 'accepted'))`, viewerID, viewerID)
 	if len(kind) > 0 {
 		switch kind[0] {
@@ -140,6 +141,7 @@ func (r *postRepo) ListByUserID(viewerID, userID int64) ([]models.Post, error) {
 		Where("user_id = ?", userID).
 		Where(`NOT EXISTS (SELECT 1 FROM user_blocks b WHERE (b.blocker_id = ? AND b.blocked_id = ?) OR (b.blocker_id = ? AND b.blocked_id = ?))`, viewerID, userID, userID, viewerID).
 		Where(`(? = ? OR EXISTS (SELECT 1 FROM users u WHERE u.id = ? AND u.is_private = 0) OR EXISTS (SELECT 1 FROM follows f WHERE f.follower_id = ? AND f.followed_id = ? AND f.status = 'accepted'))`, viewerID, userID, userID, viewerID, userID).
+		Where(`(posts.repost_of_id IS NULL OR EXISTS (SELECT 1 FROM posts orig JOIN users orig_author ON orig_author.id = orig.user_id WHERE orig.id = posts.repost_of_id AND orig.visibility = 'public' AND orig_author.account_status = 'active' AND orig_author.is_private = 0 AND NOT EXISTS (SELECT 1 FROM user_blocks b WHERE (b.blocker_id = ? AND b.blocked_id = orig.user_id) OR (b.blocker_id = orig.user_id AND b.blocked_id = ?))))`, viewerID, viewerID).
 		Where(`(posts.visibility = 'public' OR posts.user_id = ? OR EXISTS (SELECT 1 FROM follows f WHERE f.follower_id = ? AND f.followed_id = posts.user_id AND f.status = 'accepted'))`, viewerID, viewerID)
 	query = postPreloads(query)
 	err := query.
@@ -164,7 +166,7 @@ func sanitizePostUsers(post *models.Post) {
 		post.Mentions[i].User.HidePrivateData()
 	}
 	if post.OriginalPost != nil {
-		post.OriginalPost.User.HidePrivateData()
+		if post.OriginalPost.Visibility != "public" || post.OriginalPost.User.AccountStatus != "active" || post.OriginalPost.User.IsPrivate { post.OriginalPost = nil } else { post.OriginalPost.User.HidePrivateData() }
 	}
 }
 

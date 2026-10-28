@@ -4,7 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"gorm.io/gorm"
-	"strconv"
+	// strconv unused
 	"time"
 )
 
@@ -65,9 +65,20 @@ func (p *Post) BeforeCreate(tx *gorm.DB) error {
 	p.PublicHash = &token
 	return nil
 }
+func (p *Post) AfterFind(tx *gorm.DB) error {
+	if p.ID > 0 && (p.PublicHash == nil || *p.PublicHash == "") {
+		if token, err := NewPostHash(); err == nil {
+			p.PublicHash = &token
+			if tx != nil {
+				_ = tx.Model(&Post{}).Where("id = ? AND (public_hash IS NULL OR public_hash = '')", p.ID).UpdateColumn("public_hash", token).Error
+			}
+		}
+	}
+	return nil
+}
 func (p *Post) PublicToken() string {
 	if p.PublicHash != nil && *p.PublicHash != "" {
 		return *p.PublicHash
 	}
-	return strconv.FormatInt(p.ID, 10)
+	token, _ := NewPostHash(); p.PublicHash = &token; return token
 }

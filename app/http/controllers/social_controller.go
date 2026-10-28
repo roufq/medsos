@@ -71,6 +71,9 @@ func acceptedFollowingBatch(followerID int64, followedIDs []int64) map[int64]boo
 // canViewPreloadedPost mirrors canViewPost but reuses an already-preloaded
 // post.User and batched block/follow maps instead of issuing new queries per post.
 func canViewPreloadedPost(viewerID int64, post *models.Post, blocked, following map[int64]bool) bool {
+	if post.RepostOfID != nil && !canViewPost(viewerID, post) {
+		return false
+	}
 	if post.User.ID == 0 || post.User.AccountStatus != "active" {
 		return false
 	}
@@ -87,6 +90,12 @@ func canViewPreloadedPost(viewerID int64, post *models.Post, blocked, following 
 }
 
 func canViewPost(viewerID int64, post *models.Post) bool {
+	if post.RepostOfID != nil {
+		var orig models.Post
+		if db.DB.First(&orig, *post.RepostOfID).Error != nil || !canViewPost(viewerID, &orig) || !canViewPost(0, &orig) {
+			return false
+		}
+	}
 	var author models.User
 	if db.DB.First(&author, post.UserID).Error != nil || author.AccountStatus != "active" {
 		return false
@@ -215,7 +224,7 @@ func (h *SocialController) Following(c goravelhttp.Context) goravelhttp.Response
 
 func (h *SocialController) followList(c goravelhttp.Context, viewerID, targetID int64, followers bool) goravelhttp.Response {
 	var target models.User
-	if db.DB.First(&target, targetID).Error != nil {
+	if db.DB.First(&target, targetID).Error != nil || target.AccountStatus != "active" {
 		return c.Response().Json(404, goravelhttp.Json{"error": "user not found"})
 	}
 	if blockedBetween(viewerID, targetID) || (target.IsPrivate && viewerID != targetID && !acceptedFollower(viewerID, targetID)) {
@@ -223,7 +232,7 @@ func (h *SocialController) followList(c goravelhttp.Context, viewerID, targetID 
 	}
 	term := strings.TrimSpace(c.Request().Query("q", ""))
 	var users []models.User
-	query := db.DB.Table("users").Where("users.account_status = 'active'")
+	query := db.DB.Table("users").Where("users.account_status = 'active' AND NOT EXISTS (SELECT 1 FROM user_blocks b WHERE (b.blocker_id = ? AND b.blocked_id = users.id) OR (b.blocker_id = users.id AND b.blocked_id = ?))", viewerID, viewerID)
 	if followers {
 		query = query.Joins("JOIN follows ON follows.follower_id = users.id").Where("follows.followed_id = ? AND follows.status = 'accepted'", targetID)
 	} else {
@@ -309,7 +318,7 @@ func (h *SocialController) Repost(c goravelhttp.Context) goravelhttp.Response {
 		return c.Response().Json(400, goravelhttp.Json{"error": "invalid post"})
 	}
 	var original models.Post
-	if db.DB.First(&original, originalID).Error != nil || !canViewPost(userID, &original) {
+	if db.DB.First(&original, originalID).Error != nil || !canViewPost(userID, &original) || !canViewPost(0, &original) {
 		return c.Response().Json(404, goravelhttp.Json{"error": "post not found"})
 	}
 	var input struct {
@@ -414,7 +423,7 @@ func (h *SocialController) ReplyComment(c goravelhttp.Context) goravelhttp.Respo
 	if db.DB.Create(&comment).Error != nil {
 		return c.Response().Json(500, goravelhttp.Json{"error": "failed to reply"})
 	}
-	notifyUser(parent.UserID, userID, "comment_reply", "comment", parent.ID, "Someone replied to your comment")
+	notifyUser(parent.UserID, userID, "comment_reply", "post", postID, "Someone replied to your comment")
 	services.NotifyCommentMentions(userID, postID, comment.Content)
 	db.DB.Preload("User").First(&comment, comment.ID)
 	if comment.User != nil {
@@ -437,6 +446,11 @@ func (h *SocialController) EditComment(c goravelhttp.Context) goravelhttp.Respon
 	}
 	if c.Request().Bind(&input) != nil || strings.TrimSpace(input.Content) == "" || len(input.Content) > 5000 {
 		return c.Response().Json(400, goravelhttp.Json{"error": "content must contain 1-5000 characters"})
+	}
+	var existingComment models.PostComment
+	var commentPost models.Post
+	if db.DB.First(&existingComment, "id = ? AND user_id = ?", commentID, userID).Error != nil || db.DB.First(&commentPost, existingComment.PostID).Error != nil || !canViewPost(userID, &commentPost) {
+		return c.Response().Json(404, goravelhttp.Json{"error": "comment not found"})
 	}
 	result := db.DB.Model(&models.PostComment{}).Where("id = ? AND user_id = ?", commentID, userID).Update("content", strings.TrimSpace(input.Content))
 	if result.RowsAffected == 0 {
@@ -587,7 +601,12 @@ func (h *SocialController) Notifications(c goravelhttp.Context) goravelhttp.Resp
 		return c.Response().Json(401, goravelhttp.Json{"error": "Unauthorized"})
 	}
 	items := make([]models.Notification, 0)
-	if err := db.DB.Where("user_id = ?", userID).Preload("Actor").Order("created_at desc").Limit(50).Find(&items).Error; err != nil {
+	if err := db.DB.Table("notifications").
+		Select("notifications.*, COALESCE(posts.public_hash, comment_posts.public_hash) AS entity_hash").
+		Joins("LEFT JOIN posts ON notifications.entity_type = 'post' AND posts.id = notifications.entity_id").
+		Joins("LEFT JOIN post_comments ON notifications.entity_type = 'comment' AND post_comments.id = notifications.entity_id").
+		Joins("LEFT JOIN posts AS comment_posts ON comment_posts.id = post_comments.post_id").
+		Where("notifications.user_id = ?", userID).Preload("Actor").Order("notifications.created_at desc").Limit(50).Find(&items).Error; err != nil {
 		return c.Response().Json(500, goravelhttp.Json{"error": "failed to load notifications"})
 	}
 	for i := range items {
@@ -707,6 +726,7 @@ func (h *SocialController) Search(c goravelhttp.Context) goravelhttp.Response {
 type adminReportResponse struct {
 	ID           int64      `json:"id"`
 	PostID       int64      `json:"post_id"`
+	PostHash     *string    `json:"post_hash,omitempty"`
 	ReporterID   int64      `json:"reporter_id"`
 	Reason       string     `json:"reason"`
 	Details      string     `json:"details,omitempty"`
@@ -725,7 +745,7 @@ type adminReportResponse struct {
 func (h *SocialController) AdminReports(c goravelhttp.Context) goravelhttp.Response {
 	reports := make([]adminReportResponse, 0)
 	err := db.DB.Table("post_reports AS reports").
-		Select(`reports.*, posts.title AS post_title, posts.content AS post_content,
+		Select(`reports.*, posts.public_hash AS post_hash, posts.title AS post_title, posts.content AS post_content,
 			posts.user_id AS author_id, authors.name AS author_name,
 			authors.avatar_url AS author_avatar, reporters.name AS reporter_name`).
 		Joins("LEFT JOIN posts ON posts.id = reports.post_id").

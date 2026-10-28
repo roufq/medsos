@@ -1,4 +1,5 @@
 import { useLanguage } from "../../context/LanguageContext";import LanguageSwitch from '../common/LanguageSwitch';
+import { postUrl } from '../../utils/postUrl';
 import { profileUrl } from '../../utils/profileUrl';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -28,7 +29,7 @@ export default function Header({ currentUser, searchQuery, setSearchQuery, onNav
   const [searchError, setSearchError] = useState('');
   const [results, setResults] = useState<any>(emptyResults);
   const navigate = useNavigate();
-  const openPost = (id: number | string) => {setIsFocused(false);navigate(`/post/${id}`);};
+  const openPost = (post: any) => {setIsFocused(false);navigate(typeof post === 'object' ? postUrl(post) : `/post/${post}`);};
   const {
     notifications,
     notificationsOpen,
@@ -38,7 +39,7 @@ export default function Header({ currentUser, searchQuery, setSearchQuery, onNav
     loadNotifications,
     openNotification
   } = useNotifications((notification: any) => {
-    if (notification.entity_type === 'post' && notification.entity_id) navigate(`/post/${notification.entity_id}`);else
+    if ((notification.entity_type === 'post' || notification.entity_type === 'comment') && notification.entity_hash) navigate(`/post/${notification.entity_hash}`);else
     if (notification.actor?.id) navigate(profileUrl(notification.actor));
   });
 
@@ -111,13 +112,13 @@ export default function Header({ currentUser, searchQuery, setSearchQuery, onNav
               )}
 
                 {results.products.slice(0, 4).map((post: any) =>
-              <button key={`product-${post.id}`} type="button" onClick={() => openPost(post.public_hash || post.id)} className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left hover:bg-surface-container-low">
+              <button key={`product-${post.id}`} type="button" onClick={() => openPost(post)} className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left hover:bg-surface-container-low">
                     <Package className="h-5 w-5 text-primary" /><div className="min-w-0"><div className="truncate text-sm font-bold">{post.title || post.content || 'Product'}</div><div className="truncate text-xs text-text-secondary">{post.shop?.category || 'Product'}</div></div>
                   </button>
               )}
 
                 {results.posts.slice(0, 4).map((post: any) =>
-              <button key={`post-${post.id}`} type="button" onClick={() => openPost(post.public_hash || post.id)} className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left hover:bg-surface-container-low">
+              <button key={`post-${post.id}`} type="button" onClick={() => openPost(post)} className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left hover:bg-surface-container-low">
                     <FileText className="h-5 w-5 text-primary" /><div className="min-w-0"><div className="truncate text-sm font-bold">{post.title || post.content || 'Post'}</div><div className="truncate text-xs text-text-secondary">{post.user?.name || 'Post'}</div></div>
                   </button>
               )}

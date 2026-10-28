@@ -46,4 +46,11 @@ func TestFixedWindowLimiterIsSafeUnderConcurrentLoad(t *testing.T) {
 	workers.Wait()
 
 	assert.Equal(t, int64(300), allowedCount)
+
+	limiter2 := &fixedWindowLimiter{windows: make(map[string]rateWindow, maxTrackedRateLimitKeys)}
+	for i := 0; i < maxTrackedRateLimitKeys; i++ {
+		limiter2.windows[string(rune(i))] = rateWindow{count: 1, resetAt: now.Add(time.Minute)}
+	}
+	evictAllowed, _, _ := limiter2.take("legit-user", 5, time.Minute, now)
+	assert.True(t, evictAllowed)
 }

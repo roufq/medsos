@@ -76,7 +76,7 @@ func (s *authService) Register(req *dto.RegisterRequest) (*dto.AuthResponse, err
 	if len(req.Name) < 2 || len(req.Name) > 100 {
 		return nil, errors.New("name must be 2-100 characters")
 	}
-	if _, err := mail.ParseAddress(req.Email); err != nil || len(req.Email) > 100 {
+	if addr, err := mail.ParseAddress(req.Email); err != nil || addr.Address != req.Email || len(req.Email) > 100 {
 		return nil, errors.New("invalid email")
 	}
 	if len(req.Password) < 8 || len(req.Password) > 72 {

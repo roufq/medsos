@@ -103,7 +103,7 @@ func (h *AccountController) UpdateSettings(c goravelhttp.Context) goravelhttp.Re
 	}
 	if input.Email != nil {
 		email := strings.ToLower(strings.TrimSpace(*input.Email))
-		if _, err := mail.ParseAddress(email); err != nil || !strings.Contains(email, "@") {
+		if addr, err := mail.ParseAddress(email); err != nil || addr.Address != email || !strings.Contains(email, "@") {
 			return c.Response().Json(400, goravelhttp.Json{"error": "invalid email"})
 		}
 		if email != strings.ToLower(current.Email) {
@@ -205,11 +205,13 @@ func (h *AccountController) UpdateSettings(c goravelhttp.Context) goravelhttp.Re
 		updates["profile_layout"] = layout
 	}
 	if input.SubscriptionPlan != nil {
-		// shortcut: activates subscription directly without payment gateway, hook Midtrans/Xendit webhook here when payment gateway is added
 		planKey := strings.ToLower(strings.TrimSpace(*input.SubscriptionPlan))
 		plan, ok := services.SubscriptionPlans[planKey]
 		if !ok {
 			return c.Response().Json(400, goravelhttp.Json{"error": "invalid subscription_plan"})
+		}
+		if planKey != "free" && current.Role != models.RoleAdmin {
+			return c.Response().Json(403, goravelhttp.Json{"error": "paid subscription requires admin or payment verification"})
 		}
 		updates["subscription_plan"] = planKey
 		updates["is_blue_verified"] = plan.BlueVerified

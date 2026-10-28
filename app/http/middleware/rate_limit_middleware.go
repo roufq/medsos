@@ -68,7 +68,8 @@ func (l *fixedWindowLimiter) take(key string, maximum int, window time.Duration,
 
 	entry, exists := l.windows[key]
 	if !exists && len(l.windows) >= maxTrackedRateLimitKeys {
-		return false, 0, now.Add(window)
+		for k, w := range l.windows { if !now.Before(w.resetAt) { delete(l.windows, k) } }
+		if len(l.windows) >= maxTrackedRateLimitKeys { for k := range l.windows { delete(l.windows, k); break } }
 	}
 	if !exists || !now.Before(entry.resetAt) {
 		entry = rateWindow{resetAt: now.Add(window)}

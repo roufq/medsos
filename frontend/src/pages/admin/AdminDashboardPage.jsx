@@ -28,7 +28,7 @@ const AdminDashboardPage = () => {
     loadNotifications,
     openNotification: handleNotification,
   } = useNotifications((notification) => {
-    if (notification.entity_type === "post" && notification.entity_id) navigate(`/post/${notification.entity_id}`);
+    if ((notification.entity_type === "post" || notification.entity_type === "comment") && notification.entity_hash) navigate(`/post/${notification.entity_hash}`);
     else if (notification.actor?.id) navigate(profileUrl(notification.actor));
   });
 

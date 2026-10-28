@@ -57,7 +57,7 @@ const AdminModerationTab = ({ stats, reports = [], onReview }) => {
               {reports.map((report) => (
                 <tr key={report.id} className="hover:bg-surface-container-low/50 transition-colors">
                   <td className="px-8 py-5 max-w-sm">
-                    <p className="font-semibold text-on-surface line-clamp-1">{report.post_title || report.post_content || `Post #${report.post_id}`}</p>
+                    <a href={`/post/${report.post_hash || report.post_id}`} className="font-semibold text-on-surface hover:text-primary line-clamp-1">{report.post_title || report.post_content || `Post ${report.post_hash || report.post_id}`}</a>
                     {report.details && <p className="text-xs text-text-secondary line-clamp-1 mt-1">{report.details}</p>}
                   </td>
                   <td className="px-8 py-5">

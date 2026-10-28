@@ -271,6 +271,9 @@ func (h *AuthController) HandleRegisterWeb(c goravelhttp.Context) goravelhttp.Re
 }
 
 func (h *AuthController) HandleLogoutWeb(c goravelhttp.Context) goravelhttp.Response {
+	if c.Request().Header("Sec-Fetch-Site") == "cross-site" {
+		return c.Response().Redirect(http.StatusSeeOther, "/web/beranda")
+	}
 	h.authService.Logout(c.Request().Cookie("refresh_token"))
 	clearAuthCookies(c)
 	return c.Response().Redirect(http.StatusSeeOther, "/web/login")

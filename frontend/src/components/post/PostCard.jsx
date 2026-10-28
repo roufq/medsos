@@ -47,7 +47,7 @@ const PostCard = ({ post, onDelete }) => {
 
         {isOwner && (
           <button
-            onClick={() => onDelete(post.id)}
+            onClick={() => onDelete(post.public_hash || post.id)}
             className="p-2 hover:bg-red-50 rounded-xl text-gray-400 hover:text-red-600 transition-colors"
             title="Delete Post"
           >

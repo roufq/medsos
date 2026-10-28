@@ -10,6 +10,7 @@ import (
 	"goravel/app/dto"
 	"goravel/app/models"
 	"goravel/app/services"
+	"goravel/pkg/csrf"
 	"goravel/pkg/db"
 	"goravel/pkg/jwt"
 	"goravel/pkg/session"
@@ -61,6 +62,9 @@ func (h *UserController) getWebUser(c goravelhttp.Context) (*models.User, gorave
 		return nil, c.Response().Redirect(http.StatusSeeOther, "/web/login")
 	}
 
+	if !csrf.SafeMethod(c.Request().Method()) && c.Request().Header("Sec-Fetch-Site") != "same-origin" && !csrf.Valid(c.Request().Cookie(csrf.CookieName), c.Request().Header(csrf.HeaderName), c.Request().Input("_csrf")) {
+		return nil, c.Response().String(http.StatusForbidden, "invalid CSRF token")
+	}
 	user, err := h.userService.GetByID(claims.UserID)
 	if err != nil {
 		return nil, c.Response().Redirect(http.StatusSeeOther, "/web/login")
@@ -296,7 +300,7 @@ func (h *UserController) ShowProfileWeb(c goravelhttp.Context) goravelhttp.Respo
 		parsed, err := strconv.ParseInt(idParam, 10, 64)
 		if err == nil {
 			fetched, err := h.userService.GetByID(parsed)
-			if err == nil {
+			if err == nil && fetched.AccountStatus == "active" && !blockedBetween(currentUser.ID, fetched.ID) && (!fetched.IsPrivate || currentUser.ID == fetched.ID || acceptedFollower(currentUser.ID, fetched.ID)) {
 				targetUser = fetched
 			}
 		}
@@ -379,8 +383,7 @@ func (h *UserController) HandleAdminDeletePostWeb(c goravelhttp.Context) goravel
 		return c.Response().String(http.StatusForbidden, "Forbidden: Only administrators can access this area.")
 	}
 
-	postIDStr := c.Request().Route("id")
-	postID, err := strconv.ParseInt(postIDStr, 10, 64)
+	postID, err := routePostID(c)
 	if err != nil {
 		return c.Response().String(http.StatusBadRequest, "Invalid post ID")
 	}
