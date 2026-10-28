@@ -27,9 +27,11 @@ const ProfilePage = () => {
       setLoading(true);
       setError('');
       try {
+        if (/^\d+$/.test(String(key || ''))) throw new Error('Numeric ID disallowed');
         const user = await userApi.getProfile(key);
         if (!active) return;
         setProfileUser(user);
+        if (user.id === authUser?.id && user.username && authUser?.username !== user.username) updateProfileState({ ...authUser, username: user.username });
         setLoadedKey(key);
         const userPosts = user.profile_locked || user.is_blocked_by_me ? [] : await postApi.getFeed(50, 0, user.id);
         if (active) setPosts(userPosts || []);

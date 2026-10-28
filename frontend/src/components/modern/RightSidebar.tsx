@@ -41,10 +41,10 @@ export default function RightSidebar({ posts, followedUsers, onFollowSuggestion,
             const id = String(user.id);
             const followed = followedUsers.includes(id);
             return <div key={id} className="poster-person">
-              <button className="poster-person-avatar" onClick={() => onOpenProfile?.(id)} aria-label={`Profil ${user.name}`}>
+              <button className="poster-person-avatar" onClick={() => onOpenProfile?.(user.username || id)} aria-label={`Profil ${user.name}`}>
                 {user.avatar_url ? <img src={user.avatar_url} alt="" /> : user.name?.slice(0, 1).toUpperCase()}
               </button>
-              <button className="poster-person-info" onClick={() => onOpenProfile?.(id)}><strong>{user.name}</strong><span>@{user.username || 'user'}</span><span>{user.followers_count != null ? `${user.followers_count} followers` : user.title || user.company || ''}</span></button>
+              <button className="poster-person-info" onClick={() => onOpenProfile?.(user.username || id)}><strong>{user.name}</strong><span>@{user.username || 'user'}</span><span>{user.followers_count != null ? `${user.followers_count} followers` : user.title || user.company || ''}</span></button>
               <button className="poster-follow" disabled={followed} onClick={() => onFollowSuggestion(id)}>{followed ? t("Following") : t("Follow")}</button>
             </div>;
           })}

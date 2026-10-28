@@ -163,6 +163,17 @@ func InitDB() {
 	if backfill.Error != nil {
 		log.Fatalf("Failed to assign public post IDs: %v", backfill.Error)
 	}
+	// Ensure every user has a unique username so profile URLs never fall back to numeric IDs.
+	var usersWithoutUsername []models.User
+	DB.Select("id", "name", "email", "username").Where("username IS NULL OR username = ''").Find(&usersWithoutUsername)
+	for _, u := range usersWithoutUsername {
+		uname := models.GenerateUsername(DB, u.Name, u.Email, u.ID)
+		if err := DB.Model(&models.User{}).Where("id = ?", u.ID).UpdateColumn("username", uname).Error; err != nil {
+			log.Printf("Failed to backfill username for user %d: %v", u.ID, err)
+		}
+	}
+	if false {
+	}
 	log.Println("Database AutoMigrate completed successfully.")
 
 	// Account deletion has a 30-day recovery window. Expired accounts are

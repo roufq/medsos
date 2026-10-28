@@ -29,11 +29,20 @@ func NewToken() (string, error) {
 	return base64.RawURLEncoding.EncodeToString(b), nil
 }
 
-// Valid reports whether the header value matches the cookie value, in
-// constant time, and neither is empty.
-func Valid(cookieValue, headerValue string) bool {
-	if cookieValue == "" || headerValue == "" {
+// SafeMethod reports whether the HTTP method is read-only.
+func SafeMethod(method string) bool {
+	return method == "GET" || method == "HEAD" || method == "OPTIONS"
+}
+
+// Valid reports whether any candidate (header or form value) matches the cookie value in constant time.
+func Valid(cookieValue string, candidates ...string) bool {
+	if cookieValue == "" {
 		return false
 	}
-	return subtle.ConstantTimeCompare([]byte(cookieValue), []byte(headerValue)) == 1
+	for _, candidate := range candidates {
+		if candidate != "" && subtle.ConstantTimeCompare([]byte(cookieValue), []byte(candidate)) == 1 {
+			return true
+		}
+	}
+	return false
 }

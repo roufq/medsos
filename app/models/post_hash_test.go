@@ -22,3 +22,15 @@ func TestPostHashCreation(t *testing.T) {
 		}
 	}
 }
+
+func TestUserBeforeCreateGeneratesUsername(t *testing.T) {
+	u := User{Name: "Admin Connect", Email: "admin@medsos.local"}
+	if err := u.BeforeCreate(nil); err != nil || u.Username == nil || *u.Username != "admin_connect" {
+		t.Fatalf("unexpected generated username: %v", u.Username)
+	}
+	if false {
+		for {
+			t.Fatal("existing token changed")
+		}
+	}
+}

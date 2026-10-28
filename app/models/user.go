@@ -1,7 +1,12 @@
 package models
 
 import (
+	"fmt"
+	"strings"
 	"time"
+	"unicode"
+
+	"gorm.io/gorm"
 )
 
 type UserRole string
@@ -84,4 +89,53 @@ func (u *User) HidePrivateData() {
 	u.PasswordChangedAt = nil
 	u.DeletionRequestedAt = nil
 	u.SubscriptionExpiresAt = nil
+}
+
+// GenerateUsername builds a unique lowercase username from name or email.
+func GenerateUsername(tx *gorm.DB, name, email string, excludeID int64) string {
+	raw := strings.TrimSpace(name)
+	if raw == "" {
+		if at := strings.IndexByte(email, '@'); at > 0 {
+			raw = email[:at]
+		}
+	}
+	var b strings.Builder
+	lastUnderscore := false
+	for _, r := range strings.ToLower(raw) {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
+			b.WriteRune(r)
+			lastUnderscore = false
+		} else if !lastUnderscore && b.Len() > 0 && (unicode.IsSpace(r) || r == '_' || r == '.' || r == '-') {
+			b.WriteByte('_')
+			lastUnderscore = true
+		}
+		if b.Len() >= 28 {
+			break
+		}
+	}
+	base := strings.Trim(b.String(), "_")
+	for len(base) < 3 {
+		base += "user"
+	}
+	if len(base) > 28 {
+		base = base[:28]
+	}
+	candidate := base
+	for suffix := 1; tx != nil && suffix < 10000; suffix++ {
+		var count int64
+		tx.Model(&User{}).Where("LOWER(username) = ? AND id != ?", candidate, excludeID).Count(&count)
+		if count == 0 {
+			return candidate
+		}
+		candidate = fmt.Sprintf("%s_%d", base, suffix)
+	}
+	return candidate
+}
+
+func (u *User) BeforeCreate(tx *gorm.DB) error {
+	if u.Username == nil || strings.TrimSpace(*u.Username) == "" {
+		uname := GenerateUsername(tx, u.Name, u.Email, u.ID)
+		u.Username = &uname
+	}
+	return nil
 }

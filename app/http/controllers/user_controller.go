@@ -86,16 +86,14 @@ func (h *UserController) GetProfileAPI(c goravelhttp.Context) goravelhttp.Respon
 	idParam := c.Request().Route("id")
 
 	if idParam != "" && idParam != "me" {
-		parsed, err := strconv.ParseInt(idParam, 10, 64)
-		if err != nil {
-			// Not numeric: resolve @username links (mentions) to an ID.
-			var found models.User
-			if db.DB.Select("id").Where("LOWER(username) = LOWER(?)", strings.TrimPrefix(idParam, "@")).First(&found).Error != nil {
-				return c.Response().Json(http.StatusNotFound, goravelhttp.Json{"error": "User not found"})
-			}
-			parsed = found.ID
+		if _, numErr := strconv.ParseInt(idParam, 10, 64); numErr == nil {
+			return c.Response().Json(http.StatusNotFound, goravelhttp.Json{"error": "User not found"})
 		}
-		targetID = parsed
+		var found models.User
+		if db.DB.Select("id").Where("LOWER(username) = LOWER(?)", strings.TrimPrefix(idParam, "@")).First(&found).Error != nil {
+			return c.Response().Json(http.StatusNotFound, goravelhttp.Json{"error": "User not found"})
+		}
+		targetID = found.ID
 	} else {
 		// Default to authenticated context user
 		ctxID := c.Value("userID")
@@ -297,11 +295,10 @@ func (h *UserController) ShowProfileWeb(c goravelhttp.Context) goravelhttp.Respo
 	targetUser := currentUser
 	idParam := c.Request().Route("id")
 	if idParam != "" && idParam != "me" {
-		parsed, err := strconv.ParseInt(idParam, 10, 64)
-		if err == nil {
-			fetched, err := h.userService.GetByID(parsed)
-			if err == nil && fetched.AccountStatus == "active" && !blockedBetween(currentUser.ID, fetched.ID) && (!fetched.IsPrivate || currentUser.ID == fetched.ID || acceptedFollower(currentUser.ID, fetched.ID)) {
-				targetUser = fetched
+		if _, numErr := strconv.ParseInt(idParam, 10, 64); numErr != nil {
+			var fetched models.User
+			if db.DB.Where("LOWER(username) = LOWER(?)", strings.TrimPrefix(idParam, "@")).First(&fetched).Error == nil && fetched.AccountStatus == "active" && !blockedBetween(currentUser.ID, fetched.ID) && (!fetched.IsPrivate || currentUser.ID == fetched.ID || acceptedFollower(currentUser.ID, fetched.ID)) {
+				targetUser = &fetched
 			}
 		}
 	}

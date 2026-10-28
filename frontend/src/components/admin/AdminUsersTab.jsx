@@ -104,7 +104,7 @@ const AdminUsersTab = ({ users, stats, searchQuery = '', onToggleBlock, onOpenPr
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <button type="button" onClick={() => onOpenProfile(u.id)} className="w-10 h-10 rounded-full overflow-hidden bg-surface-container-high border border-border-subtle flex-shrink-0">
+                      <button type="button" onClick={() => onOpenProfile(u.username || u.id)} className="w-10 h-10 rounded-full overflow-hidden bg-surface-container-high border border-border-subtle flex-shrink-0">
                         <img 
                           src={u.avatar_url || '/favicon.svg'}
                           alt={u.name} 
@@ -112,7 +112,7 @@ const AdminUsersTab = ({ users, stats, searchQuery = '', onToggleBlock, onOpenPr
                         />
                       </button>
                       <div className="flex flex-col">
-                        <button type="button" onClick={() => onOpenProfile(u.id)} className="text-left font-label-md text-label-md text-text-primary hover:underline">{u.name}</button>
+                        <button type="button" onClick={() => onOpenProfile(u.username || u.id)} className="text-left font-label-md text-label-md text-text-primary hover:underline">{u.name}</button>
                         <span className="text-[12px] text-text-secondary">{u.email}</span>
                       </div>
                     </div>

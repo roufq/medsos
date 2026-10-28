@@ -4,6 +4,8 @@ import { Send, Pencil, Trash2, CornerDownRight, ChevronDown, ChevronUp } from 'l
 import { postApi } from '../../api/postApi';
 import { useAuth } from '../../context/AuthContext';
 import { RichText, timeAgo } from '../../utils/postFormat';
+import { Link } from 'react-router-dom';
+import { profileUrl } from '../../utils/profileUrl';
 
 interface CommentThreadProps {
   postId: number | string;
@@ -117,7 +119,7 @@ export default function CommentThread({ postId, postOwnerId, onCountChange }: Co
         <div className="flex-1 min-w-0">
           <div className="bg-surface-container-low rounded-2xl px-3 py-2">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-bold text-text-primary">{comment.user?.name || 'Pengguna'}</span>
+              <Link to={profileUrl(comment.user)} className="text-xs font-bold text-text-primary hover:underline">{comment.user?.name || 'Pengguna'}</Link>
               <span className="text-[10px] text-outline">{timeAgo(comment.created_at)}</span>
             </div>
             {isEditing ? (

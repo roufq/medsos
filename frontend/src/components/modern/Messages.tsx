@@ -31,7 +31,7 @@ export default function Messages({ currentUser }: MessagesProps) {const { t } = 
           lastMsg: c.messages && c.messages.length > 0 ? c.messages[0] : null,
           unread: false
         }));
-        const existingTarget = targetUserId ? mapped.find((conversation: any) => String(conversation.otherUser.id) === String(targetUserId)) : null;
+        const existingTarget = targetUserId ? mapped.find((conversation: any) => String(conversation.otherUser.id) === String(targetUserId) || conversation.otherUser.username === targetUserId) : null;
         if (existingTarget) {
           setConversations(mapped);
           setSelectedConvId(existingTarget.id);

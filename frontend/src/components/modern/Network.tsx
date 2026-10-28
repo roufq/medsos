@@ -94,11 +94,11 @@ export default function Network({ onNavigateToMessages, onOpenProfile }: Network
                 {pendingRequests.map((req) => (
                   <div key={req.id} className="flex gap-4 items-center justify-between p-3.5 bg-surface-container-low rounded-2xl border border-border-subtle/20">
                     <div className="flex gap-3 items-center min-w-0">
-                      <button type="button" onClick={() => onOpenProfile?.(req.id)} className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
+                      <button type="button" onClick={() => onOpenProfile?.((req as any).username || req.id)} className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
                         {(req as any).avatar_url ? <img src={(req as any).avatar_url} alt={req.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center bg-secondary-container text-primary font-bold">{req.name?.slice(0, 1).toUpperCase()}</div>}
                       </button>
                       <div className="min-w-0">
-                        <button type="button" onClick={() => onOpenProfile?.(req.id)} className="block max-w-full font-bold text-text-primary text-xs truncate hover:underline">{req.name}</button>
+                        <button type="button" onClick={() => onOpenProfile?.((req as any).username || req.id)} className="block max-w-full font-bold text-text-primary text-xs truncate hover:underline">{req.name}</button>
                         <div className="text-[11px] text-text-secondary truncate">{req.title} @ {req.company}</div>
                       </div>
                     </div>
@@ -149,11 +149,11 @@ export default function Network({ onNavigateToMessages, onOpenProfile }: Network
                 {filteredConnections.map((conn) => (
                   <div key={conn.id} className="border border-border-subtle/30 rounded-2xl p-4 flex flex-col gap-3 hover:border-primary hover:shadow-xs transition-all bg-white relative">
                     <div className="flex items-center gap-3">
-                      <button type="button" onClick={() => onOpenProfile?.(conn.id)} className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-surface-container">
+                      <button type="button" onClick={() => onOpenProfile?.((conn as any).username || conn.id)} className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-surface-container">
                         {(conn as any).avatar_url ? <img src={(conn as any).avatar_url} alt={conn.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center bg-secondary-container text-primary font-bold">{conn.name?.slice(0, 1).toUpperCase()}</div>}
                       </button>
                       <div className="min-w-0">
-                        <button type="button" onClick={() => onOpenProfile?.(conn.id)} className="block max-w-full font-bold text-text-primary text-xs truncate hover:underline">{conn.name}</button>
+                        <button type="button" onClick={() => onOpenProfile?.((conn as any).username || conn.id)} className="block max-w-full font-bold text-text-primary text-xs truncate hover:underline">{conn.name}</button>
                         <div className="text-[10px] text-text-secondary truncate">{conn.title}</div>
                         <div className="text-[10px] text-outline truncate">{conn.company}</div>
                       </div>
