@@ -46,21 +46,38 @@ const (
 // ErrForbidden is returned when a user edits or deletes someone else's post.
 var ErrForbidden = errors.New("forbidden: you can only change your own posts")
 
-// SubscriptionPlans defines the 9 user tiers: daily post quota, blue check, and location feature access.
+// SubscriptionPlans defines the 9 user tiers: daily post quota, blue check, location access, and 1/3/6/9/12-month IDR prices.
 var SubscriptionPlans = map[string]struct {
 	MaxPostsPerDay int
 	BlueVerified   bool
 	AllowLocation  bool
+	PricesIDR      map[int]int64
 }{
-	"free":    {1, false, false},
-	"tier_3":  {3, false, true},
-	"tier_6":  {6, true, false},
-	"tier_9":  {9, true, false},
-	"tier_12": {12, true, true},
-	"tier_15": {15, true, true},
-	"tier_18": {18, true, true},
-	"tier_21": {21, true, true},
-	"tier_24": {24, true, true},
+	"free":    {1, false, true, nil},
+	"tier_3":  {3, true, true, map[int]int64{1: 69000, 3: 207000, 6: 414000, 9: 621000, 12: 828000}},
+	"tier_6":  {6, true, true, map[int]int64{1: 129900, 3: 389700, 6: 779400, 9: 1169100, 12: 1558800}},
+	"tier_9":  {9, true, true, map[int]int64{1: 159900, 3: 479700, 6: 959400, 9: 1439100, 12: 1918800}},
+	"tier_12": {12, true, true, map[int]int64{1: 299000, 3: 897000, 6: 1794000, 9: 2961000, 12: 3588000}},
+	"tier_15": {15, true, true, map[int]int64{1: 366000, 3: 1098000, 6: 2196000, 9: 3294000, 12: 4392000}},
+	"tier_18": {18, true, true, map[int]int64{1: 599000, 3: 1797000, 6: 3594000, 9: 5391000, 12: 7188000}},
+	"tier_21": {21, true, true, map[int]int64{1: 699000, 3: 2097000, 6: 4194000, 9: 6291000, 12: 8388000}},
+	"tier_24": {24, true, true, map[int]int64{1: 799000, 3: 2397000, 6: 4794000, 9: 7191000, 12: 9588000}},
+}
+
+// EffectiveDailyQuota returns the user's daily post limit, falling back to 1x/day
+// (or 3x/day during an active 1-month referral bonus) when unsubscribed or expired.
+func EffectiveDailyQuota(author *models.User, now time.Time) int {
+	if author.SubscriptionPlan != "" && author.SubscriptionPlan != "free" {
+		if author.SubscriptionExpiresAt == nil || author.SubscriptionExpiresAt.After(now) {
+			if plan, ok := SubscriptionPlans[author.SubscriptionPlan]; ok {
+				return plan.MaxPostsPerDay
+			}
+		}
+	}
+	if author.ReferralBonusUntil != nil && author.ReferralBonusUntil.After(now) {
+		return 3
+	}
+	return 1
 }
 
 type PostService interface {
@@ -296,11 +313,12 @@ func checkSubscriptionQuota(userID int64, location string, existingPostID ...int
 		return nil
 	}
 	now := time.Now()
+	maxPosts := EffectiveDailyQuota(&author, now)
 	startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 	var todayCount int64
 	db.DB.Model(&models.Post{}).Where("user_id = ? AND created_at >= ?", userID, startOfDay).Count(&todayCount)
-	if int(todayCount) >= plan.MaxPostsPerDay {
-		return fmt.Errorf("kuota posting harian paket Anda (%dx postingan) telah habis; silakan upgrade paket di Pengaturan", plan.MaxPostsPerDay)
+	if int(todayCount) >= maxPosts {
+		return fmt.Errorf("kuota posting harian paket Anda (%dx postingan) telah habis; silakan upgrade paket di Pengaturan", maxPosts)
 	}
 	return nil
 }

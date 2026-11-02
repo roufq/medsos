@@ -59,7 +59,8 @@ func (h *AccountController) UpdateSettings(c goravelhttp.Context) goravelhttp.Re
 		Location      *string  `json:"location"`
 		BirthPlace    *string  `json:"birth_place"`
 		PhoneCountry     *string  `json:"phone_country"`
-		SubscriptionPlan *string  `json:"subscription_plan"`
+		SubscriptionPlan   *string  `json:"subscription_plan"`
+		SubscriptionMonths *int     `json:"subscription_months"`
 	}
 	if err := c.Request().Bind(&input); err != nil {
 		return c.Response().Json(http.StatusBadRequest, goravelhttp.Json{"error": err.Error()})
@@ -210,15 +211,24 @@ func (h *AccountController) UpdateSettings(c goravelhttp.Context) goravelhttp.Re
 		if !ok {
 			return c.Response().Json(400, goravelhttp.Json{"error": "invalid subscription_plan"})
 		}
-		if planKey != "free" && current.Role != models.RoleAdmin {
-			return c.Response().Json(403, goravelhttp.Json{"error": "paid subscription requires admin or payment verification"})
+		months := 1
+		if input.SubscriptionMonths != nil && *input.SubscriptionMonths > 0 {
+			months = *input.SubscriptionMonths
+		}
+		if planKey != "free" {
+			if _, ok := plan.PricesIDR[months]; !ok {
+				return c.Response().Json(400, goravelhttp.Json{"error": "subscription_months must be 1, 3, 6, 9, or 12"})
+			}
+			if current.Role != models.RoleAdmin {
+				return c.Response().Json(403, goravelhttp.Json{"error": "paid subscription requires admin or payment verification"})
+			}
 		}
 		updates["subscription_plan"] = planKey
 		updates["is_blue_verified"] = plan.BlueVerified
 		if planKey == "free" {
 			updates["subscription_expires_at"] = nil
 		} else {
-			updates["subscription_expires_at"] = time.Now().Add(30 * 24 * time.Hour)
+			updates["subscription_expires_at"] = time.Now().Add(time.Duration(months) * 30 * 24 * time.Hour)
 		}
 	}
 	if len(updates) == 0 {

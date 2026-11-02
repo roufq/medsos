@@ -45,6 +45,7 @@ type User struct {
 	SubscriptionPlan      string     `gorm:"type:varchar(20);not null;default:'free'" json:"subscription_plan"`
 	IsBlueVerified        bool       `gorm:"not null;default:false" json:"is_blue_verified"`
 	SubscriptionExpiresAt *time.Time `json:"subscription_expires_at,omitempty"`
+	ReferralBonusUntil    *time.Time `json:"referral_bonus_until,omitempty"`
 	ProfileLayout       string     `gorm:"type:varchar(10);not null;default:'grid'" json:"profile_layout"`
 	EmailVerifiedAt     *time.Time `json:"email_verified_at,omitempty"`
 	PhoneVerifiedAt     *time.Time `json:"phone_verified_at,omitempty"`
@@ -89,6 +90,24 @@ func (u *User) HidePrivateData() {
 	u.PasswordChangedAt = nil
 	u.DeletionRequestedAt = nil
 	u.SubscriptionExpiresAt = nil
+	u.ReferralBonusUntil = nil
+}
+
+// AfterFind reverts expired paid subscriptions to free and removes Blue Verified.
+func (u *User) AfterFind(tx *gorm.DB) error {
+	if u.SubscriptionPlan != "" && u.SubscriptionPlan != "free" && u.SubscriptionExpiresAt != nil && u.SubscriptionExpiresAt.Before(time.Now()) {
+		u.SubscriptionPlan = "free"
+		u.IsBlueVerified = false
+		u.SubscriptionExpiresAt = nil
+		if tx != nil && u.ID > 0 {
+			_ = tx.Session(&gorm.Session{SkipHooks: true, NewDB: true}).Model(&User{}).Where("id = ?", u.ID).Updates(map[string]any{
+				"subscription_plan":       "free",
+				"is_blue_verified":        false,
+				"subscription_expires_at": nil,
+			}).Error
+		}
+	}
+	return nil
 }
 
 // GenerateUsername builds a unique lowercase username from name or email.

@@ -14,7 +14,10 @@ import (
 	"github.com/goravel/framework/facades"
 )
 
-var webhookClient = &http.Client{Timeout: 8 * time.Second}
+var (
+	webhookClient   = &http.Client{Timeout: 8 * time.Second}
+	headerSanitizer = strings.NewReplacer("\r", "", "\n", "")
+)
 
 func configOrEnv(key string, fallback ...string) string {
 	if val := strings.TrimSpace(os.Getenv(key)); val != "" {
@@ -53,6 +56,7 @@ func sendEmail(target, code, purpose string) error {
 	if host == "" || port == "" || from == "" {
 		return errors.New("SMTP is not configured")
 	}
+	target, from, purpose = headerSanitizer.Replace(target), headerSanitizer.Replace(from), headerSanitizer.Replace(purpose)
 	subject := "Verification code"
 	body := fmt.Sprintf("Your verification code for %s is %s. This code expires in 10 minutes.", purpose, code)
 	message := []byte("To: " + target + "\r\n" +

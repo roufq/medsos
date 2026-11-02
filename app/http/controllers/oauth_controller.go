@@ -217,7 +217,7 @@ func (f *flexBool) UnmarshalJSON(data []byte) error {
 
 func (h *OAuthController) fetchIdentity(p oauthProvider, token, idToken string) (oauthIdentityPayload, error) {
 	if p.name == "apple" {
-		return identityFromJWT(idToken)
+		return identityFromJWT(idToken, p.clientID)
 	}
 	request, _ := http.NewRequest(http.MethodGet, p.userURL, nil)
 	request.Header.Set("Authorization", "Bearer "+token)
@@ -270,7 +270,7 @@ func (h *OAuthController) fetchIdentity(p oauthProvider, token, idToken string) 
 	return oauthIdentityPayload{Subject: subject, Name: name, Email: generic.Email, Avatar: avatar, EmailVerified: emailVerified}, nil
 }
 
-func identityFromJWT(token string) (oauthIdentityPayload, error) {
+func identityFromJWT(token, clientID string) (oauthIdentityPayload, error) {
 	parts := strings.Split(token, ".")
 	if len(parts) != 3 {
 		return oauthIdentityPayload{}, errors.New("Apple identity token is invalid")
@@ -280,11 +280,14 @@ func identityFromJWT(token string) (oauthIdentityPayload, error) {
 		return oauthIdentityPayload{}, err
 	}
 	var claims struct {
+		Issuer        string   `json:"iss"`
+		Audience      string   `json:"aud"`
 		Subject       string   `json:"sub"`
+		ExpiresAt     int64    `json:"exp"`
 		Email         string   `json:"email"`
 		EmailVerified flexBool `json:"email_verified"`
 	}
-	if json.Unmarshal(payload, &claims) != nil || claims.Subject == "" {
+	if parts[2] == "" || json.Unmarshal(payload, &claims) != nil || claims.Subject == "" || claims.Issuer != "https://appleid.apple.com" || (clientID != "" && claims.Audience != clientID) || claims.ExpiresAt <= time.Now().Unix() {
 		return oauthIdentityPayload{}, errors.New("Apple identity token is invalid")
 	}
 	return oauthIdentityPayload{Subject: claims.Subject, Email: claims.Email, Name: "Apple User", EmailVerified: bool(claims.EmailVerified)}, nil

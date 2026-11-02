@@ -624,6 +624,10 @@ func (h *SocialController) ReadNotification(c goravelhttp.Context) goravelhttp.R
 	}
 	id, err := routeID(c, "id")
 	if err != nil {
+		if strings.EqualFold(c.Request().Route("id"), "all") {
+			db.DB.Model(&models.Notification{}).Where("user_id = ? AND read_at IS NULL", userID).Update("read_at", time.Now())
+			return c.Response().Json(200, goravelhttp.Json{"message": "all notifications read"})
+		}
 		return c.Response().Json(400, goravelhttp.Json{"error": "invalid notification"})
 	}
 	now := time.Now()

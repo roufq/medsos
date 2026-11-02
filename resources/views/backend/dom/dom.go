@@ -182,7 +182,15 @@ func H6(attrs []Attr, children ...Node) *Element       { return &Element{"h6", a
 func A(attrs []Attr, children ...Node) *Element        { return &Element{"a", attrs, children} }
 func Button(attrs []Attr, children ...Node) *Element   { return &Element{"button", attrs, children} }
 func Input(attrs []Attr) *Element                      { return &Element{"input", attrs, nil} }
-func Form(attrs []Attr, children ...Node) *Element     { return &Element{"form", attrs, children} }
+func Form(attrs []Attr, children ...Node) *Element {
+	for _, a := range attrs {
+		if strings.EqualFold(a.Key, "method") && strings.EqualFold(a.Value, "post") {
+			children = append(children, ScriptEl(nil, "document.querySelectorAll('form[method=POST],form[method=post]').forEach(f=>{if(!f.querySelector('input[name=_csrf]')){const i=document.createElement('input');i.type='hidden';i.name='_csrf';const m=document.cookie.match(/(?:^|; )csrf_token=([^;]*)/);if(m)i.value=decodeURIComponent(m[1]);f.appendChild(i)}})"))
+			break
+		}
+	}
+	return &Element{"form", attrs, children}
+}
 func Img(attrs []Attr) *Element                        { return &Element{"img", attrs, nil} }
 func Video(attrs []Attr, children ...Node) *Element    { return &Element{"video", attrs, children} }
 func SVG(attrs []Attr, children ...Node) *Element      { return &Element{"svg", attrs, children} }

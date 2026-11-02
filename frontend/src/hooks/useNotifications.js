@@ -42,6 +42,17 @@ export function useNotifications(onOpen) {
     if (onOpen) onOpen(notification);
   };
 
+  const markAllAsRead = async () => {
+    if (unreadCount === 0) return;
+    try {
+      await socialApi.readNotification('all');
+      const now = new Date().toISOString();
+      setNotifications((items) => items.map((item) => (item.read_at ? item : { ...item, read_at: now })));
+    } catch (error) {
+      console.error('Failed to mark all notifications as read', error);
+    }
+  };
+
   return {
     notifications,
     notificationsOpen,
@@ -50,5 +61,6 @@ export function useNotifications(onOpen) {
     unreadCount,
     loadNotifications,
     openNotification,
+    markAllAsRead,
   };
 }

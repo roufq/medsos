@@ -3,6 +3,7 @@ package services
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"goravel/app/dto"
 	"goravel/app/models"
@@ -165,8 +166,24 @@ func TestSubscriptionPlans(t *testing.T) {
 	if len(SubscriptionPlans) != 9 || SubscriptionPlans["free"].MaxPostsPerDay != 1 || SubscriptionPlans["free"].BlueVerified {
 		t.Fatalf("unexpected free plan: %+v", SubscriptionPlans["free"])
 	}
-	if !SubscriptionPlans["tier_6"].BlueVerified || SubscriptionPlans["tier_24"].MaxPostsPerDay != 24 {
-		t.Fatalf("unexpected paid plans: %+v %+v", SubscriptionPlans["tier_6"], SubscriptionPlans["tier_24"])
+	if !SubscriptionPlans["tier_3"].BlueVerified || SubscriptionPlans["tier_24"].PricesIDR[12] != 9588000 {
+		t.Fatalf("unexpected paid plans: %+v %+v", SubscriptionPlans["tier_3"], SubscriptionPlans["tier_24"])
+	}
+	now := time.Now()
+	future := now.Add(24 * time.Hour)
+	past := now.Add(-24 * time.Hour)
+	freeUser := models.User{SubscriptionPlan: "free"}
+	if EffectiveDailyQuota(&freeUser, now) != 1 {
+		t.Fatal("expected 1 post/day for free user")
+	}
+	freeUser.ReferralBonusUntil = &future
+	if EffectiveDailyQuota(&freeUser, now) != 3 {
+		t.Fatal("expected 3 posts/day for referred free user")
+	}
+	expiredSub := models.User{SubscriptionPlan: "tier_12", IsBlueVerified: true, SubscriptionExpiresAt: &past}
+	_ = expiredSub.AfterFind(nil)
+	if expiredSub.SubscriptionPlan != "free" || expiredSub.IsBlueVerified || EffectiveDailyQuota(&expiredSub, now) != 1 {
+		t.Fatalf("expected expired subscriber to lose blue check and revert to 1x/day: %+v", expiredSub)
 	}
 }
 

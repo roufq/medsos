@@ -62,7 +62,12 @@ func (h *UserController) getWebUser(c goravelhttp.Context) (*models.User, gorave
 		return nil, c.Response().Redirect(http.StatusSeeOther, "/web/login")
 	}
 
-	if !csrf.SafeMethod(c.Request().Method()) && c.Request().Header("Sec-Fetch-Site") != "same-origin" && !csrf.Valid(c.Request().Cookie(csrf.CookieName), c.Request().Header(csrf.HeaderName), c.Request().Input("_csrf")) {
+	if c.Request().Cookie(csrf.CookieName) == "" {
+		if csrfToken, err := csrf.NewToken(); err == nil {
+			c.Response().Cookie(authCookie(csrf.CookieName, csrfToken, int(jwt.RefreshTTL.Seconds()), false))
+		}
+	}
+	if !csrf.SafeMethod(c.Request().Method()) && !csrf.Valid(c.Request().Cookie(csrf.CookieName), c.Request().Header(csrf.HeaderName, ""), c.Request().Input("_csrf")) {
 		return nil, c.Response().String(http.StatusForbidden, "invalid CSRF token")
 	}
 	user, err := h.userService.GetByID(claims.UserID)

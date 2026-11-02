@@ -45,6 +45,7 @@ export default function Signup({ onRegister, onNavigateToLogin, onOAuth }: Signu
   const [province, setProvince] = useState('');
   const [city, setCity] = useState('');
   const [postalCode, setPostalCode] = useState('');
+  const [referralCode, setReferralCode] = useState(() => new URLSearchParams(window.location.search).get('ref') || '');
 
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [agree, setAgree] = useState(false);
@@ -118,6 +119,7 @@ export default function Signup({ onRegister, onNavigateToLogin, onOAuth }: Signu
     const extra = {
       phone: phoneLocal ? `${phoneCode}${phoneLocal.replace(/^0+/, '')}` : '',
       phone_country: phoneCode === '+62' ? 'ID' : phoneCode === '+60' ? 'MY' : 'SG',
+      referral_code: referralCode.trim(),
       profile: {
         ...(gender ? { gender } : {}),
         birth_date: birthDate,
@@ -199,6 +201,18 @@ export default function Signup({ onRegister, onNavigateToLogin, onOAuth }: Signu
                   </button>
                 </div>
                 <p className="text-[10px] text-text-secondary mt-1.5 ml-1">{t("Masukkan kembali password kamu")}</p>
+              </div>
+              <div className="col-span-1 md:col-span-2">
+                <div className="flex items-center w-full bg-surface-card border border-border-subtle rounded-xl focus-within:border-text-primary overflow-hidden">
+                  <User size={18} className="ml-3.5 mr-2.5 text-text-secondary" />
+                  <input aria-label="Kode Referral" value={referralCode} onChange={e => setReferralCode(e.target.value)}
+                    className="flex-1 w-0 bg-transparent py-2.5 pr-4 text-[13px] text-text-primary outline-none"
+                    placeholder="Kode Referral teman (opsional)"
+                  />
+                </div>
+                <p className="text-[10px] text-text-secondary mt-1.5 ml-1">{t("Masukkan kode referral teman yang mengajak kamu")}</p>
+              </div>
+              <div className="hidden">
               </div>
             </div>
           </div>

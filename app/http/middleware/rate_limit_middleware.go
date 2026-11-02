@@ -33,6 +33,12 @@ func RateLimit(name string, maximum int, window time.Duration) goravelhttp.Middl
 		identity := ctx.Request().Ip()
 		if userID := ctx.Value("userID"); userID != nil {
 			identity = "user:" + fmt.Sprint(userID)
+		} else if target := ctx.Request().Input("identifier", ctx.Request().Input("target", ctx.Request().Input("email", ""))); target != "" && len(target) <= 100 {
+			if ok, _, resetAt := requestLimiter.take(name+":target:"+target, maximum, window, now); !ok {
+				ctx.Response().Header("Retry-After", strconv.Itoa(max(1, int(time.Until(resetAt).Seconds()))))
+				ctx.Request().AbortWithStatusJson(http.StatusTooManyRequests, goravelhttp.Json{"error": "Too many requests. Please try again later."})
+				return
+			}
 		}
 		key := name + ":" + identity
 		allowed, remaining, resetAt := requestLimiter.take(key, maximum, window, now)
@@ -91,6 +97,7 @@ func ConcurrentLimit(maximum int) goravelhttp.Middleware {
 		select {
 		case semaphore <- struct{}{}:
 			defer func() { <-semaphore }()
+			ctx.Response().Header("X-Content-Type-Options", "nosniff")
 			ctx.Request().Next()
 		default:
 			ctx.Response().Header("Retry-After", "1")

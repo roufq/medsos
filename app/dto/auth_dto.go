@@ -18,7 +18,8 @@ type RegisterRequest struct {
 	BirthDate   string   `form:"birth_date" json:"birth_date"`
 	Country     string   `form:"country" json:"country"`
 	City        string   `form:"city" json:"city"`
-	Interests   string   `form:"interests" json:"interests"` // comma separated from frontend FormData
+	Interests    string   `form:"interests" json:"interests"` // comma separated from frontend FormData
+	ReferralCode string   `form:"referral_code" json:"referral_code"`
 }
 
 // LoginRequest defines the credentials payload for log in

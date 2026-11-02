@@ -99,6 +99,9 @@ func (h *AuthController) RefreshAPI(c goravelhttp.Context) goravelhttp.Response 
 	// The SPA sends no body and relies on the httpOnly refresh_token cookie;
 	// other API clients (mobile, scripts) can still pass it in the JSON body.
 	if cookie := c.Request().Cookie("refresh_token"); cookie != "" {
+		if !csrf.Valid(c.Request().Cookie(csrf.CookieName), c.Request().Header(csrf.HeaderName, "")) {
+			return c.Response().Json(http.StatusForbidden, goravelhttp.Json{"error": "CSRF token is missing or invalid"})
+		}
 		req.RefreshToken = cookie
 	} else if err := c.Request().Bind(&req); err != nil {
 		return c.Response().Json(http.StatusBadRequest, goravelhttp.Json{"error": err.Error()})
@@ -249,7 +252,8 @@ func (h *AuthController) HandleRegisterWeb(c goravelhttp.Context) goravelhttp.Re
 	req := dto.RegisterRequest{
 		Name:     firstName + " " + surname,
 		Email:    email,
-		Password: password,
+		Password:     password,
+		ReferralCode: c.Request().Input("referral_code"),
 	}
 
 	res, err := h.authService.Register(&req)
@@ -271,7 +275,7 @@ func (h *AuthController) HandleRegisterWeb(c goravelhttp.Context) goravelhttp.Re
 }
 
 func (h *AuthController) HandleLogoutWeb(c goravelhttp.Context) goravelhttp.Response {
-	if c.Request().Header("Sec-Fetch-Site") == "cross-site" {
+	if c.Request().Header("Sec-Fetch-Site") == "cross-site" || (c.Request().Method() == http.MethodGet && c.Request().Header("Sec-Fetch-Mode") != "" && c.Request().Header("Sec-Fetch-Mode") != "navigate") {
 		return c.Response().Redirect(http.StatusSeeOther, "/web/beranda")
 	}
 	h.authService.Logout(c.Request().Cookie("refresh_token"))

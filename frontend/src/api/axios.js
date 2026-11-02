@@ -44,7 +44,7 @@ let refreshPromise = null;
 function refreshSession() {
   if (!refreshPromise) {
     refreshPromise = axios
-      .post(`${api.defaults.baseURL}/auth/refresh`, {}, { withCredentials: true })
+      .post(`${api.defaults.baseURL}/auth/refresh`, {}, { withCredentials: true, headers: readCookie('csrf_token') ? { 'X-CSRF-Token': readCookie('csrf_token') } : {} })
       .finally(() => { refreshPromise = null; });
   }
   return refreshPromise;

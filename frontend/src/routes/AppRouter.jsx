@@ -11,6 +11,7 @@ const FeaturePage = lazy(() => import('../pages/FeaturePage'));
 const ForgotPasswordPage = lazy(() => import('../pages/ForgotPasswordPage'));
 const ThanksPage = lazy(() => import('../pages/ThanksPage'));
 const SettingsPage = lazy(() => import('../pages/SettingsPage'));
+const PricingPage = lazy(() => import('../pages/PricingPage'));
 const PostPage = lazy(() => import('../pages/PostPage'));
 const VideoPage = lazy(() => import('../pages/VideoPage'));
 const SearchPage = lazy(() => import('../pages/SearchPage'));
@@ -91,6 +92,7 @@ const AppRouter = () => {
           />
           <Route path="/u/:username" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
           <Route path="/settings" element={<PrivateRoute><SettingsPage /></PrivateRoute>} />
+          <Route path="/pricing" element={<PrivateRoute><PricingPage /></PrivateRoute>} />
           <Route path="/post/:id" element={<PrivateRoute><PostPage /></PrivateRoute>} />
           <Route path="/posts/:id" element={<PrivateRoute><PostPage /></PrivateRoute>} />
           <Route path="/shorts" element={<Navigate to="/videos" replace />} />

@@ -13,6 +13,7 @@ import (
 	"goravel/app/dto"
 	"goravel/app/models"
 	"goravel/app/repositories"
+	"goravel/pkg/db"
 	"goravel/pkg/hash"
 	"goravel/pkg/jwt"
 	"goravel/pkg/session"
@@ -153,6 +154,11 @@ func (s *authService) Register(req *dto.RegisterRequest) (*dto.AuthResponse, err
 
 	if err := s.userRepo.Create(user); err != nil {
 		return nil, err
+	}
+	if ref := normalizeUsername(req.ReferralCode); ref != "" && ref != username {
+		if referrer, err := s.userRepo.GetByUsername(ref); err == nil && referrer.AccountStatus == "active" && db.DB != nil {
+			_ = db.DB.Model(&models.User{}).Where("id = ?", referrer.ID).Update("referral_bonus_until", time.Now().Add(30*24*time.Hour)).Error
+		}
 	}
 
 	return issueTokens(user)

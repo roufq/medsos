@@ -23,7 +23,7 @@ interface AppLayoutProps {
 
 const ROUTES: Record<string, string> = {
   home: '/', shop: '/shop', shorts: '/videos', videos: '/videos', network: '/network', messages: '/messages', saved: '/saved',
-  settings: '/settings', admin: '/admin/dashboard', analytics: '/analytics',
+  settings: '/settings', pricing: '/pricing', admin: '/admin/dashboard', analytics: '/analytics',
 };
 
 export function useAppNavigate() {
@@ -44,7 +44,7 @@ export default function AppLayout({ currentTab, children, onPostCreated, compose
   const setComposer = setComposerOpen ?? setOwnComposer;
   const openComposer = () => { onComposerTypeChange?.('image'); (setComposerType ?? setOwnComposerType)(undefined); setComposer(true); };
 
-  const currentUser = { id: user?.id, name: user?.name || '', title: user?.title || '', company: user?.company || '', avatar: user?.avatar_url || `${import.meta.env.BASE_URL}favicon.svg` };
+  const currentUser = { id: user?.id, username: user?.username || '', name: user?.name || '', title: user?.title || '', company: user?.company || '', avatar: user?.avatar_url || `${import.meta.env.BASE_URL}favicon.svg` };
 
   const handleLogout = async () => {
     await logout();
@@ -62,6 +62,7 @@ export default function AppLayout({ currentTab, children, onPostCreated, compose
         onToggleMobileSidebar={() => setMobileOpen((open) => !open)}
         currentTab={isComposerOpen ? 'newpost' : currentTab}
         onRequestCreatePost={openComposer}
+        onLogout={handleLogout}
       />
       <main className={`poster-main ${wide ? 'poster-main-wide' : ''}`}>
         <Sidebar currentTab={currentTab} onNavigate={goTo} onRequestCreatePost={openComposer} onLogout={handleLogout} />

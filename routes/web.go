@@ -50,6 +50,7 @@ func Web() {
 	web.Get("register", authController.ShowRegisterWeb)
 	web.Middleware(middleware.RateLimit("web-register", 5, time.Minute)).Post("register", authController.HandleRegisterWeb)
 	web.Get("logout", authController.HandleLogoutWeb)
+	web.Post("logout", authController.HandleLogoutWeb)
 
 	web.Get("beranda", postController.ShowBerandaWeb)
 	web.Post("beranda", postController.HandleCreatePostWeb)

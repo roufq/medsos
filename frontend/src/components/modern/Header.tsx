@@ -3,7 +3,7 @@ import { postUrl } from '../../utils/postUrl';
 import { profileUrl } from '../../utils/profileUrl';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Bell, Mail, Settings, Menu, Package, FileText, Home, UserRound, ShoppingBag, SquarePlay, SquarePen, ChevronDown, Sun, Moon } from 'lucide-react';
+import { Search, Bell, Mail, Settings, Menu, Package, FileText, Home, UserRound, ShoppingBag, SquarePlay, SquarePen, ChevronDown, ChevronRight, Sun, Moon, BadgeCheck, Palette, HelpCircle, LogOut, X } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { socialApi } from '../../api/socialApi';
 import { useNotifications } from '../../hooks/useNotifications';
@@ -18,11 +18,14 @@ interface HeaderProps {
   onNavigate: (tab: 'home' | 'network' | 'jobs' | 'messages' | 'profile' | 'admin' | 'analytics') => void;
   onOpenProfile?: (userId: string) => void;
   onToggleMobileSidebar: () => void;
+  onLogout?: () => void;
 }
 
 const emptyResults = { users: [], posts: [], jobs: [], products: [] };
 
-export default function Header({ currentUser, searchQuery, setSearchQuery, onNavigate, onOpenProfile, onToggleMobileSidebar, currentTab, onRequestCreatePost }: HeaderProps) {const { t } = useLanguage();
+export default function Header({ currentUser, searchQuery, setSearchQuery, onNavigate, onOpenProfile, onToggleMobileSidebar, currentTab, onRequestCreatePost, onLogout }: HeaderProps) {const { t } = useLanguage();
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const [isFocused, setIsFocused] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
@@ -37,7 +40,8 @@ export default function Header({ currentUser, searchQuery, setSearchQuery, onNav
     notificationsLoading,
     unreadCount,
     loadNotifications,
-    openNotification
+    openNotification,
+    markAllAsRead
   } = useNotifications((notification: any) => {
     if ((notification.entity_type === 'post' || notification.entity_type === 'comment') && notification.entity_hash) navigate(`/post/${notification.entity_hash}`);else
     if (notification.actor?.id) navigate(profileUrl(notification.actor));
@@ -144,7 +148,17 @@ export default function Header({ currentUser, searchQuery, setSearchQuery, onNav
               </button>
               {notificationsOpen &&
               <div className="absolute right-0 top-11 w-80 max-h-[70vh] overflow-y-auto rounded-2xl border border-border-subtle bg-white p-2 shadow-xl text-text-primary">
-                  <div className="flex items-center justify-between px-3 py-2"><span className="text-sm font-bold">Notifications</span><span className="text-xs text-text-secondary">{unreadCount} unread</span></div>
+                  <div className="flex items-center justify-between gap-2 px-3 py-2">
+                    <span className="text-sm font-bold">Notifications</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-text-secondary">{unreadCount} unread</span>
+                      {unreadCount > 0 && (
+                        <button type="button" onClick={markAllAsRead} className="rounded-full bg-primary px-2.5 py-1 text-[11px] font-bold text-white hover:opacity-90 cursor-pointer">
+                          Sudah dilihat
+                        </button>
+                      )}
+                    </div>
+                  </div>
                   {notificationsLoading && notifications.length === 0 && <p className="px-3 py-4 text-xs text-text-secondary">Loading notifications...</p>}
                   {!notificationsLoading && notifications.length === 0 && <p className="px-3 py-4 text-xs text-text-secondary">No notifications yet.</p>}
                   {notifications.map((notification) =>
@@ -156,14 +170,131 @@ export default function Header({ currentUser, searchQuery, setSearchQuery, onNav
                 </div>
               }
             </div>
-            <button type="button" onClick={() => onNavigate('messages')} className="relative p-2 text-text-secondary hover:text-primary transition-all rounded-full hover:bg-surface-container-low cursor-pointer" aria-label={t("Messages")}><Mail className="w-5 h-5" /></button>
-            <button type="button" onClick={() => navigate('/settings')} className="p-2 text-text-secondary hover:text-primary transition-all rounded-full hover:bg-surface-container-low cursor-pointer" aria-label={t("Pengaturan akun")}><Settings className="w-5 h-5" /></button>
+            {/* Messages & Settings removed from top bar to match design */}
+            {/* Settings is in the Avatar dropdown */}
           </div>
 
-          <div onClick={() => onNavigate('profile')} className="w-9 h-9 rounded-full overflow-hidden border border-border-subtle cursor-pointer active:scale-95 hover:shadow-sm transition-all">
+          <div className="relative shrink-0">
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => { setProfileMenuOpen((open) => !open); setNotificationsOpen(false); }}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setProfileMenuOpen((open) => !open); setNotificationsOpen(false); } }}
+              aria-label="Menu profil"
+              className="w-9 h-9 rounded-full overflow-hidden border border-white/25 cursor-pointer active:scale-95 hover:shadow-sm transition-all"
+            >
+              <img src={currentUser.avatar} alt={currentUser.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+            </div>
+
+            {profileMenuOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setProfileMenuOpen(false)} />
+                <div className="absolute right-0 top-12 z-50 w-64 rounded-2xl border border-white/10 bg-[#12141f] p-2 text-white shadow-2xl">
+                  <button
+                    type="button"
+                    onClick={() => { setProfileMenuOpen(false); onNavigate('profile'); }}
+                    className="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left hover:bg-white/10 transition-colors cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <img src={currentUser.avatar} alt={currentUser.name} className="h-10 w-10 rounded-full object-cover border border-white/15 shrink-0" referrerPolicy="no-referrer" />
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-bold text-white">{currentUser.name || 'User'}</div>
+                        <div className="truncate text-xs text-slate-400">@{(currentUser as any).username || 'user'}</div>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
+                  </button>
+
+                  <div className="my-1.5 h-px bg-white/10" />
+
+                  <button
+                    type="button"
+                    onClick={() => { setProfileMenuOpen(false); onNavigate('profile'); }}
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-200 hover:bg-white/10 transition-colors cursor-pointer"
+                  >
+                    <UserRound className="w-4 h-4 text-slate-400" />
+                    <span>Profile</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { setProfileMenuOpen(false); navigate('/pricing'); }}
+                    className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-200 hover:bg-white/10 transition-colors cursor-pointer"
+                  >
+                    <span className="flex items-center gap-3">
+                      <BadgeCheck className="w-4 h-4 text-indigo-400" />
+                      <span>Pricing</span>
+                    </span>
+                    <span className="rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 px-2.5 py-0.5 text-[10px] font-extrabold text-white">
+                      Pro
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { setProfileMenuOpen(false); navigate('/settings'); }}
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-200 hover:bg-white/10 transition-colors cursor-pointer"
+                  >
+                    <Settings className="w-4 h-4 text-slate-400" />
+                    <span>Settings</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { toggleTheme(); }}
+                    className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-200 hover:bg-white/10 transition-colors cursor-pointer"
+                  >
+                    <span className="flex items-center gap-3">
+                      <Palette className="w-4 h-4 text-slate-400" />
+                      <span>Appearance</span>
+                    </span>
+                    <span className="rounded-md bg-white/10 px-2 py-0.5 text-[10px] font-bold text-slate-300">
+                      {theme === 'dark' ? 'Dark' : 'Light'}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { setProfileMenuOpen(false); setHelpOpen(true); }}
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-200 hover:bg-white/10 transition-colors cursor-pointer"
+                  >
+                    <HelpCircle className="w-4 h-4 text-slate-400" />
+                    <span>Help & Support</span>
+                  </button>
+
+                  <div className="my-1.5 h-px bg-white/10" />
+
+                  <button
+                    type="button"
+                    onClick={() => { setProfileMenuOpen(false); if (onLogout) onLogout(); else navigate('/settings'); }}
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-semibold text-rose-400 hover:bg-rose-500/15 transition-colors cursor-pointer"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span>Log Out</span>
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+          {helpOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setHelpOpen(false)}>
+              <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#12141f] p-6 text-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-lg font-extrabold flex items-center gap-2"><HelpCircle className="w-5 h-5 text-indigo-400" /> Help & Support</h3>
+                  <button type="button" onClick={() => setHelpOpen(false)} className="rounded-lg p-1 text-slate-400 hover:text-white cursor-pointer"><X className="w-5 h-5" /></button>
+                </div>
+                <div className="space-y-2.5 text-xs text-slate-300">
+                  <p><strong>• Kuota Posting & Centang Biru:</strong> Akun Free mendapat 1x posting/hari (atau 3x/hari selama 1 bulan dengan membagikan kode referral). Paket berbayar mendapat 3x–24x posting/hari + Centang Biru.</p>
+                  <p><strong>• Berhenti Berlangganan:</strong> Jika langganan berhenti/kedaluwarsa, Centang Biru otomatis dinonaktifkan dan kuota kembali ke 1x/hari.</p>
+                  <p><strong>• Kontak Bantuan:</strong> Hubungi tim support di <span className="text-indigo-400">support@theposter.id</span> atau kelola akun di halaman <button type="button" onClick={() => { setHelpOpen(false); navigate('/settings'); }} className="text-indigo-400 underline font-bold cursor-pointer">Settings</button>.</p>
+                </div>
+              </div>
+            </div>
+          )}
+          <div className="hidden">
             <img src={currentUser.avatar} alt={currentUser.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
           </div>
-          <button onClick={() => navigate('/settings')} aria-label={t("Pengaturan akun")} className="poster-account-chevron"><ChevronDown size={16} /></button>
+          <button onClick={() => navigate('/settings')} aria-label={t("Pengaturan akun")} className="hidden"><ChevronDown size={16} /></button>
         </div>
       </div>
     </header>);
