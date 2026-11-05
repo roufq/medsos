@@ -35,7 +35,7 @@ export default function SearchPage() {const { t } = useLanguage();
 
   return (
     <AppLayout currentTab="">
-      <div className="max-w-[680px] mx-auto flex flex-col gap-4">
+      <div className="w-full flex flex-col gap-4">
         <form onSubmit={(e) => {e.preventDefault();setParams({ q: input.trim() });}} className="flex items-center gap-2 rounded-full bg-white border border-border-subtle px-4 py-2">
           <Search className="w-5 h-5 text-outline" />
           <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Judul, deskripsi, #hashtag, lokasi, @username" className="flex-1 text-sm outline-none" />
@@ -50,8 +50,8 @@ export default function SearchPage() {const { t } = useLanguage();
         </div>
         {error && <p className="text-sm text-error">{error}</p>}
         {query && !results && !error && <div className="flex justify-center py-10"><Loader className="animate-spin text-primary" size={32} /></div>}
-        {results && tab === 'posts' && results.posts.map((post) => <PostCard key={post.id} post={post} />)}
-        {results && tab === 'products' && results.products.map((post) => <PostCard key={post.id} post={post} />)}
+        {results && tab === 'posts' && results.posts.map((post) => <PostCard key={post.id} post={post} onUpdated={(u) => setResults((r) => ({ ...r, posts: r.posts.map((p) => p.id === u.id ? u : p) }))} onDeleted={(id) => setResults((r) => ({ ...r, posts: r.posts.filter((p) => p.id !== id) }))} />)}
+        {results && tab === 'products' && results.products.map((post) => <PostCard key={post.id} post={post} onUpdated={(u) => setResults((r) => ({ ...r, products: r.products.map((p) => p.id === u.id ? u : p) }))} onDeleted={(id) => setResults((r) => ({ ...r, products: r.products.filter((p) => p.id !== id) }))} />)}
         {results && tab === 'users' && results.users.map((u) =>
         <Link key={u.id} to={profileUrl(u)} className="flex items-center gap-3 rounded-2xl bg-white p-3 hover:shadow-sm">
             <img src={u.avatar_url || '/favicon.svg'} alt="" className="w-11 h-11 rounded-full object-cover" />

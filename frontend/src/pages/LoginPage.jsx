@@ -4,10 +4,14 @@ import { useAuth } from '../context/AuthContext';
 import Login from '../components/modern/Login';
 import { authApi } from '../api/authApi';
 
-const REASONS = {
+export const OAUTH_REASONS = {
   session_idle_expired: 'Sesi berakhir karena tidak aktif selama 30 menit. Silakan masuk kembali.',
   account_inactive: 'Akun Anda tidak aktif (diblokir atau sedang dalam proses penghapusan).',
   session_revoked: 'Sesi Anda telah berakhir. Silakan masuk kembali.',
+  oauth_not_configured: 'Layanan login sosial belum dikonfigurasi di server.',
+  oauth_cancelled: 'Proses login sosial dibatalkan.',
+  oauth_expired: 'Sesi login sosial telah kedaluwarsa. Silakan coba lagi.',
+  oauth_failed: 'Gagal masuk melalui akun sosial. Silakan coba lagi.',
 };
 
 const LoginPage = () => {
@@ -15,7 +19,7 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const reason = params.get('reason') || params.get('oauth_error');
-  const [error, setError] = useState(REASONS[reason] || '');
+  const [error, setError] = useState(OAUTH_REASONS[reason] || '');
   const [pending, setPending] = useState(null);
   const [message, setMessage] = useState('');
 
@@ -58,7 +62,7 @@ const LoginPage = () => {
         onLogin={handleLogin}
         onNavigateToSignup={() => navigate('/register')}
         onNavigateToForgot={() => navigate('/forgot-password')}
-        onOAuth={(provider) => { window.location.href = authApi.oauthStartUrl(provider); }}
+        onOAuth={(provider) => { window.location.href = authApi.oauthStartUrl(provider, { from: 'login' }); }}
       />
     </>
   );

@@ -56,7 +56,14 @@ const HomePage = () => {
 
   const addPost = (post) => setPosts((current) => [post, ...current.filter((p) => p.id !== post.id)]);
   const replacePost = (post) => setPosts((current) => current.map((p) => (p.id === post.id ? post : p)));
-  const removePost = (id) => setPosts((current) => current.filter((p) => p.id !== id));
+  const removePost = (id) => setPosts((current) => {
+    const removed = current.find((p) => p.id === id);
+    return current
+      .filter((p) => p.id !== id)
+      .map((p) => (removed?.repost_of_id && p.id === removed.repost_of_id
+        ? { ...p, is_reposted_by_me: false, reposts_count: Math.max(0, (p.reposts_count || 1) - 1) }
+        : p));
+  });
 
   const handleFollowSuggestion = async (userId) => {
     if (followedUsers.includes(userId)) return;

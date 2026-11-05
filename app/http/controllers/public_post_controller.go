@@ -96,6 +96,12 @@ func loadPublicPost(c goravelhttp.Context) (*publicPostView, bool) {
 	if db.DB.Preload("User").Preload("Media").Preload("Link").Preload("Shop").First(&post, postID).Error != nil || !canViewPost(0, &post) {
 		return nil, false
 	}
+	if post.RepostOfID != nil && (post.Content == nil || strings.TrimSpace(*post.Content) == "") {
+		var orig models.Post
+		if db.DB.Preload("User").Preload("Media").Preload("Link").Preload("Shop").First(&orig, *post.RepostOfID).Error == nil && canViewPost(0, &orig) {
+			post = orig
+		}
+	}
 	view := &publicPostView{ID: post.ID, AuthorName: post.User.Name, PostURL: publicPostURL(post.ID), AppURL: appBaseURL(), ViewInApp: fmt.Sprintf("%s/post/%s", appBaseURL(), post.PublicToken())}
 	if post.Title != nil {
 		view.Title = *post.Title

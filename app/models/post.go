@@ -44,7 +44,9 @@ type Post struct {
 	IsLikedByMe   bool          `gorm:"column:is_liked_by_me;->" json:"is_liked_by_me"`
 	IsSavedByMe   bool          `gorm:"column:is_saved_by_me;->" json:"is_saved_by_me"`
 	ViewsCount    int64         `gorm:"column:views_count;->" json:"views_count"`
-	SharesCount   int64         `gorm:"column:shares_count;->" json:"shares_count"`
+	SharesCount    int64         `gorm:"column:shares_count;->" json:"shares_count"`
+	RepostsCount   int64         `gorm:"column:reposts_count;->" json:"reposts_count"`
+	IsRepostedByMe bool          `gorm:"column:is_reposted_by_me;->" json:"is_reposted_by_me"`
 }
 
 func NewPostHash() (string, error) {

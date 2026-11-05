@@ -25,6 +25,7 @@ export default function CommentThread({ postId, postOwnerId, onCountChange }: Co
   const [draft, setDraft] = useState('');
   const [replyTo, setReplyTo] = useState<any | null>(null);
   const [editing, setEditing] = useState<{ id: number; text: string } | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
   const toggleReplies = (id: number) => {
@@ -51,7 +52,8 @@ export default function CommentThread({ postId, postOwnerId, onCountChange }: Co
 
   const submit = async () => {
     const text = draft.trim();
-    if (!text) return;
+    if (!text || submitting) return;
+    setSubmitting(true);
     setError('');
     try {
       if (replyTo) {
@@ -69,6 +71,8 @@ export default function CommentThread({ postId, postOwnerId, onCountChange }: Co
       setReplyTo(null);
     } catch (err) {
       setError(errorText(err, 'Gagal mengirim komentar'));
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -89,22 +93,23 @@ export default function CommentThread({ postId, postOwnerId, onCountChange }: Co
   const remove = async (comment: any) => {
     if (!window.confirm('Hapus komentar ini?')) return;
     try {
-      await postApi.deleteComment(comment.id);
+      const res = await postApi.deleteComment(comment.id);
       const removedReplies = comment.replies?.length || 0;
+      const deletedTotal = Number(res?.deleted_count) || (1 + removedReplies);
       setComments((current) =>
         current
           .filter((c) => c.id !== comment.id)
           .map((c) => ({ ...c, replies: (c.replies || []).filter((r: any) => r.id !== comment.id) }))
       );
-      onCountChange?.(-(1 + removedReplies));
+      onCountChange?.(-deletedTotal);
     } catch (err) {
       setError(errorText(err, 'Gagal menghapus komentar'));
     }
   };
 
   const renderComment = (comment: any, parent?: any) => {
-    const mine = comment.user_id === user?.id;
-    const canDelete = mine || postOwnerId === user?.id;
+    const mine = Number(comment.user_id) === Number(user?.id);
+    const canDelete = mine || Number(postOwnerId) === Number(user?.id);
     const isEditing = editing?.id === comment.id;
     const repliesCount = (comment.replies || []).length;
     const isRepliesOpen = Boolean(openReplies[comment.id]);

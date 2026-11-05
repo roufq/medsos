@@ -40,7 +40,7 @@ const PLATFORMS: {id: string;label: string;color: string;}[] = [
 // Instagram and TikTok have no web share intent: copy the link, then open the app.
 const APP_ONLY: Record<string, string> = { instagram: 'https://www.instagram.com/', tiktok: 'https://www.tiktok.com/' };
 
-export function ShareModal({ postId, onClose, onShared }: {postId: number | string;onClose: () => void;onShared?: () => void;}) {const { t } = useLanguage();
+export function ShareModal({ postId, onClose, onShared }: {postId: number | string;onClose: () => void;onShared?: (result?: any) => void;}) {const { t } = useLanguage();
   const [message, setMessage] = useState('');
   const [query, setQuery] = useState('');
   const [users, setUsers] = useState<any[]>([]);
@@ -70,7 +70,7 @@ export function ShareModal({ postId, onClose, onShared }: {postId: number | stri
       } else if (popup && result.intent_url) {
         popup.location.href = result.intent_url;
       }
-      onShared?.();
+      onShared?.(result);
     } catch (err) {
       popup?.close();
       setError(errorText(err, 'Gagal membagikan postingan'));
@@ -80,10 +80,10 @@ export function ShareModal({ postId, onClose, onShared }: {postId: number | stri
   const sendToUser = async (recipient: any) => {
     setError('');
     try {
-      await postApi.share(postId, 'message', { recipient_id: recipient.id, message: note });
+      const result = await postApi.share(postId, 'message', { recipient_id: recipient.id, message: note });
       setMessage(`Terkirim ke ${recipient.name}.`);
       setQuery('');
-      onShared?.();
+      onShared?.(result);
     } catch (err) {
       setError(errorText(err, 'Gagal mengirim pesan'));
     }
@@ -211,7 +211,10 @@ export function RepostModal({ postId, onClose, onReposted }: {postId: number | s
     <Modal title="Repost" onClose={onClose}>
       <textarea value={commentary} onChange={(e) => setCommentary(e.target.value)} maxLength={2000} rows={3} placeholder="Tambahkan komentar (opsional)" className="w-full rounded-xl border border-border-subtle p-3 text-sm" />
       {error && <p className="text-xs text-error mt-2">{error}</p>}
-      <button type="button" onClick={submit} className="mt-3 w-full rounded-full bg-primary py-2 text-sm font-bold text-white">Repost sekarang</button>
+      <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <button type="button" onClick={async () => { try { const p = await postApi.repost(postId, ''); onReposted?.(p); onClose(); } catch (err) { setError(errorText(err, 'Gagal merepost')); } }} className="w-full rounded-full border border-border-subtle bg-surface-container-low hover:bg-surface-container py-2 text-sm font-bold text-text-primary">Repost Langsung</button>
+        <button type="button" onClick={submit} className="w-full rounded-full bg-primary py-2 text-sm font-bold text-white">{commentary.trim() ? 'Posting Kutipan' : 'Repost sekarang'}</button>
+      </div>
     </Modal>);
 
 }

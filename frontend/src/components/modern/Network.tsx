@@ -61,11 +61,11 @@ export default function Network({ onNavigateToMessages, onOpenProfile }: Network
   );
 
   return (
-    <div className="flex-1 max-w-4xl mx-auto py-4 select-none">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="flex-1 w-full py-4 select-none">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         
         {/* Left Column Stats card */}
-        <div className="md:col-span-1 flex flex-col gap-6">
+        <div className="lg:col-span-1 flex flex-col gap-6">
           <div className="bg-white rounded-2xl p-6 border border-border-subtle/50 shadow-sm flex flex-col gap-5">
             <h3 className="font-bold text-text-primary text-base border-b border-border-subtle/10 pb-3">My Network</h3>
             <div className="flex justify-between items-center text-sm">
@@ -84,7 +84,7 @@ export default function Network({ onNavigateToMessages, onOpenProfile }: Network
         </div>
 
         {/* Central column list requests & existing contacts */}
-        <div className="md:col-span-2 flex flex-col gap-6 animate-fadeIn">
+        <div className="lg:col-span-3 flex flex-col gap-6 animate-fadeIn">
           
           {/* Pending Invitations block if any exists */}
           {pendingRequests.length > 0 && (
@@ -145,7 +145,7 @@ export default function Network({ onNavigateToMessages, onOpenProfile }: Network
             {filteredConnections.length === 0 ? (
               <p className="text-xs text-outline text-center py-8">No connections match your search query.</p>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                 {filteredConnections.map((conn) => (
                   <div key={conn.id} className="border border-border-subtle/30 rounded-2xl p-4 flex flex-col gap-3 hover:border-primary hover:shadow-xs transition-all bg-white relative">
                     <div className="flex items-center gap-3">

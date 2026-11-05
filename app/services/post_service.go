@@ -477,7 +477,7 @@ func (s *postService) CreatePost(userID int64, req *dto.CreatePostRequest) (*mod
 	}
 	dispatchTranscodes(post.Media)
 
-	created, err := s.postRepo.GetByID(post.ID)
+	created, err := s.postRepo.GetForViewer(userID, post.ID)
 	if err == nil {
 		createMentionNotifications(userID, post.ID, mentionedUsers, "You were mentioned in a post")
 	}
@@ -664,7 +664,7 @@ func (s *postService) UpdatePost(userID, postID int64, req *dto.UpdatePostReques
 		}
 	}
 	createMentionNotifications(userID, postID, newlyMentioned, "You were mentioned in a post")
-	return s.postRepo.GetByID(postID)
+	return s.postRepo.GetForViewer(userID, postID)
 }
 
 func dispatchLinkPreview(link *models.PostLink) {

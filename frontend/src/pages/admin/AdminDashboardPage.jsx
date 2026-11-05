@@ -147,7 +147,7 @@ const AdminDashboardPage = () => {
       <main className="ml-64 flex-1 flex flex-col min-h-screen relative w-full">
         {/* Header */}
         <header className="fixed top-0 right-0 left-64 bg-surface dark:bg-surface-dim border-b border-border-subtle dark:border-outline-variant z-40">
-          <div className="flex justify-between items-center px-6 py-4 max-w-7xl mx-auto w-full">
+          <div className="flex justify-between items-center px-6 py-4 w-full">
             <div className="relative w-full max-w-md">
               <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">search</span>
               <input
@@ -194,7 +194,7 @@ const AdminDashboardPage = () => {
         </header>
 
         {/* Dashboard Content */}
-        <div className="pt-24 pb-12 px-6 flex-1 bg-background max-w-7xl mx-auto w-full">
+        <div className="pt-24 pb-12 px-6 flex-1 bg-background w-full">
           {error && (
             <div className="mb-6 rounded-xl border border-error/30 bg-error/10 px-4 py-3 text-error">
               Failed to load database data: {error}

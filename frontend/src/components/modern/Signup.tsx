@@ -7,7 +7,7 @@ import AuthLayout from './AuthLayout';
 interface SignupProps {
 	onRegister: (email: string, fullName: string, password?: string, extra?: Record<string, any>) => void | Promise<void>;
 	onNavigateToLogin: () => void;
-	onOAuth: (provider: string) => void;
+	onOAuth: (provider: string, referralCode?: string) => void;
 }
 
 const INTERESTS = [
@@ -16,6 +16,18 @@ const INTERESTS = [
 ];
 
 const COUNTRIES = ["Indonesia", "Malaysia", "Singapore"];
+
+const FALLBACK_ID_REGIONS: Record<string, string[]> = {
+  "DKI Jakarta": ["Jakarta Pusat", "Jakarta Selatan", "Jakarta Barat", "Jakarta Timur", "Jakarta Utara"],
+  "Jawa Barat": ["Bandung", "Bekasi", "Bogor", "Depok", "Cimahi", "Sukabumi"],
+  "Jawa Tengah": ["Semarang", "Surakarta", "Magelang", "Pekalongan", "Tegal"],
+  "DI Yogyakarta": ["Yogyakarta", "Sleman", "Bantul", "Kulon Progo", "Gunungkidul"],
+  "Jawa Timur": ["Surabaya", "Malang", "Sidoarjo", "Gresik", "Kediri", "Batu"],
+  "Banten": ["Tangerang", "Tangerang Selatan", "Serang", "Cilegon"],
+  "Bali": ["Denpasar", "Badung", "Gianyar", "Tabanan", "Buleleng"],
+  "Sumatera Utara": ["Medan", "Binjai", "Deli Serdang", "Pematangsiantar"],
+  "Sulawesi Selatan": ["Makassar", "Gowa", "Maros", "Parepare"]
+};
 
 const REGION_DATA: Record<string, Record<string, string[]>> = {
   "Malaysia": {
@@ -67,6 +79,7 @@ export default function Signup({ onRegister, onNavigateToLogin, onOAuth }: Signu
         })
         .catch(err => {
           console.error(err);
+          setProvinces(Object.keys(FALLBACK_ID_REGIONS).map((name, idx) => ({ id: String(idx + 1), name })));
           setIsLoadingRegions(false);
         });
     } else {
@@ -88,6 +101,7 @@ export default function Signup({ onRegister, onNavigateToLogin, onOAuth }: Signu
           })
           .catch(err => {
             console.error(err);
+            setCities((FALLBACK_ID_REGIONS[province] || [province]).map((name, idx) => ({ id: String(idx + 1), name })));
             setIsLoadingRegions(false);
           });
       }
@@ -124,7 +138,7 @@ export default function Signup({ onRegister, onNavigateToLogin, onOAuth }: Signu
         ...(gender ? { gender } : {}),
         birth_date: birthDate,
         country,
-        location: province,
+        location: [province, postalCode].filter(Boolean).join(' '),
         city,
         interests: selectedInterests
       }
@@ -136,7 +150,7 @@ export default function Signup({ onRegister, onNavigateToLogin, onOAuth }: Signu
 
   return (
     <AuthLayout isLogin={false}>
-      <div className="bg-surface-card rounded-[2rem] p-8 sm:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-border-subtle w-full lg:max-h-[85vh] lg:overflow-y-auto custom-scrollbar">
+      <div className="bg-surface-card rounded-[2rem] p-5 sm:p-8 xl:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-border-subtle w-full">
 
         <div className="mb-8">
           <h2 className="text-3xl font-bold text-text-primary mb-2 tracking-tight">{t("Daftar Akun Baru")}</h2>
@@ -398,7 +412,7 @@ export default function Signup({ onRegister, onNavigateToLogin, onOAuth }: Signu
         </div>
 
         <div className="mt-6">
-          <OAuthButtons onOAuth={onOAuth} verb="Daftar" />
+          <OAuthButtons onOAuth={(provider) => onOAuth(provider, referralCode.trim())} verb="Daftar" />
         </div>
 
         <div className="mt-8 text-center text-[11px] text-text-secondary">

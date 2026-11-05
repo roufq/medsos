@@ -28,7 +28,7 @@ export default function Login({ onLogin, onNavigateToSignup, onNavigateToForgot,
 
   return (
     <AuthLayout isLogin={true}>
-      <div className="bg-surface-card rounded-[2rem] p-8 sm:p-12 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-border-subtle">
+      <div className="bg-surface-card rounded-[2rem] p-6 sm:p-10 xl:p-12 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-border-subtle w-full">
         <div className="mb-10">
           <h2 className="text-4xl font-bold text-text-primary mb-3 tracking-tight">{t("Sign In")}</h2>
           <p className="text-text-secondary text-base">{t("Welcome back! Please sign in to your Postterest account.")}</p>

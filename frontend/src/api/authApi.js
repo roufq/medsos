@@ -31,5 +31,8 @@ export const authApi = {
 	requestVerification: async (channel) => (await api.post('/auth/verification/request', { channel })).data,
 	confirmVerification: async (purpose, code) => (await api.post('/auth/verification/confirm', { purpose, code })).data,
 	reactivate: async (identifier, password) => (await api.post('/auth/account/reactivate', { identifier, password })).data,
-	oauthStartUrl: (provider) => `${api.defaults.baseURL}/auth/oauth/${provider}/start`,
+	oauthStartUrl: (provider, params = {}) => {
+		const qs = new URLSearchParams(Object.entries(params).filter(([, v]) => v)).toString();
+		return `${api.defaults.baseURL}/auth/oauth/${provider}/start${qs ? `?${qs}` : ''}`;
+	},
 };

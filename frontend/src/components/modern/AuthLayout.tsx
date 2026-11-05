@@ -34,35 +34,42 @@ export default function AuthLayout({ children, isLogin = true }: AuthLayoutProps
   ];
 
   return (
-    <div className="auth-layout text-text-primary min-h-screen bg-background flex items-center justify-center font-sans overflow-hidden">
-      <div className="w-full max-w-[1400px] grid lg:grid-cols-2 min-h-screen lg:min-h-[900px] h-full p-4 sm:p-8 gap-12">
+    <div className="auth-layout text-text-primary min-h-screen w-full bg-background flex items-center justify-center font-sans overflow-x-hidden">
+      <div className="w-full max-w-[1720px] mx-auto grid grid-cols-1 lg:grid-cols-12 min-h-screen items-center px-4 sm:px-8 lg:px-12 xl:px-16 py-6 sm:py-10 gap-8 xl:gap-12">
 
-        {/* LEFT COLUMN */}
-        <div className="hidden lg:flex flex-col justify-center relative pl-8 lg:pl-12">
-          {/* Decorative Phone Mockups */}
-          <div className="absolute -left-16 top-1/2 -translate-y-1/2 w-[280px] h-[580px] z-10 pointer-events-none">
-            {/* Phone 1 (Back) */}
-            <div className="absolute top-12 -left-12 w-full h-full bg-black rounded-[2.5rem] shadow-2xl opacity-60 transform -rotate-6 scale-90 border-8 border-gray-800" />
-            {/* Phone 2 (Middle) */}
-            <div className="absolute top-6 -left-6 w-full h-full bg-black rounded-[2.5rem] shadow-2xl opacity-80 transform -rotate-3 scale-95 border-8 border-gray-800 overflow-hidden">
+        {/* MOBILE / TABLET COMPACT HERO */}
+        <div className="lg:hidden text-center max-w-xl mx-auto pt-2">
+          <span className="inline-block px-3.5 py-1 rounded-full bg-surface-container-highest text-text-primary text-xs font-medium mb-3">
+            {t(badgeText)}
+          </span>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-text-primary tracking-tight">
+            {t(title)}
+          </h1>
+          <p className="text-text-secondary text-xs sm:text-sm mt-2 leading-relaxed">
+            {t(subtitle)}
+          </p>
+        </div>
+
+        {/* LEFT COLUMN (Desktop Showcase + Intro) */}
+        <div className={`hidden lg:flex items-center gap-8 xl:gap-12 ${isLogin ? 'lg:col-span-6 xl:col-span-7' : 'lg:col-span-5 xl:col-span-6'}`}>
+          {/* Decorative Phone Mockups on XL screens */}
+          <div className="hidden xl:block relative w-[250px] h-[540px] shrink-0 ml-6 pointer-events-none">
+            <div className="absolute top-10 -left-8 w-full h-full bg-black rounded-[2.5rem] shadow-2xl opacity-60 transform -rotate-6 scale-90 border-8 border-gray-800" />
+            <div className="absolute top-5 -left-4 w-full h-full bg-black rounded-[2.5rem] shadow-2xl opacity-80 transform -rotate-3 scale-95 border-8 border-gray-800 overflow-hidden">
               <img src="https://images.unsplash.com/photo-1542314831-c6a4d14faaf2?auto=format&fit=crop&q=80&w=400" className="w-full h-full object-cover opacity-50" alt="" />
             </div>
-            {/* Phone 3 (Front) */}
-            <div className="absolute top-0 left-0 w-full h-full bg-black rounded-[2.5rem] shadow-2xl border-[10px] border-black overflow-hidden relative">
+            <div className="absolute top-0 left-0 w-full h-full bg-black rounded-[2.5rem] shadow-2xl border-[10px] border-black overflow-hidden">
               <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&q=80&w=400" className="w-full h-full object-cover" alt="Nature" />
-              {/* Fake UI Overlay */}
               <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/80 flex flex-col justify-between p-4">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm" />
                   <div className="w-24 h-3 bg-white/60 rounded-full" />
                 </div>
                 <div>
-                  <div className="w-48 h-4 bg-[#ffffff] font-bold rounded-full mb-2" />
-                  <div className="w-32 h-3 bg-white/70 rounded-full mb-4" />
-                  <div className="flex items-center justify-between">
-                    <div className="w-3/4 h-1 bg-white/30 rounded-full overflow-hidden">
-                      <div className="w-1/3 h-full bg-[#ffffff]" />
-                    </div>
+                  <div className="w-40 h-4 bg-white font-bold rounded-full mb-2" />
+                  <div className="w-28 h-3 bg-white/70 rounded-full mb-4" />
+                  <div className="w-3/4 h-1 bg-white/30 rounded-full overflow-hidden">
+                    <div className="w-1/3 h-full bg-white" />
                   </div>
                 </div>
               </div>
@@ -70,25 +77,25 @@ export default function AuthLayout({ children, isLogin = true }: AuthLayoutProps
           </div>
 
           {/* Text Content Area */}
-          <div className="ml-[320px] max-w-[420px] z-20">
-            <span className="inline-block px-4 py-1.5 rounded-full bg-surface-container-highest text-text-primary text-sm font-medium mb-6 backdrop-blur-sm">
+          <div className="flex-1 min-w-0 max-w-xl">
+            <span className="inline-block px-4 py-1.5 rounded-full bg-surface-container-highest text-text-primary text-sm font-medium mb-5 backdrop-blur-sm">
               {t(badgeText)}
             </span>
-            <h1 className="text-5xl font-extrabold text-text-primary mb-6 leading-tight tracking-tight">
+            <h1 className="text-3xl xl:text-5xl font-extrabold text-text-primary mb-5 leading-tight tracking-tight">
               {t(title)}
             </h1>
-            <p className="text-text-secondary text-lg mb-10 leading-relaxed">
+            <p className="text-text-secondary text-base xl:text-lg mb-8 leading-relaxed">
               {t(subtitle)}
             </p>
 
-            <div className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-5">
               {features.map((f, i) => (
                 <div key={i} className="flex gap-4 items-start">
-                  <div className="w-12 h-12 rounded-xl bg-surface-container-highest flex items-center justify-center shrink-0 text-text-primary">
+                  <div className="w-11 h-11 rounded-xl bg-surface-container-highest flex items-center justify-center shrink-0 text-text-primary">
                     {f.icon}
                   </div>
-                  <div>
-                    <h3 className="font-bold text-text-primary mb-1">{t(f.title)}</h3>
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-text-primary mb-0.5">{t(f.title)}</h3>
                     <p className="text-sm text-text-secondary leading-relaxed">{t(f.description)}</p>
                   </div>
                 </div>
@@ -96,19 +103,19 @@ export default function AuthLayout({ children, isLogin = true }: AuthLayoutProps
             </div>
 
             {!isLogin && (
-              <div className="mt-12 transform -rotate-2">
-                <p className="font-serif italic text-xl text-text-secondary">
-                  {t("\"Lebih dari sekadar media sosial,")}<br/>{t("ini adalah tempat untuk menemukan")}<br/>{t("dunia baru.\"")}
+              <div className="mt-10 transform -rotate-1">
+                <p className="font-serif italic text-lg text-text-secondary">
+                  {t("\"Lebih dari sekadar media sosial,")}<br />{t("ini adalah tempat untuk menemukan")}<br />{t("dunia baru.\"")}
                 </p>
-                <div className="w-32 h-px bg-text-secondary mt-4 ml-8" />
+                <div className="w-32 h-px bg-text-secondary mt-3 ml-6" />
               </div>
             )}
           </div>
         </div>
 
         {/* RIGHT COLUMN (Forms) */}
-        <div className="flex items-center justify-center lg:justify-start w-full">
-          <div className="w-full max-w-[600px]">
+        <div className={`w-full flex items-center justify-center ${isLogin ? 'lg:col-span-6 xl:col-span-5' : 'lg:col-span-7 xl:col-span-6'}`}>
+          <div className={`w-full ${isLogin ? 'max-w-[620px]' : 'max-w-none'}`}>
             {children}
           </div>
         </div>

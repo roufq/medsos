@@ -112,6 +112,23 @@ func canViewPost(viewerID int64, post *models.Post) bool {
 	return post.Visibility == "public" || post.Visibility == ""
 }
 
+// resolveInteractivePost validates visibility and unwraps pure reposts (repost without commentary)
+// so likes, comments, saves, shares, and views always target the root original post.
+func resolveInteractivePost(viewerID, postID int64) (int64, models.Post, bool) {
+	var post models.Post
+	if db.DB.First(&post, postID).Error != nil || !canViewPost(viewerID, &post) {
+		return 0, models.Post{}, false
+	}
+	if post.RepostOfID != nil && (post.Content == nil || strings.TrimSpace(*post.Content) == "") {
+		var orig models.Post
+		if db.DB.First(&orig, *post.RepostOfID).Error != nil || !canViewPost(viewerID, &orig) {
+			return 0, models.Post{}, false
+		}
+		return orig.ID, orig, true
+	}
+	return post.ID, post, true
+}
+
 func notifyUser(userID, actorID int64, kind, entityType string, entityID int64, message string) {
 	if userID == actorID {
 		return
@@ -268,6 +285,10 @@ func (h *SocialController) ToggleSave(c goravelhttp.Context) goravelhttp.Respons
 	if db.DB.First(&post, postID).Error != nil || !canViewPost(userID, &post) {
 		return c.Response().Json(404, goravelhttp.Json{"error": "post not found"})
 	}
+	postID, post, ok := resolveInteractivePost(userID, postID)
+	if !ok {
+		return c.Response().Json(404, goravelhttp.Json{"error": "post not found"})
+	}
 	var saved models.SavedPost
 	if db.DB.Where("user_id = ? AND post_id = ?", userID, postID).First(&saved).Error == nil {
 		db.DB.Delete(&saved)
@@ -336,12 +357,27 @@ func (h *SocialController) Repost(c goravelhttp.Context) goravelhttp.Response {
 			title = string([]rune(title)[:100])
 		}
 	}
-	repost := models.Post{UserID: userID, Title: &title, Content: &commentary, PostType: original.PostType, Visibility: "public", RepostOfID: &originalID}
+	if original.RepostOfID != nil {
+		originalID = *original.RepostOfID
+		_ = db.DB.First(&original, originalID).Error
+	}
+	if commentary == "" {
+		var existing models.Post
+		if db.DB.Where("user_id = ? AND repost_of_id = ? AND (content IS NULL OR content = '')", userID, originalID).First(&existing).Error == nil {
+			if loaded, err := postsWithCounters.GetForViewer(userID, existing.ID); err == nil {
+				return c.Response().Json(200, loaded)
+			}
+		}
+	}
+	repost := models.Post{UserID: userID, Title: &title, Content: &commentary, PostType: models.PostTypeText, Visibility: "public", RepostOfID: &originalID}
 	if err := db.DB.Create(&repost).Error; err != nil {
 		return c.Response().Json(500, goravelhttp.Json{"error": "failed to repost"})
 	}
 	notifyUser(original.UserID, userID, "repost", "post", originalID, "Someone reposted your post")
-	db.DB.Preload("User").Preload("OriginalPost.User").Preload("OriginalPost.Media").First(&repost, repost.ID)
+	if loaded, err := postsWithCounters.GetForViewer(userID, repost.ID); err == nil {
+		return c.Response().Json(201, loaded)
+	}
+	db.DB.Preload("User").Preload("OriginalPost.User").Preload("OriginalPost.Media").Preload("OriginalPost.Shop").Preload("OriginalPost.Link").First(&repost, repost.ID)
 	repost.User.HidePrivateData()
 	if repost.OriginalPost != nil {
 		repost.OriginalPost.User.HidePrivateData()
@@ -360,6 +396,10 @@ func (h *SocialController) Comments(c goravelhttp.Context) goravelhttp.Response 
 	}
 	var post models.Post
 	if db.DB.First(&post, postID).Error != nil || !canViewPost(userID, &post) {
+		return c.Response().Json(404, goravelhttp.Json{"error": "post not found"})
+	}
+	postID, post, ok := resolveInteractivePost(userID, postID)
+	if !ok {
 		return c.Response().Json(404, goravelhttp.Json{"error": "post not found"})
 	}
 	limit, limitErr := strconv.Atoi(c.Request().Query("limit", "50"))
@@ -415,15 +455,26 @@ func (h *SocialController) ReplyComment(c goravelhttp.Context) goravelhttp.Respo
 	if db.DB.First(&post, postID).Error != nil || !canViewPost(userID, &post) {
 		return c.Response().Json(404, goravelhttp.Json{"error": "post not found"})
 	}
+	postID, post, ok := resolveInteractivePost(userID, postID)
+	if !ok {
+		return c.Response().Json(404, goravelhttp.Json{"error": "post not found"})
+	}
 	var parent models.PostComment
 	if db.DB.Where("id = ? AND post_id = ?", input.ParentID, postID).First(&parent).Error != nil {
 		return c.Response().Json(404, goravelhttp.Json{"error": "parent comment not found"})
 	}
-	comment := models.PostComment{PostID: postID, UserID: userID, ParentID: &parent.ID, Content: strings.TrimSpace(input.Content)}
+	parentID := parent.ID
+	if parent.ParentID != nil {
+		parentID = *parent.ParentID
+	}
+	comment := models.PostComment{PostID: postID, UserID: userID, ParentID: &parentID, Content: strings.TrimSpace(input.Content)}
 	if db.DB.Create(&comment).Error != nil {
 		return c.Response().Json(500, goravelhttp.Json{"error": "failed to reply"})
 	}
 	notifyUser(parent.UserID, userID, "comment_reply", "post", postID, "Someone replied to your comment")
+	if post.UserID != parent.UserID {
+		notifyUser(post.UserID, userID, "comment", "post", postID, "Someone commented on your post")
+	}
 	services.NotifyCommentMentions(userID, postID, comment.Content)
 	db.DB.Preload("User").First(&comment, comment.ID)
 	if comment.User != nil {
@@ -477,8 +528,9 @@ func (h *SocialController) DeleteComment(c goravelhttp.Context) goravelhttp.Resp
 	if comment.UserID != userID && post.UserID != userID {
 		return c.Response().Json(403, goravelhttp.Json{"error": "forbidden"})
 	}
-	db.DB.Delete(&comment)
-	return c.Response().Json(200, goravelhttp.Json{"message": "comment deleted"})
+	res := db.DB.Where("id = ? OR parent_id = ?", comment.ID, comment.ID).Delete(&models.PostComment{})
+	return c.Response().Json(200, goravelhttp.Json{"message": "comment deleted", "deleted_count": res.RowsAffected})
+
 }
 
 var shareChannels = map[string]bool{"message": true, "facebook": true, "x": true, "threads": true, "linkedin": true, "instagram": true, "telegram": true, "tiktok": true, "whatsapp": true, "pinterest": true, "copy": true, "embed": true}
@@ -515,6 +567,10 @@ func (h *SocialController) Share(c goravelhttp.Context) goravelhttp.Response {
 	if db.DB.First(&post, postID).Error != nil || !canViewPost(userID, &post) {
 		return c.Response().Json(404, goravelhttp.Json{"error": "post not found"})
 	}
+	postID, post, ok := resolveInteractivePost(userID, postID)
+	if !ok {
+		return c.Response().Json(404, goravelhttp.Json{"error": "post not found"})
+	}
 	title := ""
 	if post.Title != nil {
 		title = *post.Title
@@ -543,7 +599,9 @@ func (h *SocialController) Share(c goravelhttp.Context) goravelhttp.Response {
 	}
 	db.DB.Create(&models.PostShare{PostID: postID, UserID: userID, Channel: input.Channel})
 	notifyUser(post.UserID, userID, "share", "post", postID, "Someone shared your post")
-	return c.Response().Json(200, goravelhttp.Json{"share_url": publicPostURL(postID), "intent_url": links[input.Channel], "links": links, "channel": input.Channel})
+	var sharesCount int64
+	db.DB.Model(&models.PostShare{}).Where("post_id = ?", postID).Count(&sharesCount)
+	return c.Response().Json(200, goravelhttp.Json{"share_url": publicPostURL(postID), "intent_url": links[input.Channel], "links": links, "channel": input.Channel, "shares_count": sharesCount})
 }
 
 func (h *SocialController) Report(c goravelhttp.Context) goravelhttp.Response {
@@ -587,6 +645,10 @@ func (h *SocialController) RecordView(c goravelhttp.Context) goravelhttp.Respons
 	}
 	var post models.Post
 	if db.DB.First(&post, postID).Error != nil || !canViewPost(userID, &post) {
+		return c.Response().Json(404, goravelhttp.Json{"error": "post not found"})
+	}
+	postID, post, ok := resolveInteractivePost(userID, postID)
+	if !ok {
 		return c.Response().Json(404, goravelhttp.Json{"error": "post not found"})
 	}
 	db.DB.Clauses(clause.OnConflict{DoNothing: true}).Create(&models.PostView{PostID: postID, UserID: userID})
@@ -673,7 +735,7 @@ func (h *SocialController) Search(c goravelhttp.Context) goravelhttp.Response {
 	if err := db.DB.Model(&models.Post{}).Distinct("posts.id").
 		Joins("LEFT JOIN post_hashtags ON post_hashtags.post_id = posts.id").
 		Joins("LEFT JOIN users ON users.id = posts.user_id").
-		Where("posts.post_type <> ? AND (posts.title LIKE ? OR posts.content LIKE ? OR posts.location LIKE ? OR post_hashtags.tag = ? OR users.name LIKE ? OR users.username LIKE ?)", models.PostTypeShop, like, like, like, tag, like, like).
+		Where("posts.post_type <> ? AND (posts.repost_of_id IS NULL OR (posts.content IS NOT NULL AND posts.content <> '')) AND (posts.title LIKE ? OR posts.content LIKE ? OR posts.location LIKE ? OR post_hashtags.tag = ? OR users.name LIKE ? OR users.username LIKE ?)", models.PostTypeShop, like, like, like, tag, like, like).
 		Order("posts.id desc").Limit(50).Pluck("posts.id", &postIDs).Error; err != nil {
 		return c.Response().Json(500, goravelhttp.Json{"error": "failed to search posts"})
 	}
@@ -682,7 +744,7 @@ func (h *SocialController) Search(c goravelhttp.Context) goravelhttp.Response {
 	if err := db.DB.Model(&models.Post{}).Distinct("posts.id").
 		Joins("JOIN shop_products ON shop_products.post_id = posts.id").
 		Joins("LEFT JOIN users ON users.id = posts.user_id").
-		Where("posts.post_type = ? AND (posts.title LIKE ? OR posts.content LIKE ? OR shop_products.category LIKE ? OR shop_products.brand LIKE ? OR users.name LIKE ? OR users.username LIKE ?)", models.PostTypeShop, like, like, like, like, like, like).
+		Where("posts.post_type = ? AND posts.repost_of_id IS NULL AND (posts.title LIKE ? OR posts.content LIKE ? OR shop_products.category LIKE ? OR shop_products.brand LIKE ? OR users.name LIKE ? OR users.username LIKE ?)", models.PostTypeShop, like, like, like, like, like, like).
 		Order("posts.id desc").Limit(30).Pluck("posts.id", &productIDs).Error; err != nil {
 		return c.Response().Json(500, goravelhttp.Json{"error": "failed to search products"})
 	}

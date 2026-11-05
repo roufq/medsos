@@ -13,7 +13,7 @@ export default function SavedPage() {
 
   return (
     <AppLayout currentTab="saved">
-      <div className="max-w-[680px] mx-auto flex flex-col gap-4">
+      <div className="w-full flex flex-col gap-4">
         <h1 className="text-xl font-bold">Postingan tersimpan</h1>
         {posts === null && <div className="flex justify-center py-10"><Loader className="animate-spin text-primary" size={32} /></div>}
         {posts?.length === 0 && <div className="bg-white rounded-2xl p-8 text-center text-sm text-text-secondary">Belum ada postingan tersimpan. Gunakan tombol Simpan pada postingan mana pun.</div>}

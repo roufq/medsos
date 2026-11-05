@@ -263,6 +263,7 @@ func (h *PostController) UploadMediaAPI(c goravelhttp.Context) goravelhttp.Respo
 		return c.Response().Json(http.StatusInternalServerError, goravelhttp.Json{"error": fmt.Sprintf("Failed to record file: %s", err.Error())})
 	}
 
+
 	return c.Response().Json(http.StatusOK, goravelhttp.Json{
 		"url": stored.URL, "media_type": stored.Type, "duration_seconds": stored.DurationSeconds, "size_bytes": stored.SizeBytes,
 		"is_short": stored.Type == "video" && stored.DurationSeconds >= services.ShortMinSeconds && stored.DurationSeconds <= services.ShortMaxSeconds,
@@ -297,13 +298,22 @@ func (h *PostController) LikePostAPI(c goravelhttp.Context) goravelhttp.Response
 		return c.Response().Json(http.StatusNotFound, goravelhttp.Json{"error": "Post not found"})
 	}
 
-	liked, err := h.postService.ToggleLikePost(postID, userID)
+	postID, post, ok := resolveInteractivePost(userID, postID)
+	if !ok {
+		return c.Response().Json(http.StatusNotFound, goravelhttp.Json{"error": "Post not found"})
+	}
+	liked, err := h.postService.ToggleLikePost(post.ID, userID)
 	if err != nil {
 		return c.Response().Json(http.StatusInternalServerError, goravelhttp.Json{"error": err.Error()})
 	}
 
+
+	var likesCount int64
+	db.DB.Model(&models.PostLike{}).Where("post_id = ?", post.ID).Count(&likesCount)
+
 	return c.Response().Json(http.StatusOK, goravelhttp.Json{
-		"liked": liked,
+		"liked":       liked,
+		"likes_count": likesCount,
 	})
 }
 
@@ -331,6 +341,10 @@ func (h *PostController) CommentPostAPI(c goravelhttp.Context) goravelhttp.Respo
 		return c.Response().Json(http.StatusNotFound, goravelhttp.Json{"error": "Post not found"})
 	}
 
+	postID, _, ok := resolveInteractivePost(userID, postID)
+	if !ok {
+		return c.Response().Json(http.StatusNotFound, goravelhttp.Json{"error": "Post not found"})
+	}
 	comment, err := h.postService.AddCommentToPost(postID, userID, content)
 	if err != nil {
 		return c.Response().Json(http.StatusInternalServerError, goravelhttp.Json{"error": err.Error()})

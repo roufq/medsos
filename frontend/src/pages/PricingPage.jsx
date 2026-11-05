@@ -238,6 +238,7 @@ export default function PricingPage() {
       const updated = await userApi.updateSettings({
         subscription_plan: checkoutPlan,
         subscription_months: checkoutMonths,
+        payment_method: paymentMethod,
       });
       updateProfileState(updated);
       setNotice({

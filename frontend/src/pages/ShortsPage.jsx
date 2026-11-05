@@ -70,8 +70,8 @@ export default function ShortsPage() {const { t } = useLanguage();
   useEffect(() => {load();}, []);
 
   const like = async (post) => {
-    const { liked } = await postApi.toggleLike(post.public_hash || post.id);
-    setPosts((current) => current.map((p) => p.id === post.id ? { ...p, is_liked_by_me: liked, likes_count: Math.max(0, (p.likes_count || 0) + (liked ? 1 : -1)) } : p));
+    const { liked, likes_count } = await postApi.toggleLike(post.public_hash || post.id);
+    setPosts((current) => current.map((p) => p.id === post.id ? { ...p, is_liked_by_me: liked, likes_count: likes_count ?? Math.max(0, (p.likes_count || 0) + (liked ? 1 : -1)) } : p));
   };
 
   return (
@@ -84,7 +84,7 @@ export default function ShortsPage() {const { t } = useLanguage();
         {!loading && posts.length === 0 && <div className="bg-white rounded-2xl p-10 text-center text-text-secondary">Belum ada Shorts. Unggah video berdurasi 1–1,5 menit untuk tampil di sini.</div>}
         {!loading && hasMore && <button type="button" onClick={() => load(posts[posts.length - 1].id)} className="self-center rounded-full bg-white px-6 py-2 text-sm font-semibold">{t("Muat lebih banyak")}</button>}
       </div>
-      {sharing && <ShareModal postId={sharing} onClose={() => setSharing(null)} />}
+      {sharing && <ShareModal postId={sharing} onClose={() => setSharing(null)} onShared={(res) => setPosts((current) => current.map((p) => (p.public_hash || p.id) === sharing ? { ...p, shares_count: res?.shares_count ?? ((p.shares_count || 0) + 1) } : p))} />}
     </AppLayout>);
 
 }

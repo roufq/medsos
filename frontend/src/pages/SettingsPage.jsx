@@ -161,7 +161,7 @@ export default function SettingsPage() {const { t } = useLanguage();
 
   return (
     <AppLayout currentTab="settings">
-      <div className="mx-auto max-w-3xl flex flex-col gap-5">
+      <div className="w-full flex flex-col gap-5">
         <div className="flex flex-wrap items-center justify-between gap-3"><h1 className="text-2xl font-bold">{t("Pengaturan akun")}</h1><button type="button" onClick={handleLogout} disabled={loggingOut} className="flex items-center gap-2 rounded-full border border-border-subtle bg-white px-4 py-2 text-sm font-semibold text-error disabled:opacity-50" aria-label={t("Keluar")}><LogOut size={17} />{loggingOut ? t("Keluar...") : t("Keluar")}</button></div>
         <Section title={t("Bahasa")} description={t("Pilihan bahasa disimpan di browser ini.")}><LanguageSwitch /></Section>
         <form onSubmit={save} className="flex flex-col gap-5">

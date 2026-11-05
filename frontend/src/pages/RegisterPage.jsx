@@ -1,14 +1,17 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Signup from '../components/modern/Signup';
 import { userApi } from '../api/userApi';
 import { authApi } from '../api/authApi';
+import { OAUTH_REASONS } from './LoginPage';
 
 const RegisterPage = () => {
   const { register, updateProfileState } = useAuth();
   const navigate = useNavigate();
-  const [error, setError] = useState('');
+  const [params] = useSearchParams();
+  const reason = params.get('oauth_error');
+  const [error, setError] = useState(OAUTH_REASONS[reason] || '');
 
   const handleRegister = async (email, fullName, password, extra) => {
     setError('');
@@ -31,7 +34,7 @@ const RegisterPage = () => {
       <Signup
         onRegister={handleRegister}
         onNavigateToLogin={() => navigate('/login')}
-        onOAuth={(provider) => { window.location.href = authApi.oauthStartUrl(provider); }}
+        onOAuth={(provider, ref) => { window.location.href = authApi.oauthStartUrl(provider, { from: 'register', ref }); }}
       />
     </>
   );

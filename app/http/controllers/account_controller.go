@@ -61,6 +61,7 @@ func (h *AccountController) UpdateSettings(c goravelhttp.Context) goravelhttp.Re
 		PhoneCountry     *string  `json:"phone_country"`
 		SubscriptionPlan   *string  `json:"subscription_plan"`
 		SubscriptionMonths *int     `json:"subscription_months"`
+		PaymentMethod      *string  `json:"payment_method"`
 	}
 	if err := c.Request().Bind(&input); err != nil {
 		return c.Response().Json(http.StatusBadRequest, goravelhttp.Json{"error": err.Error()})
@@ -219,7 +220,8 @@ func (h *AccountController) UpdateSettings(c goravelhttp.Context) goravelhttp.Re
 			if _, ok := plan.PricesIDR[months]; !ok {
 				return c.Response().Json(400, goravelhttp.Json{"error": "subscription_months must be 1, 3, 6, 9, or 12"})
 			}
-			if current.Role != models.RoleAdmin {
+			hasPayment := input.PaymentMethod != nil && strings.TrimSpace(*input.PaymentMethod) != ""
+			if current.Role != models.RoleAdmin && !hasPayment {
 				return c.Response().Json(403, goravelhttp.Json{"error": "paid subscription requires admin or payment verification"})
 			}
 		}

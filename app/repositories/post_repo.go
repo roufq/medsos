@@ -31,7 +31,7 @@ func (r *postRepo) Create(post *models.Post) error {
 
 func (r *postRepo) GetByID(id int64) (*models.Post, error) {
 	var post models.Post
-	if err := postPreloads(db.DB).First(&post, id).Error; err != nil {
+	if err := postPreloads(db.DB, 0).First(&post, id).Error; err != nil {
 		return nil, err
 	}
 	sanitizePostUsers(&post)
@@ -46,13 +46,15 @@ func withCounters(query *gorm.DB, viewerID int64) *gorm.DB {
 			EXISTS(SELECT 1 FROM post_likes WHERE post_likes.post_id = posts.id AND post_likes.user_id = ?) AS is_liked_by_me,
 			EXISTS(SELECT 1 FROM saved_posts WHERE saved_posts.post_id = posts.id AND saved_posts.user_id = ?) AS is_saved_by_me,
 			(SELECT COUNT(*) FROM post_views WHERE post_views.post_id = posts.id) AS views_count,
-			(SELECT COUNT(*) FROM post_shares WHERE post_shares.post_id = posts.id) AS shares_count`, viewerID, viewerID)
+			(SELECT COUNT(*) FROM post_shares WHERE post_shares.post_id = posts.id) AS shares_count,
+			(SELECT COUNT(*) FROM posts r WHERE r.repost_of_id = COALESCE(posts.repost_of_id, posts.id)) AS reposts_count,
+			EXISTS(SELECT 1 FROM posts r WHERE r.repost_of_id = COALESCE(posts.repost_of_id, posts.id) AND r.user_id = ?) AS is_reposted_by_me`, viewerID, viewerID, viewerID)
 }
 
 // GetForViewer loads one post with counters; visibility is checked by the caller.
 func (r *postRepo) GetForViewer(viewerID, postID int64) (*models.Post, error) {
 	var post models.Post
-	if err := postPreloads(withCounters(db.DB.Model(&models.Post{}), viewerID)).Where("posts.id = ?", postID).Take(&post).Error; err != nil {
+	if err := postPreloads(withCounters(db.DB.Model(&models.Post{}), viewerID), viewerID).Where("posts.id = ?", postID).Take(&post).Error; err != nil {
 		return nil, err
 	}
 	sanitizePostUsers(&post)
@@ -67,7 +69,7 @@ func (r *postRepo) GetManyForViewer(viewerID int64, ids []int64) ([]models.Post,
 		return result, nil
 	}
 	var posts []models.Post
-	if err := postPreloads(withCounters(db.DB.Model(&models.Post{}), viewerID)).Where("posts.id IN ?", ids).Find(&posts).Error; err != nil {
+	if err := postPreloads(withCounters(db.DB.Model(&models.Post{}), viewerID), viewerID).Where("posts.id IN ?", ids).Find(&posts).Error; err != nil {
 		return nil, err
 	}
 	byID := make(map[int64]models.Post, len(posts))
@@ -85,19 +87,14 @@ func (r *postRepo) GetManyForViewer(viewerID int64, ids []int64) ([]models.Post,
 
 func (r *postRepo) ListAll(viewerID int64, limit, offset int, beforeID int64, shortsOnly bool, kind ...string) ([]models.Post, error) {
 	var posts []models.Post
-	query := db.DB.Model(&models.Post{}).
-		Select(`posts.*,
-			(SELECT COUNT(*) FROM post_likes WHERE post_likes.post_id = posts.id) AS likes_count,
-			(SELECT COUNT(*) FROM post_comments WHERE post_comments.post_id = posts.id) AS comments_count,
-			EXISTS(SELECT 1 FROM post_likes WHERE post_likes.post_id = posts.id AND post_likes.user_id = ?) AS is_liked_by_me,
-			EXISTS(SELECT 1 FROM saved_posts WHERE saved_posts.post_id = posts.id AND saved_posts.user_id = ?) AS is_saved_by_me,
-			(SELECT COUNT(*) FROM post_views WHERE post_views.post_id = posts.id) AS views_count,
-			(SELECT COUNT(*) FROM post_shares WHERE post_shares.post_id = posts.id) AS shares_count`, viewerID, viewerID).
+	query := withCounters(db.DB.Model(&models.Post{}), viewerID).
 		Where(`EXISTS (SELECT 1 FROM users author WHERE author.id = posts.user_id AND author.account_status = 'active')`).
 		Where(`NOT EXISTS (SELECT 1 FROM user_blocks b WHERE (b.blocker_id = ? AND b.blocked_id = posts.user_id) OR (b.blocker_id = posts.user_id AND b.blocked_id = ?))`, viewerID, viewerID).
 		Where(`(posts.repost_of_id IS NULL OR EXISTS (SELECT 1 FROM posts orig JOIN users orig_author ON orig_author.id = orig.user_id WHERE orig.id = posts.repost_of_id AND orig.visibility = 'public' AND orig_author.account_status = 'active' AND orig_author.is_private = 0 AND NOT EXISTS (SELECT 1 FROM user_blocks b WHERE (b.blocker_id = ? AND b.blocked_id = orig.user_id) OR (b.blocker_id = orig.user_id AND b.blocked_id = ?))))`, viewerID, viewerID).
 		Where(`(posts.user_id = ? OR (posts.visibility = 'public' AND EXISTS (SELECT 1 FROM users author WHERE author.id = posts.user_id AND author.is_private = 0)) OR EXISTS (SELECT 1 FROM follows f WHERE f.follower_id = ? AND f.followed_id = posts.user_id AND f.status = 'accepted'))`, viewerID, viewerID)
-	if len(kind) > 0 {
+	if len(kind) > 0 && kind[0] != "" {
+		// Category feeds (Shop catalog, Video feed, etc.) show original posts only, never repost wrappers.
+		query = query.Where("posts.repost_of_id IS NULL")
 		switch kind[0] {
 		case "shop", "image", "link":
 			query = query.Where("posts.post_type = ?", kind[0])
@@ -110,9 +107,9 @@ func (r *postRepo) ListAll(viewerID int64, limit, offset int, beforeID int64, sh
 		}
 	}
 	if shortsOnly {
-		query = query.Where(`EXISTS (SELECT 1 FROM post_media m WHERE m.post_id = posts.id AND m.is_short = 1)`)
+		query = query.Where(`posts.repost_of_id IS NULL AND EXISTS (SELECT 1 FROM post_media m WHERE m.post_id = posts.id AND m.is_short = 1)`)
 	}
-	query = postPreloads(query)
+	query = postPreloads(query, viewerID)
 	if beforeID > 0 {
 		query = query.Where("posts.id < ?", beforeID)
 	} else {
@@ -130,20 +127,13 @@ func (r *postRepo) ListAll(viewerID int64, limit, offset int, beforeID int64, sh
 
 func (r *postRepo) ListByUserID(viewerID, userID int64) ([]models.Post, error) {
 	var posts []models.Post
-	query := db.DB.Model(&models.Post{}).
-		Select(`posts.*,
-			(SELECT COUNT(*) FROM post_likes WHERE post_likes.post_id = posts.id) AS likes_count,
-			(SELECT COUNT(*) FROM post_comments WHERE post_comments.post_id = posts.id) AS comments_count,
-			EXISTS(SELECT 1 FROM post_likes WHERE post_likes.post_id = posts.id AND post_likes.user_id = ?) AS is_liked_by_me,
-			EXISTS(SELECT 1 FROM saved_posts WHERE saved_posts.post_id = posts.id AND saved_posts.user_id = ?) AS is_saved_by_me,
-			(SELECT COUNT(*) FROM post_views WHERE post_views.post_id = posts.id) AS views_count,
-			(SELECT COUNT(*) FROM post_shares WHERE post_shares.post_id = posts.id) AS shares_count`, viewerID, viewerID).
+	query := withCounters(db.DB.Model(&models.Post{}), viewerID).
 		Where("user_id = ?", userID).
 		Where(`NOT EXISTS (SELECT 1 FROM user_blocks b WHERE (b.blocker_id = ? AND b.blocked_id = ?) OR (b.blocker_id = ? AND b.blocked_id = ?))`, viewerID, userID, userID, viewerID).
 		Where(`(? = ? OR EXISTS (SELECT 1 FROM users u WHERE u.id = ? AND u.is_private = 0) OR EXISTS (SELECT 1 FROM follows f WHERE f.follower_id = ? AND f.followed_id = ? AND f.status = 'accepted'))`, viewerID, userID, userID, viewerID, userID).
 		Where(`(posts.repost_of_id IS NULL OR EXISTS (SELECT 1 FROM posts orig JOIN users orig_author ON orig_author.id = orig.user_id WHERE orig.id = posts.repost_of_id AND orig.visibility = 'public' AND orig_author.account_status = 'active' AND orig_author.is_private = 0 AND NOT EXISTS (SELECT 1 FROM user_blocks b WHERE (b.blocker_id = ? AND b.blocked_id = orig.user_id) OR (b.blocker_id = orig.user_id AND b.blocked_id = ?))))`, viewerID, viewerID).
 		Where(`(posts.visibility = 'public' OR posts.user_id = ? OR EXISTS (SELECT 1 FROM follows f WHERE f.follower_id = ? AND f.followed_id = posts.user_id AND f.status = 'accepted'))`, viewerID, viewerID)
-	query = postPreloads(query)
+	query = postPreloads(query, viewerID)
 	err := query.
 		Order("posts.id desc").
 		Limit(50).
@@ -166,12 +156,34 @@ func sanitizePostUsers(post *models.Post) {
 		post.Mentions[i].User.HidePrivateData()
 	}
 	if post.OriginalPost != nil {
-		if post.OriginalPost.Visibility != "public" || post.OriginalPost.User.AccountStatus != "active" || post.OriginalPost.User.IsPrivate { post.OriginalPost = nil } else { post.OriginalPost.User.HidePrivateData() }
+		if post.OriginalPost.Visibility != "public" || post.OriginalPost.User.AccountStatus != "active" || post.OriginalPost.User.IsPrivate {
+			post.OriginalPost = nil
+		} else {
+			post.OriginalPost.User.HidePrivateData()
+			for i := range post.OriginalPost.Mentions {
+				post.OriginalPost.Mentions[i].User.HidePrivateData()
+			}
+		}
 	}
 }
 
-func postPreloads(query *gorm.DB) *gorm.DB {
-	return query.Preload("User").Preload("Media").Preload("Link").Preload("Hashtags").Preload("Mentions.User").Preload("Shop").Preload("OriginalPost.User").Preload("OriginalPost.Media").Preload("OriginalPost.Link")
+func postPreloads(query *gorm.DB, viewerID int64) *gorm.DB {
+	return query.
+		Preload("User").
+		Preload("Media").
+		Preload("Link").
+		Preload("Hashtags").
+		Preload("Mentions.User").
+		Preload("Shop").
+		Preload("OriginalPost", func(tx *gorm.DB) *gorm.DB {
+			return withCounters(tx, viewerID)
+		}).
+		Preload("OriginalPost.User").
+		Preload("OriginalPost.Media").
+		Preload("OriginalPost.Link").
+		Preload("OriginalPost.Shop").
+		Preload("OriginalPost.Hashtags").
+		Preload("OriginalPost.Mentions.User")
 }
 
 func (r *postRepo) Delete(id int64) error {
@@ -179,7 +191,6 @@ func (r *postRepo) Delete(id int64) error {
 }
 
 func (r *postRepo) Update(post *models.Post) error {
-	// GORM save will save associations if they are modified
 	return db.DB.Save(post).Error
 }
 
@@ -188,12 +199,10 @@ func (r *postRepo) ToggleLike(postID, userID int64) (bool, error) {
 	err := db.DB.Where("post_id = ? AND user_id = ?", postID, userID).First(&like).Error
 
 	if err == nil {
-		// Like exists, remove it
 		err = db.DB.Delete(&like).Error
 		return false, err
 	}
 
-	// Like doesn't exist, create it
 	like = models.PostLike{
 		PostID: postID,
 		UserID: userID,
@@ -213,7 +222,6 @@ func (r *postRepo) AddComment(postID, userID int64, content string) (*models.Pos
 		return nil, err
 	}
 
-	// Preload the user data before returning
 	db.DB.Preload("User").First(&comment, comment.ID)
 	comment.User.HidePrivateData()
 
