@@ -44,6 +44,9 @@
 .poster-account button:hover { background: #343638; }
 .poster-header .poster-account-chevron { display: block; color: #fff; }
 .poster-main { max-width: 100%; width: 100%; margin: auto; padding: 26px 28px 40px 108px; min-height: calc(100vh - 68px); }
+.poster-main.poster-main-flush { padding: 0 0 0 84px !important; height: calc(100vh - 68px); min-height: calc(100vh - 68px); overflow: hidden; display: flex; }
+.poster-main-flush .poster-rail { background: rgb(var(--card-bg)); border-right: 1px solid rgb(var(--border) / .35); }
+@media (max-width: 767px) { .poster-main.poster-main-flush { padding: 0 !important; height: calc(100vh - 60px); min-height: calc(100vh - 60px); } }
 .poster-rail { position: fixed; top: 68px; left: 0; bottom: 0; width: 84px; background: rgba(255,255,255,.32); padding: 24px 18px; overflow-y: auto; z-index: 30; flex-direction: column; }
 .poster-rail > .mb-6, .poster-rail nav button span, .poster-rail nav > .mt-4, .poster-rail > .mt-auto { display: none; }
 .poster-rail nav { gap: 14px; flex: none; }
@@ -201,7 +204,7 @@ body { background-color: rgb(var(--app-bg)); color: rgb(var(--text-main)); }
 .poster-theme-toggle { display: flex; align-items: center; justify-content: center; color: #fff; width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; }
 .poster-theme-toggle:focus-visible { outline: 2px solid #8ebeff; outline-offset: 3px; }
 .poster-account { gap: 12px; }
-[data-theme="dark"] .bg-white { background-color: rgb(var(--card-bg)); }
+[data-theme="dark"] .bg-white, [data-theme="dark"] .focus-within\:bg-white:focus-within, [data-theme="dark"] .focus\:bg-white:focus { background-color: rgb(var(--card-bg)) !important; }
 [data-theme="dark"] .bg-gray-50, [data-theme="dark"] .bg-gray-100 { background-color: rgb(var(--surface-low)); }
 [data-theme="dark"] .text-gray-900, [data-theme="dark"] .text-gray-800, [data-theme="dark"] .text-gray-700 { color: rgb(var(--text-main)); }
 [data-theme="dark"] .poster-panel, [data-theme="dark"] .poster-composer, [data-theme="dark"] .poster-post { background: rgb(var(--card-bg)); }
@@ -585,3 +588,9 @@ body { background-color: rgb(var(--app-bg)); color: rgb(var(--text-main)); }
 .idle-session-warning p { font-size: 11px; margin-top: 4px; color: rgb(var(--text-muted)); }
 .idle-session-warning button { border-radius: 20px; padding: 8px 14px; color: #fff; background: #293c55; font-size: 11px; white-space: nowrap; }
 @media (max-width: 767px) { .idle-session-warning { top: 76px; right: 16px; left: 16px; flex-wrap: wrap; } }
+
+.message-composer-input { background-color: rgb(var(--surface-low)) !important; color: rgb(var(--text-main)) !important; border: 1px solid rgb(var(--border)) !important; }
+.message-composer-input:focus-within { background-color: rgb(var(--surface-low)) !important; border-color: #6483ac !important; box-shadow: 0 0 0 2px rgba(100, 131, 172, 0.22) !important; }
+.message-composer-input input { background-color: transparent !important; color: rgb(var(--text-main)) !important; caret-color: rgb(var(--text-main)) !important; -webkit-text-fill-color: rgb(var(--text-main)) !important; }
+.message-composer-input input::placeholder { color: rgb(var(--text-muted)) !important; -webkit-text-fill-color: rgb(var(--text-muted)) !important; opacity: 1 !important; }
+.message-composer-input input:-webkit-autofill, .message-composer-input input:-webkit-autofill:hover, .message-composer-input input:-webkit-autofill:focus { -webkit-text-fill-color: rgb(var(--text-main)) !important; box-shadow: 0 0 0 1000px rgb(var(--surface-low)) inset !important; transition: background-color 5000s ease-in-out 0s; }

@@ -25,6 +25,9 @@ api.interceptors.request.use((config) => {
   if (csrfToken) {
     config.headers['X-CSRF-Token'] = csrfToken;
   }
+  if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+    delete config.headers['Content-Type'];
+  }
   return config;
 });
 

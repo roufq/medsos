@@ -4,15 +4,29 @@ import AppLayout from '../components/modern/AppLayout';
 import Network from '../components/modern/Network';
 import Messages from '../components/modern/Messages';
 import { useAuth } from '../context/AuthContext';
+import { messageApi } from '../api/messageApi';
 
 const FeaturePage = ({ title }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const currentUser = { id: user?.id, name: user?.name || '', title: user?.title || '', avatar: user?.avatar_url || '/favicon.svg' };
 
+  const handleNavigateToMessages = async (userId) => {
+    if (!userId) {
+      navigate('/messages');
+      return;
+    }
+    try {
+      const { token } = await messageApi.createIntent({ user_id: String(userId) });
+      navigate(`/messages?t=${encodeURIComponent(token)}`);
+    } catch {
+      navigate('/messages');
+    }
+  };
+
   return (
     <AppLayout currentTab={title.toLowerCase()}>
-          {title === 'Network' && <Network onNavigateToMessages={(userId) => navigate(userId ? `/messages?user_id=${userId}` : '/messages')} onOpenProfile={(userId) => navigate(`/profile/${userId}`)} />}
+          {title === 'Network' && <Network onNavigateToMessages={handleNavigateToMessages} onOpenProfile={(userId) => navigate(`/profile/${userId}`)} />}
           {title === 'Messages' && <Messages currentUser={currentUser} />}
           {title === 'Analytics' && (
             <div className="bg-white rounded-2xl border border-border-subtle/40 shadow-sm flex flex-col items-center justify-center text-center p-12 h-[calc(100vh-130px)]">

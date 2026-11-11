@@ -13,6 +13,7 @@ type MessageRepository interface {
 	GetConversations(userID int64) ([]models.Conversation, error)
 	GetMessages(convID, userID, beforeID int64) ([]models.Message, error)
 	SendMessage(senderID, receiverID int64, content string) (models.Message, error)
+	SendRichMessage(receiverID int64, draft models.Message) (models.Message, error)
 	MarkAsRead(convID, userID int64) error
 }
 
@@ -49,12 +50,42 @@ func (r *MessageRepositoryImpl) GetConversations(userID int64) ([]models.Convers
 		for _, message := range lastMessages {
 			lastByConversation[message.ConversationID] = message
 		}
+
+		// Unread counts per conversation
+		type unreadRow struct {
+			ConversationID int64
+			Count          int64
+		}
+		var unreadRows []unreadRow
+		_ = db.DB.Model(&models.Message{}).
+			Select("conversation_id, COUNT(*) as count").
+			Where("conversation_id IN ? AND sender_id <> ? AND is_read = ?", conversationIDs, userID, false).
+			Group("conversation_id").
+			Scan(&unreadRows).Error
+		unreadByConv := make(map[int64]int64, len(unreadRows))
+		for _, row := range unreadRows {
+			unreadByConv[row.ConversationID] = row.Count
+		}
+
+		// Conversations containing shop messages
+		var shopConvIDs []int64
+		_ = db.DB.Model(&models.Message{}).
+			Distinct("conversation_id").
+			Where("conversation_id IN ? AND message_type = ?", conversationIDs, "shop").
+			Pluck("conversation_id", &shopConvIDs).Error
+		shopSet := make(map[int64]bool, len(shopConvIDs))
+		for _, id := range shopConvIDs {
+			shopSet[id] = true
+		}
+
 		for i := range convs {
 			if message, ok := lastByConversation[convs[i].ID]; ok {
 				convs[i].Messages = []models.Message{message}
 			} else {
 				convs[i].Messages = []models.Message{}
 			}
+			convs[i].UnreadCount = unreadByConv[convs[i].ID]
+			convs[i].HasShopMessage = shopSet[convs[i].ID]
 		}
 	}
 	for i := range convs {
@@ -94,9 +125,21 @@ func (r *MessageRepositoryImpl) GetMessages(convID, userID, beforeID int64) ([]m
 }
 
 func (r *MessageRepositoryImpl) SendMessage(senderID, receiverID int64, content string) (models.Message, error) {
+	return r.SendRichMessage(receiverID, models.Message{
+		SenderID:    senderID,
+		Content:     content,
+		MessageType: "text",
+	})
+}
+
+func (r *MessageRepositoryImpl) SendRichMessage(receiverID int64, draft models.Message) (models.Message, error) {
+	senderID := draft.SenderID
 	user1ID, user2ID := senderID, receiverID
 	if user1ID > user2ID {
 		user1ID, user2ID = user2ID, user1ID
+	}
+	if draft.MessageType == "" {
+		draft.MessageType = "text"
 	}
 
 	var msg models.Message
@@ -115,7 +158,8 @@ func (r *MessageRepositoryImpl) SendMessage(senderID, receiverID int64, content 
 			return err
 		}
 
-		msg = models.Message{ConversationID: conv.ID, SenderID: senderID, Content: content}
+		msg = draft
+		msg.ConversationID = conv.ID
 		if err := tx.Create(&msg).Error; err != nil {
 			return err
 		}

@@ -130,7 +130,7 @@ export default function Network({ onNavigateToMessages, onOpenProfile }: Network
               <h3 className="font-bold text-text-primary text-sm select-none">All Connections</h3>
               
               {/* Search inside connections */}
-              <div className="flex items-center bg-surface-container-low rounded-xl px-3 py-1.5 border border-transparent focus-within:border-primary focus-within:bg-white transition-all w-full md:max-w-xs">
+              <div className="message-composer-input flex items-center bg-surface-container-low rounded-xl px-3 py-1.5 border border-transparent focus-within:border-primary transition-all w-full md:max-w-xs">
                 <Search className="w-4 h-4 text-outline" />
                 <input 
                   type="text" 
@@ -160,7 +160,7 @@ export default function Network({ onNavigateToMessages, onOpenProfile }: Network
                     </div>
                     <div className="flex gap-2 mt-2 pt-2 border-t border-border-subtle/10">
                       <button 
-                        onClick={() => onNavigateToMessages(conn.id)}
+                        onClick={() => onNavigateToMessages((conn as any).public_hash || (conn as any).username || conn.id)}
                         className="w-full py-1.5 bg-secondary-container hover:bg-secondary-container/80 text-primary transition-colors font-bold text-xs rounded-xl flex items-center justify-center gap-1 cursor-pointer"
                       >
                         <MessageSquare className="w-3.5 h-3.5" />

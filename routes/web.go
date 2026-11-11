@@ -70,6 +70,6 @@ func Web() {
 	// ==========================================
 	// Any unmatched route will be sent to the React frontend index.html
 	facades.Route().Fallback(func(c http.Context) http.Response {
-		return c.Response().File("./frontend/dist/index.html")
+		return c.Response().Header("Cache-Control", "no-store, no-cache, must-revalidate").File("./frontend/dist/index.html")
 	})
 }

@@ -164,6 +164,20 @@ func InitDB() {
 		log.Fatalf("Failed to assign public post IDs: %v", backfill.Error)
 	}
 	// Ensure every user has a unique username so profile URLs never fall back to numeric IDs.
+	var oldUsers []models.User
+	DB.Select("id", "public_hash").Where("public_hash IS NULL OR public_hash = ''").Find(&oldUsers)
+	for _, u := range oldUsers {
+		if token, err := models.NewPostHash(); err == nil {
+			_ = DB.Model(&models.User{}).Where("id = ? AND (public_hash IS NULL OR public_hash = '')", u.ID).UpdateColumn("public_hash", token).Error
+		}
+	}
+	var oldConvs []models.Conversation
+	DB.Select("id", "public_hash").Where("public_hash IS NULL OR public_hash = ''").Find(&oldConvs)
+	for _, conv := range oldConvs {
+		if token, err := models.NewPostHash(); err == nil {
+			_ = DB.Model(&models.Conversation{}).Where("id = ? AND (public_hash IS NULL OR public_hash = '')", conv.ID).UpdateColumn("public_hash", token).Error
+		}
+	}
 	var usersWithoutUsername []models.User
 	DB.Select("id", "name", "email", "username").Where("username IS NULL OR username = ''").Find(&usersWithoutUsername)
 	for _, u := range usersWithoutUsername {

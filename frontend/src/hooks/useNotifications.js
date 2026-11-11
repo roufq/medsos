@@ -25,6 +25,10 @@ export function useNotifications(onOpen) {
 
   useEffect(() => {
     loadNotifications();
+    const interval = window.setInterval(() => {
+      if (document.visibilityState !== 'hidden') loadNotifications();
+    }, 5000);
+    return () => window.clearInterval(interval);
   }, []);
 
   const unreadCount = notifications.filter((item) => !item.read_at).length;

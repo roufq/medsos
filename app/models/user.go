@@ -17,6 +17,7 @@ const (
 )
 
 type User struct {
+	PublicHash          *string    `gorm:"type:varchar(32);uniqueIndex" json:"public_hash"`
 	ID                  int64      `gorm:"primaryKey;autoIncrement" json:"id"`
 	Name                string     `gorm:"type:varchar(100);not null" json:"name"`
 	Username            *string    `gorm:"type:varchar(50);uniqueIndex" json:"username,omitempty"`
@@ -95,6 +96,14 @@ func (u *User) HidePrivateData() {
 
 // AfterFind reverts expired paid subscriptions to free and removes Blue Verified.
 func (u *User) AfterFind(tx *gorm.DB) error {
+	if u.ID > 0 && (u.PublicHash == nil || *u.PublicHash == "") {
+		if token, err := NewPostHash(); err == nil {
+			u.PublicHash = &token
+			if tx != nil {
+				_ = tx.Session(&gorm.Session{SkipHooks: true, NewDB: true}).Model(&User{}).Where("id = ? AND (public_hash IS NULL OR public_hash = '')", u.ID).UpdateColumn("public_hash", token).Error
+			}
+		}
+	}
 	if u.SubscriptionPlan != "" && u.SubscriptionPlan != "free" && u.SubscriptionExpiresAt != nil && u.SubscriptionExpiresAt.Before(time.Now()) {
 		u.SubscriptionPlan = "free"
 		u.IsBlueVerified = false
@@ -152,6 +161,11 @@ func GenerateUsername(tx *gorm.DB, name, email string, excludeID int64) string {
 }
 
 func (u *User) BeforeCreate(tx *gorm.DB) error {
+	if u.PublicHash == nil || strings.TrimSpace(*u.PublicHash) == "" {
+		if token, err := NewPostHash(); err == nil {
+			u.PublicHash = &token
+		}
+	}
 	if u.Username == nil || strings.TrimSpace(*u.Username) == "" {
 		uname := GenerateUsername(tx, u.Name, u.Email, u.ID)
 		u.Username = &uname

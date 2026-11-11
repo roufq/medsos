@@ -5,12 +5,13 @@ import { Link } from 'react-router-dom';
 export const POST_RULES = {
   titleMin: 5,
   titleMax: 100,
+  descriptionMinChars: 160,
   descriptionMinWords: 160,
   descriptionMaxWords: 6000,
   hashtagsMin: 3,
   hashtagsMax: 9,
   shopHashtagsMax: 30,
-  mentionsMin: 1,
+  mentionsMin: 0,
   mentionsMax: 10,
   imagesMax: 6,
   shopVideoMin: 30,
@@ -20,6 +21,7 @@ export const POST_RULES = {
   videoMaxSeconds: 30 * 60,
 };
 
+export const countChars = (text: string) => [...text.trim()].length;
 export const countWords = (text: string) => (text.trim() ? text.trim().split(/\s+/).length : 0);
 
 export function parseTokens(raw: string, prefix: '#' | '@'): string[] {

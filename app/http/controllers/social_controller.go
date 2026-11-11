@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"encoding/json"
 	"errors"
 	"strconv"
 	"strings"
@@ -593,7 +594,28 @@ func (h *SocialController) Share(c goravelhttp.Context) goravelhttp.Response {
 			return c.Response().Json(400, goravelhttp.Json{"error": "message is too long"})
 		}
 		content := strings.TrimSpace(note + " " + publicPostURL(postID))
-		if _, err := shareMessages.SendMessage(userID, input.RecipientID, content); err != nil {
+		draft := models.Message{SenderID: userID, Content: content, MessageType: "link"}
+		if post.PostType == models.PostTypeShop {
+			var shop models.ShopProduct
+			var media []models.PostMedia
+			_ = db.DB.Where("post_id = ?", post.ID).First(&shop).Error
+			_ = db.DB.Where("post_id = ? AND media_type = ?", post.ID, models.MediaTypeImage).Order("position asc, id asc").Limit(1).Find(&media).Error
+			imgURL := ""
+			if len(media) > 0 {
+				imgURL = media[0].MediaURL
+			}
+			routeToken := post.PublicToken()
+			metaBytes, _ := json.Marshal(map[string]any{
+				"post_id": routeToken, "title": title, "price_minor": shop.PriceMinor, "currency": shop.Currency,
+				"image_url": imgURL, "category": shop.Category, "condition": shop.Condition, "url": "/post/" + routeToken,
+			})
+			draft.MessageType = "shop"
+			draft.MetadataJSON = string(metaBytes)
+		} else {
+			metaBytes, _ := json.Marshal(map[string]any{"title": title, "url": publicPostURL(postID)})
+			draft.MetadataJSON = string(metaBytes)
+		}
+		if _, err := shareMessages.SendRichMessage(input.RecipientID, draft); err != nil {
 			return c.Response().Json(500, goravelhttp.Json{"error": "failed to send message"})
 		}
 	}
@@ -706,8 +728,8 @@ func (h *SocialController) Search(c goravelhttp.Context) goravelhttp.Response {
 		return c.Response().Json(401, goravelhttp.Json{"error": "Unauthorized"})
 	}
 	term := strings.TrimSpace(c.Request().Query("q", ""))
-	if utf8.RuneCountInString(term) < 2 || utf8.RuneCountInString(term) > 100 {
-		return c.Response().Json(400, goravelhttp.Json{"error": "q must contain 2-100 characters"})
+	if utf8.RuneCountInString(term) < 1 || utf8.RuneCountInString(term) > 100 {
+		return c.Response().Json(400, goravelhttp.Json{"error": "q must contain 1-100 characters"})
 	}
 	like := "%" + term + "%"
 	tag := strings.TrimPrefix(strings.ToLower(term), "#")

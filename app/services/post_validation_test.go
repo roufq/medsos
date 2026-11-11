@@ -41,11 +41,11 @@ func TestPostRules(t *testing.T) {
 	cases := map[string]func(d *postDraft){
 		"title too short":              func(d *postDraft) { d.title = "abcd" },
 		"title too long":               func(d *postDraft) { d.title = strings.Repeat("a", 101) },
-		"description < 160 words":      func(d *postDraft) { d.content = words(159) },
+		"description < 160 characters": func(d *postDraft) { d.content = strings.Repeat("a", 159) },
 		"description > 6000":           func(d *postDraft) { d.content = words(6001) },
 		"fewer than 3 hashtags":        func(d *postDraft) { d.tags = d.tags[:2] },
 		"more than 9 hashtags":         func(d *postDraft) { d.tags = strings.Fields("a1 a2 a3 a4 a5 a6 a7 a8 a9 a10") },
-		"no mention":                   func(d *postDraft) { d.mentions = nil },
+
 		"more than 10 mentions":        func(d *postDraft) { d.mentions = strings.Fields("m1 m2 m3 m4 m5 m6 m7 m8 m9 m10 m11") },
 		"link without valid url":       func(d *postDraft) { d.postType = models.PostTypeLink; d.linkURL = "javascript:alert(1)" },
 		"link with short description": func(d *postDraft) {
@@ -107,7 +107,8 @@ func TestValidVariants(t *testing.T) {
 			d.postType = models.PostTypeVideo
 			d.media = []dto.MediaItem{{URL: "v", Type: models.MediaTypeVideo, DurationSeconds: 30 * 60}}
 		},
-		"link": func(d *postDraft) { d.postType, d.linkURL = models.PostTypeLink, "https://example.com/a" },
+		"link":       func(d *postDraft) { d.postType, d.linkURL = models.PostTypeLink, "https://example.com/a" },
+		"no mention": func(d *postDraft) { d.mentions = nil },
 		"shop with short description and no mention": func(d *postDraft) {
 			d.postType, d.content, d.mentions = models.PostTypeShop, "Sepatu lari ukuran 42", nil
 			d.media = []dto.MediaItem{image, {URL: "v", Type: models.MediaTypeVideo, DurationSeconds: 45}}
@@ -148,7 +149,7 @@ func TestHashtagAndMentionExtraction(t *testing.T) {
 }
 
 func TestDescriptionCountsWords(t *testing.T) {
-	for _, text := range []string{words(160), words(342), words(6000)} {
+	for _, text := range []string{strings.Repeat("a", 160), words(160), words(342), words(6000)} {
 		d := validDraft()
 		d.content = text
 		if err := d.validate(); err != nil {

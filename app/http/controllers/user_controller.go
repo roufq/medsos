@@ -95,7 +95,7 @@ func (h *UserController) GetProfileAPI(c goravelhttp.Context) goravelhttp.Respon
 			return c.Response().Json(http.StatusNotFound, goravelhttp.Json{"error": "User not found"})
 		}
 		var found models.User
-		if db.DB.Select("id").Where("LOWER(username) = LOWER(?)", strings.TrimPrefix(idParam, "@")).First(&found).Error != nil {
+		if db.DB.Select("id").Where("public_hash = ? OR LOWER(username) = LOWER(?)", idParam, strings.TrimPrefix(idParam, "@")).First(&found).Error != nil {
 			return c.Response().Json(http.StatusNotFound, goravelhttp.Json{"error": "User not found"})
 		}
 		targetID = found.ID

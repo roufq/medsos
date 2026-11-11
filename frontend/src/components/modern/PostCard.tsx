@@ -4,12 +4,13 @@ import { copyToClipboard } from '../../utils/clipboard';
 import { useLanguage } from "../../context/LanguageContext";
 import { profileUrl } from '../../utils/profileUrl';
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Heart, MessageCircle, Repeat2, Share2, Bookmark, BookmarkCheck, MoreHorizontal, Pencil, Trash2,
   Code, Flag, Link as LinkIcon, Eye, MapPin, Globe, Users, X, ChevronLeft, ChevronRight, Loader2, ShoppingBag
 } from 'lucide-react';
 import { postApi } from '../../api/postApi';
+import { messageApi } from '../../api/messageApi';
 import { useAuth } from '../../context/AuthContext';
 import { RichText, formatPrice, timeAgo } from '../../utils/postFormat';
 import CommentThread from './CommentThread';
@@ -98,9 +99,30 @@ function LinkPreview({ link }: { link: any; }) {
   );
 }
 
-function ShopDetails({ shop }: { shop: any; }) {
+function ShopDetails({ shop, post }: { shop: any; post?: any; }) {
   const { t } = useLanguage();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [chatBusy, setChatBusy] = useState(false);
   const fulfillment = (shop.fulfillment || '').split(',').filter(Boolean).map((v: string) => FULFILLMENT_LABELS[v] || v);
+  const sellerId = post?.user_id || post?.user?.id;
+  const sellerToken = post?.user?.public_hash || post?.user?.username || sellerId;
+  const postToken = post?.public_hash || post?.id;
+  const isOwner = sellerId && user?.id && String(sellerId) === String(user.id);
+  const openSellerChat = async () => {
+    if (!postToken || chatBusy) return;
+    setChatBusy(true);
+    try {
+      const payload: any = { shop_post_id: String(postToken) };
+      if (!isOwner && sellerToken) payload.user_id = String(sellerToken);
+      const { token } = await messageApi.createIntent(payload);
+      navigate(`/messages?t=${encodeURIComponent(token)}`);
+    } catch {
+      navigate('/messages');
+    } finally {
+      setChatBusy(false);
+    }
+  };
   return (
     <div className="mb-4 rounded-xl border border-primary/20 bg-primary/5 p-3 text-xs text-text-primary">
       <div className="flex items-center justify-between gap-2 mb-2">
@@ -114,6 +136,22 @@ function ShopDetails({ shop }: { shop: any; }) {
         {fulfillment.length > 0 && <span>Pengiriman: <strong className="text-text-primary">{fulfillment.join(', ')}</strong></span>}
         {shop.payment_method && <span>Pembayaran: <strong className="text-text-primary">{shop.payment_method}</strong></span>}
       </div>
+      {postToken && (
+        <div className="mt-3 pt-2.5 border-t border-primary/15 flex items-center justify-between gap-2 flex-wrap">
+          <Link to={postUrl(post)} className="text-xs font-bold text-primary hover:underline">
+            Detail Produk
+          </Link>
+          <button
+            type="button"
+            disabled={chatBusy}
+            onClick={openSellerChat}
+            className="inline-flex items-center gap-1.5 rounded-full bg-[#e6192b] hover:brightness-110 px-4 py-1.5 text-xs font-bold text-white shadow-xs transition-all cursor-pointer disabled:opacity-60"
+          >
+            <MessageCircle className="w-3.5 h-3.5" />
+            <span>{isOwner ? 'Kirim Produk ke Chat' : 'Chat Penjual / Beli'}</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -136,7 +174,7 @@ function OriginalPost({ post, onOpenImage }: { post: any; onOpenImage?: (index: 
       </div>
       {post.title && <Link to={postUrl(post)} className="block font-bold text-sm mb-1 hover:underline">{post.title}</Link>}
       {post.content && <p className="text-xs text-text-primary whitespace-pre-wrap break-words line-clamp-4 mb-2.5">{post.content}</p>}
-      {post.shop && <ShopDetails shop={post.shop} />}
+      {post.shop && <ShopDetails shop={post.shop} post={post} />}
       {(post.media || []).length > 0 && <MediaGallery media={post.media} onOpen={onOpenImage || (() => {})} />}
       {post.link && <LinkPreview link={post.link} />}
     </div>
@@ -349,7 +387,7 @@ export default function PostCard({ post: initialPost, onDeleted, onUpdated, onRe
 
       {isRepost && !isPureRepost ? <OriginalPost post={post.original_post} onOpenImage={setLightbox} /> :
         <>
-          {displayPost.shop && <ShopDetails shop={displayPost.shop} />}
+          {displayPost.shop && <ShopDetails shop={displayPost.shop} post={displayPost} />}
           {!hideMedia && (displayPost.media || []).length > 0 && <MediaGallery media={displayPost.media} onOpen={setLightbox} />}
           {displayPost.link && <LinkPreview link={displayPost.link} />}
           {((displayPost.hashtags || []).length > 0 || (displayPost.mentions || []).length > 0) &&

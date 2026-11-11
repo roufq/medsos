@@ -132,6 +132,11 @@ func Api() {
 		router.Get("messages/conversations", msgController.GetConversations)
 		router.Get("messages", msgController.GetMessages)
 		router.Post("messages", msgController.SendMessage)
+		router.Post("messages/upload", msgController.UploadAttachment)
+		router.Post("messages/intent", msgController.CreateIntent)
+		router.Post("messages/intent/resolve", msgController.ResolveIntent)
+		router.Post("messages/call/signal", msgController.SendCallSignal)
+		router.Get("messages/call/poll", msgController.PollCallSignals)
 
 		// Admin Operations
 		router.Middleware(middleware.AdminMiddleware()).Group(func(admin route.Router) {

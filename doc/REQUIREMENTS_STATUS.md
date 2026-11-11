@@ -29,9 +29,9 @@ Status diverifikasi terhadap kode dan smoke test API (53 skenario) pada 2026-10-
 | Fitur | Status |
 |---|---|
 | Judul wajib 5–100 karakter | Tervalidasi (backend + form) |
-| Deskripsi 160–6000 kata | Tervalidasi; post shop cukup deskripsi tidak kosong |
+| Deskripsi minimal 160 karakter (maks 6000 kata) | Tervalidasi; post shop cukup deskripsi tidak kosong |
 | Hashtag wajib 3–9 (shop 3–30) | Tervalidasi; `#tag` di teks ikut dihitung |
-| Mention 1–10 user (shop 0–10) | Tervalidasi; user tidak dikenal/memblokir ditolak |
+| Mention 0–10 user | Tervalidasi; user tidak dikenal/memblokir ditolak |
 | Gambar 1–6, maks 10 MB/file | Tervalidasi; JPEG/PNG dikompresi, EXIF/GPS dihapus |
 | Video maks 30 menit | Tervalidasi dengan ffprobe; ditranscode ke MP4 H.264 |
 | Format video | MP4, MOV, AVI, WMV, FLV, WebM, MKV, MPEG, MPEG-TS, MXF (codec H.264, HEVC, ProRes, DNxHR, CineForm) |
