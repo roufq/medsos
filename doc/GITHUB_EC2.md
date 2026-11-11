@@ -1,8 +1,35 @@
 # Menghubungkan EC2 ke repository GitHub
 
-Repository: `roufq/medsos`, branch `ahmad`. Target yang diinginkan adalah `/opt/postter` menjadi checkout repository sekaligus folder aplikasi aktif. Clone sebelumnya di `/home/ubuntu/medsos` tidak melayani website.
+Repository: `roufq/medsos`. Pengembangan lokal memakai branch `ahmad`; AWS memakai branch `production` di `/opt/postter`. Clone sebelumnya di `/home/ubuntu/medsos` tidak melayani website.
 
 Koneksi ini memungkinkan server mengambil kode dengan `git pull`. Koneksi ini belum menjalankan build atau deployment otomatis, dan tidak mengubah `.env`, uploads, database, maupun service yang sedang berjalan.
+
+## Pembagian branch
+
+| Branch | Penggunaan |
+|---|---|
+| `ahmad` | Pengembangan dan pengujian di komputer lokal |
+| `production` | Source yang dipilih untuk server publik AWS |
+| `hotfix/...` | Perbaikan kode dari AWS yang perlu disimpan dan dikembalikan ke jalur pengembangan |
+
+Branch `production` dibuat dari versi awal yang sama dengan `ahmad`. Setelah dipisahkan, push ke `ahmad` tidak mengubah `production`. Untuk rilis, buka pull request dengan base `production` dan compare `ahmad`, periksa perubahan, lalu merge. Setelah itu server mengambil `production` dan menjalankan proses build/deploy.
+
+Jika memperbaiki kode langsung di AWS, simpan pada branch `hotfix/...` dan masukkan perbaikannya kembali ke `production` serta `ahmad` melalui merge. Jangan menimpa perubahan server dengan reset paksa. Deploy key saat ini hanya memiliki akses baca; push dari server memerlukan kredensial dengan akses tulis yang diatur tersendiri. Pemisahan branch tidak menambah izin pada key.
+
+Postingan, akun, komentar, dan metadata upload berada di database; file upload berada di `/opt/postter/uploads`. Data ini tidak berpindah melalui Git dan tidak ikut pergantian branch.
+
+## Mengganti instalasi yang sudah terhubung dari ahmad ke production
+
+Jangan jalankan ulang script penghubung pada instalasi yang sudah mempunyai `.git`. Jalankan di terminal AWS:
+
+```bash
+sudo git -C /opt/postter status --short
+sudo git -C /opt/postter fetch origin
+sudo git -C /opt/postter switch --track origin/production
+sudo git -C /opt/postter status --short --branch
+```
+
+Jika status awal menunjukkan file source berubah, simpan perubahan itu pada branch hotfix sebelum berganti branch. Perintah switch di atas untuk pembuatan branch lokal pertama kali; jika branch lokal `production` sudah ada, gunakan `sudo git -C /opt/postter switch production`. Perubahan branch tidak membangun ulang binary/frontend dan tidak membutuhkan restart untuk tahap penyambungan ini.
 
 ## 1. Buat deploy key di terminal AWS
 
@@ -59,14 +86,14 @@ sudo git -C /opt/postter remote -v
 sudo git -C /opt/postter branch --show-current
 ```
 
-Script mencadangkan instalasi ke direktori privat `/var/backups/postter-before-git.*`, membuat metadata Git baru, mengambil branch `ahmad`, menolak revision yang melacak file runtime, lalu menempatkan source di folder aplikasi. `.env`, binary `postter`, hasil build frontend, uploads, dan storage dipertahankan. Database dan service tidak diubah. Script menolak berjalan ulang bila `.git` sudah ada; jika gagal, periksa error sebelum melanjutkan.
+Script memeriksa akses ke remote branch `production`, mencadangkan instalasi ke direktori privat `/var/backups/postter-before-git.*`, membuat metadata Git baru, mengambil branch `production`, menolak revision yang melacak file runtime, lalu menempatkan source di folder aplikasi. `.env`, binary `postter`, hasil build frontend, uploads, dan storage dipertahankan. Database dan service tidak diubah. Script menolak berjalan ulang bila `.git` sudah ada; jika gagal, periksa error sebelum melanjutkan.
 
 ## 5. Mengambil perubahan selanjutnya
 
-Setelah kode dari komputer lokal di-push ke branch `ahmad`:
+Setelah perubahan lokal di `ahmad` diperiksa dan di-merge ke `production`, jalankan di AWS saat branch aktif adalah `production`:
 
 ```bash
-sudo git -C /opt/postter pull --ff-only origin ahmad
+sudo git -C /opt/postter pull --ff-only origin production
 ```
 
 Perintah ini memperbarui source langsung di folder aplikasi aktif. Binary Go dan frontend tetap perlu dibangun, diterapkan, dan diperiksa sebelum update terlihat di website. `systemctl restart postter` saja tidak membangun ulang kode. Jangan jalankan installer awal untuk menimpa aplikasi aktif.
