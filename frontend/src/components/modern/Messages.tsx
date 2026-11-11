@@ -24,7 +24,8 @@ import {
   VideoOff,
   Volume2,
   VolumeX,
-  MoreVertical,
+  Info,
+  BellOff,
   Download,
   Loader2,
   X,
@@ -33,6 +34,7 @@ import {
   Music,
 } from 'lucide-react';
 import { messageApi } from '../../api/messageApi';
+import ChatDetails from './ChatDetails';
 import { userApi } from '../../api/userApi';
 import { postApi } from '../../api/postApi';
 import { socialApi } from '../../api/socialApi';
@@ -127,6 +129,10 @@ export default function Messages({ currentUser }: MessagesProps) {
   const [messageText, setMessageText] = useState('');
   const [error, setError] = useState('');
   const [sending, setSending] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [chatBlocked, setChatBlocked] = useState(false);
+  const detailsButtonRef = useRef<HTMLButtonElement | null>(null);
+  useEffect(() => { setDetailsOpen(false); setChatBlocked(false); }, [selectedConvId]);
   const [uploading, setUploading] = useState(false);
 
   // Left sidebar search & filter tabs
@@ -232,6 +238,8 @@ export default function Messages({ currentUser }: MessagesProps) {
           const lastMsg = c.messages && c.messages.length > 0 ? c.messages[0] : null;
           return {
             id: c.id,
+            nickname: c.nickname || '',
+            muted: Boolean(c.muted),
             otherUser: String(c.user1_id) === String(currentUser.id) ? c.user2 : c.user1,
             lastMsg,
             unreadCount: c.id === selectedConvIdRef.current ? 0 : Number(c.unread_count || 0),
@@ -265,6 +273,8 @@ export default function Messages({ currentUser }: MessagesProps) {
           const lastMsg = c.messages && c.messages.length > 0 ? c.messages[0] : null;
           return {
             id: c.id,
+            nickname: c.nickname || '',
+            muted: Boolean(c.muted),
             otherUser: String(c.user1_id) === String(currentUser.id) ? c.user2 : c.user1,
             lastMsg,
             unreadCount: c.id === selectedConvIdRef.current ? 0 : Number(c.unread_count || 0),
@@ -334,15 +344,17 @@ export default function Messages({ currentUser }: MessagesProps) {
       setMessages([]);
       return;
     }
+    let active = true;
     const fetchMsgs = async () => {
       try {
         const data = await messageApi.getMessages(selectedConvId);
+        if (!active) return;
         setMessages(data || []);
         setConversations((prev) =>
           prev.map((c) => (c.id === selectedConvId ? { ...c, unreadCount: 0 } : c))
         );
       } catch (err: any) {
-        setError(err.response?.data?.error || 'Gagal memuat pesan.');
+        if (active) setError(err.response?.data?.error || 'Gagal memuat pesan.');
       }
     };
     fetchMsgs();
@@ -350,6 +362,7 @@ export default function Messages({ currentUser }: MessagesProps) {
       if (document.visibilityState === 'hidden') return;
       try {
         const data = await messageApi.getMessages(selectedConvId);
+        if (!active) return;
         const next = Array.isArray(data) ? data : [];
         setMessages((prev) => {
           const changed =
@@ -373,6 +386,7 @@ export default function Messages({ currentUser }: MessagesProps) {
     window.addEventListener('focus', pollMsgs);
     document.addEventListener('visibilitychange', pollMsgs);
     return () => {
+      active = false;
       window.clearInterval(interval);
       window.removeEventListener('focus', pollMsgs);
       document.removeEventListener('visibilitychange', pollMsgs);
@@ -1270,7 +1284,7 @@ export default function Messages({ currentUser }: MessagesProps) {
       }
       if (!searchQuery.trim()) return true;
       const q = searchQuery.toLowerCase();
-      const nameMatch = conv.otherUser?.name?.toLowerCase().includes(q);
+      const nameMatch = (conv.nickname || conv.otherUser?.name)?.toLowerCase().includes(q);
       const userMatch = conv.otherUser?.username?.toLowerCase().includes(q);
       const msgMatch = conv.lastMsg?.content?.toLowerCase().includes(q);
       return nameMatch || userMatch || msgMatch;
@@ -1557,7 +1571,7 @@ export default function Messages({ currentUser }: MessagesProps) {
 
   return (
     <div className="flex-1 w-full h-full select-none">
-      <div className="bg-white overflow-hidden flex w-full h-full">
+      <div className="bg-white overflow-hidden flex w-full h-full relative">
         {/* Left Sidebar: Conversations & Filters */}
         <div
           className={`${
@@ -1677,7 +1691,7 @@ export default function Messages({ currentUser }: MessagesProps) {
                   >
                     <div className="w-11 h-11 rounded-full flex-shrink-0 relative">
                       <img
-                        src={conv.otherUser?.avatar_url || '/favicon.svg'}
+                        src={conv.otherUser?.avatar_url || '/frontend/dist/favicon.svg'}
                         alt={conv.otherUser?.name}
                         className="w-full h-full rounded-full object-cover"
                       />
@@ -1686,7 +1700,8 @@ export default function Messages({ currentUser }: MessagesProps) {
                     <div className="min-w-0 flex-1">
                       <div className="flex justify-between items-center gap-2 mb-0.5">
                         <span className="font-bold text-text-primary text-xs truncate inline-flex items-center gap-1">
-                          {conv.otherUser?.name}
+                          {conv.nickname || conv.otherUser?.name}
+                          {conv.muted && <BellOff className="w-3 h-3 shrink-0 text-text-secondary" aria-label="Messages muted" />}
                           {conv.otherUser?.is_blue_verified && (
                             <span className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-sky-500 text-white text-[9px] leading-none shrink-0">
                               ✓
@@ -1746,7 +1761,7 @@ export default function Messages({ currentUser }: MessagesProps) {
                     className="w-10 h-10 rounded-full flex-shrink-0 relative cursor-pointer"
                   >
                     <img
-                      src={selectedConv.otherUser?.avatar_url || '/favicon.svg'}
+                      src={selectedConv.otherUser?.avatar_url || '/frontend/dist/favicon.svg'}
                       alt={selectedConv.otherUser?.name}
                       className="w-full h-full rounded-full object-cover"
                     />
@@ -1760,7 +1775,7 @@ export default function Messages({ currentUser }: MessagesProps) {
                       }
                       className="font-bold text-text-primary text-sm truncate hover:underline inline-flex items-center gap-1 cursor-pointer"
                     >
-                      {selectedConv.otherUser?.name}
+                      {selectedConv.nickname || selectedConv.otherUser?.name}
                       {selectedConv.otherUser?.is_blue_verified && (
                         <span className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-sky-500 text-white text-[9px] leading-none">
                           ✓
@@ -1777,7 +1792,7 @@ export default function Messages({ currentUser }: MessagesProps) {
                   <button
                     type="button"
                     onClick={() => startCall('voice')}
-                    disabled={Boolean(activeCall || incomingCall)}
+                    disabled={chatBlocked || Boolean(activeCall || incomingCall)}
                     className="p-2 rounded-full hover:bg-surface-container-low text-text-primary cursor-pointer disabled:opacity-40"
                     title="Telepon Suara"
                     aria-label="Telepon Suara"
@@ -1787,7 +1802,7 @@ export default function Messages({ currentUser }: MessagesProps) {
                   <button
                     type="button"
                     onClick={() => startCall('video')}
-                    disabled={Boolean(activeCall || incomingCall)}
+                    disabled={chatBlocked || Boolean(activeCall || incomingCall)}
                     className="p-2 rounded-full hover:bg-surface-container-low text-text-primary cursor-pointer disabled:opacity-40"
                     title="Video Call (VC)"
                     aria-label="Video Call (VC)"
@@ -1796,18 +1811,20 @@ export default function Messages({ currentUser }: MessagesProps) {
                   </button>
                   <button
                     type="button"
-                    onClick={() =>
-                      navigate(`/profile/${selectedConv.otherUser.username || selectedConv.otherUser.id}`)
-                    }
+                    ref={detailsButtonRef}
+                    onClick={() => setDetailsOpen((open) => !open)}
                     className="p-2 rounded-full hover:bg-surface-container-low text-text-primary cursor-pointer"
-                    title="Lihat Profil"
-                    aria-label="Lihat Profil"
+                    title="Details"
+                    aria-label="Chat details"
+                    aria-expanded={detailsOpen}
+                    aria-controls="chat-details"
                   >
-                    <MoreVertical className="w-4.5 h-4.5" />
+                    <Info className={`w-4.5 h-4.5 ${detailsOpen ? 'text-primary' : ''}`} strokeWidth={2} />
                   </button>
                 </div>
               </div>
 
+              {chatBlocked && <p role="status" className="px-5 py-2 text-xs text-red-500">Pesan dan panggilan tidak tersedia karena pengguna diblokir.</p>}
               {/* Pending Shop Product Banner (when redirected from Shop) */}
               {pendingShopPost && (
                 <div className="mx-5 mt-3 p-3 rounded-2xl bg-surface-container-low border border-border-subtle/40 flex items-center justify-between gap-3">
@@ -1878,7 +1895,7 @@ export default function Messages({ currentUser }: MessagesProps) {
                           src={
                             (isMe
                               ? (currentUser as any).avatar || (currentUser as any).avatar_url
-                              : selectedConv.otherUser?.avatar_url) || '/favicon.svg'
+                              : selectedConv.otherUser?.avatar_url) || '/frontend/dist/favicon.svg'
                           }
                           alt=""
                           className="w-7 h-7 rounded-full object-cover shrink-0 mb-4"
@@ -2059,7 +2076,7 @@ export default function Messages({ currentUser }: MessagesProps) {
                     placeholder="Type a message..."
                     value={messageText}
                     onChange={(e) => setMessageText(e.target.value)}
-                    disabled={sending}
+                    disabled={sending || chatBlocked}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !sending) handleSendMessage();
                     }}
@@ -2103,7 +2120,7 @@ export default function Messages({ currentUser }: MessagesProps) {
                   type="button"
                   aria-label={t('Kirim pesan')}
                   onClick={handleSendMessage}
-                  disabled={sending || !messageText.trim()}
+                  disabled={sending || chatBlocked || !messageText.trim()}
                   className="w-10 h-10 bg-[#151515] text-white rounded-full shadow-xs hover:brightness-125 active:scale-95 transition-all flex items-center justify-center cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
                 >
                   <Send className="w-4 h-4" />
@@ -2119,6 +2136,22 @@ export default function Messages({ currentUser }: MessagesProps) {
             </div>
           )}
         </div>
+        {detailsOpen && selectedConv && <ChatDetails key={selectedConv.otherUser.id} peer={selectedConv.otherUser}
+          onClose={() => { setDetailsOpen(false); detailsButtonRef.current?.focus(); }}
+          onSettings={(settings) => {
+            if (selectedConvIdRef.current === selectedConv.id) setChatBlocked(settings.blocked_between);
+            setConversations((items) => items.map((conv) => conv.id === selectedConv.id ? { ...conv, muted: settings.muted, nickname: settings.nickname } : conv));
+          }}
+          onDelete={() => {
+            const removedId = selectedConv.id;
+            setConversations((items) => items.filter((conv) => conv.id !== removedId));
+            if (selectedConvIdRef.current === removedId) {
+              selectedConvIdRef.current = null;
+              setSelectedConvId(null); setMessages([]); setDetailsOpen(false); setMobileShowChat(false);
+              setIntentTargetUser(null); setPendingShopPost(null);
+            }
+          }}
+        />}
       </div>
 
       {/* Modal: Manual Location Input */}

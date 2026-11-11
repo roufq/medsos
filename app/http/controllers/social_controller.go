@@ -690,7 +690,9 @@ func (h *SocialController) Notifications(c goravelhttp.Context) goravelhttp.Resp
 		Joins("LEFT JOIN posts ON notifications.entity_type = 'post' AND posts.id = notifications.entity_id").
 		Joins("LEFT JOIN post_comments ON notifications.entity_type = 'comment' AND post_comments.id = notifications.entity_id").
 		Joins("LEFT JOIN posts AS comment_posts ON comment_posts.id = post_comments.post_id").
-		Where("notifications.user_id = ?", userID).Preload("Actor").Order("notifications.created_at desc").Limit(50).Find(&items).Error; err != nil {
+		Where("notifications.user_id = ?", userID).
+		Where("notifications.entity_type <> 'conversation' OR NOT EXISTS (SELECT 1 FROM conversation_settings WHERE conversation_settings.user_id = notifications.user_id AND conversation_settings.peer_id = notifications.actor_id AND conversation_settings.muted = ?)", true).
+		Preload("Actor").Order("notifications.created_at desc").Limit(50).Find(&items).Error; err != nil {
 		return c.Response().Json(500, goravelhttp.Json{"error": "failed to load notifications"})
 	}
 	for i := range items {

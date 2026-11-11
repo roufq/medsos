@@ -226,7 +226,7 @@ func (h *UserController) AdminGetStatsAPI(c goravelhttp.Context) goravelhttp.Res
 		`SELECT COALESCE(SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END), 0) AS pending,
 			COALESCE(SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END), 0) AS today,
 			COALESCE(SUM(CASE WHEN status = 'resolved' THEN 1 ELSE 0 END), 0) AS resolved
-		FROM post_reports`, startToday).Scan(&reportCounts).Error; err != nil {
+		FROM (SELECT status, created_at FROM post_reports UNION ALL SELECT status, created_at FROM conversation_reports) AS reports`, startToday).Scan(&reportCounts).Error; err != nil {
 		return c.Response().Json(http.StatusInternalServerError, goravelhttp.Json{"error": "Failed to load stats"})
 	}
 	counts["pending_reports"], counts["reports_today"], counts["resolved_reports"] =

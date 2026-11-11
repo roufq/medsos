@@ -130,6 +130,8 @@ func InitDB() {
 		&models.JobPosting{},
 		&models.JobApplication{},
 		&models.Conversation{},
+		&models.ConversationSetting{},
+		&models.ConversationReport{},
 		&models.Message{},
 		&models.QueueRecord{},
 		&models.FailedQueueRecord{},

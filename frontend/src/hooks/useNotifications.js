@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { socialApi } from '../api/socialApi';
+import { messageApi } from '../api/messageApi';
+import { useNavigate } from 'react-router-dom';
 
 // Shared by Header.tsx and AdminDashboardPage.jsx, which previously each kept
 // their own copy of this fetch/dropdown/mark-read logic and had already begun
@@ -7,6 +9,7 @@ import { socialApi } from '../api/socialApi';
 // onOpen receives the whole notification so callers can route to the post
 // (entity_type "post") or fall back to the actor's profile.
 export function useNotifications(onOpen) {
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [notificationsLoading, setNotificationsLoading] = useState(false);
@@ -43,6 +46,15 @@ export function useNotifications(onOpen) {
       }
     }
     setNotificationsOpen(false);
+    if (notification.entity_type === 'conversation' && notification.actor_id) {
+      try {
+        const intent = await messageApi.createIntent({ user_id: notification.actor_id });
+        navigate(`/messages?t=${encodeURIComponent(intent.token)}`);
+      } catch (error) {
+        console.error('Failed to open conversation', error);
+      }
+      return;
+    }
     if (onOpen) onOpen(notification);
   };
 

@@ -19,6 +19,8 @@ type Conversation struct {
 	Messages       []Message `gorm:"foreignKey:ConversationID;constraint:OnDelete:CASCADE" json:"messages"`
 	UnreadCount    int64     `gorm:"-" json:"unread_count"`
 	HasShopMessage bool      `gorm:"-" json:"has_shop_message"`
+	Muted          bool      `gorm:"-" json:"muted"`
+	Nickname       string    `gorm:"-" json:"nickname"`
 }
 
 func (c *Conversation) BeforeCreate(tx *gorm.DB) error {

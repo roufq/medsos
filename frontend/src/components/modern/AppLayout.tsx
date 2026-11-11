@@ -1,6 +1,6 @@
 import { postUrl } from '../../utils/postUrl';
 import { profileUrl } from '../../utils/profileUrl';
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Phone, PhoneIncoming, PhoneOff, Video as VideoIcon } from 'lucide-react';
 import Header from './Header';
@@ -53,7 +53,7 @@ export default function AppLayout({ currentTab, children, onPostCreated, compose
     mode: 'voice' | 'video';
     fromUser: any;
   } | null>(null);
-  const handledGlobalCallsRef = React.useRef<Set<string>>(new Set());
+  const handledGlobalCallsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (currentTab === 'messages' || !user?.id) {

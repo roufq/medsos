@@ -51,6 +51,15 @@ Status diverifikasi terhadap kode dan smoke test API (53 skenario) pada 2026-10-
 
 Harga (ISO 4217, satuan minor), kategori, kondisi baru/bekas, stok, merek, pengiriman (ambil langsung/COD/ekspedisi), metode pembayaran, 1–6 gambar, dan maksimal 1 video 30–90 detik. Like, komentar, share, embed, report, repost, dan views berlaku sama seperti post biasa.
 
+## Pesan: panel Details
+
+- Tombol info pada header chat membuka panel Details: Mute messages, Members, Nicknames, Block/Unblock, Report, dan Delete chat.
+- Mute dan nickname disimpan per pengguna; nickname hanya terlihat oleh pemilik pengaturan. Mute menghentikan notifikasi pesan, sementara pesan tetap diterima.
+- Members membuka profil lawan chat. Block/Unblock memakai fitur blokir pengguna yang sudah ada.
+- Report masuk ke antrean moderasi admin dan dapat ditandai resolved atau dismissed.
+- Delete chat menyembunyikan riwayat hanya untuk pengguna yang menghapus. Pesan baru memunculkan percakapan kembali tanpa mengembalikan riwayat lama.
+- Tabel `conversation_settings` dan `conversation_reports` dibuat oleh AutoMigrate saat backend dijalankan ulang.
+
 ## Media
 
 - Storage lokal di folder `uploads`; setiap upload dicatat di tabel `media_uploads`, dan post hanya boleh memakai upload milik penulisnya.

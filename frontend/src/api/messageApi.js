@@ -1,6 +1,10 @@
 import api from './axios';
 
 export const messageApi = {
+  getSettings: async (userId) => (await api.get(`/messages/users/${userId}/settings`)).data,
+  updateSettings: async (userId, settings) => (await api.put(`/messages/users/${userId}/settings`, settings)).data,
+  deleteHistory: async (userId) => (await api.delete(`/messages/users/${userId}/history`)).data,
+  report: async (userId, reason, details) => (await api.post(`/messages/users/${userId}/report`, { reason, details })).data,
   getConversations: async () => {
     const res = await api.get('/messages/conversations');
     return res.data;

@@ -130,6 +130,10 @@ func Api() {
 
 		// Messages
 		router.Get("messages/conversations", msgController.GetConversations)
+		router.Get("messages/users/{id}/settings", msgController.ConversationSettings)
+		router.Put("messages/users/{id}/settings", msgController.UpdateConversationSettings)
+		router.Delete("messages/users/{id}/history", msgController.DeleteConversationHistory)
+		router.Post("messages/users/{id}/report", msgController.ReportConversation)
 		router.Get("messages", msgController.GetMessages)
 		router.Post("messages", msgController.SendMessage)
 		router.Post("messages/upload", msgController.UploadAttachment)
@@ -143,6 +147,8 @@ func Api() {
 			admin.Get("admin/stats", userController.AdminGetStatsAPI)
 			admin.Get("admin/users", userController.AdminGetUsersAPI)
 			admin.Get("admin/reports", socialController.AdminReports)
+			admin.Get("admin/conversation-reports", msgController.AdminConversationReports)
+			admin.Put("admin/conversation-reports/{id}", msgController.ReviewConversationReport)
 			admin.Put("admin/reports/{id}", socialController.ReviewReport)
 			admin.Post("admin/users/{id}/block", socialController.AdminBlockUser)
 			admin.Delete("admin/users/{id}/block", socialController.AdminUnblockUser)

@@ -57,7 +57,7 @@ const AdminModerationTab = ({ stats, reports = [], onReview }) => {
               {reports.map((report) => (
                 <tr key={report.id} className="hover:bg-surface-container-low/50 transition-colors">
                   <td className="px-8 py-5 max-w-sm">
-                    <a href={`/post/${report.post_hash || report.post_id}`} className="font-semibold text-on-surface hover:text-primary line-clamp-1">{report.post_title || report.post_content || `Post ${report.post_hash || report.post_id}`}</a>
+                    <a href={report.report_type === 'chat' ? `/profile/${report.reported_user_id}` : `/post/${report.post_hash || report.post_id}`} className="font-semibold text-on-surface hover:text-primary line-clamp-1">{report.report_type === 'chat' ? `Chat: ${report.author_name}` : report.post_title || report.post_content || `Post ${report.post_hash || report.post_id}`}</a>
                     {report.details && <p className="text-xs text-text-secondary line-clamp-1 mt-1">{report.details}</p>}
                   </td>
                   <td className="px-8 py-5">
@@ -72,7 +72,7 @@ const AdminModerationTab = ({ stats, reports = [], onReview }) => {
                     {report.status === 'pending' ? (
                       <div className="flex gap-2">
                         <button disabled={busyId === report.id} onClick={() => review(report, 'dismissed')} className="px-3 py-1.5 text-success bg-success/10 rounded-lg text-xs font-bold disabled:opacity-50">Dismiss</button>
-                        <button disabled={busyId === report.id} onClick={() => review(report, 'resolved', true)} className="px-3 py-1.5 text-error bg-error/10 rounded-lg text-xs font-bold disabled:opacity-50">Delete post</button>
+                        <button disabled={busyId === report.id} onClick={() => review(report, 'resolved', report.report_type !== 'chat')} className="px-3 py-1.5 text-error bg-error/10 rounded-lg text-xs font-bold disabled:opacity-50">{report.report_type === 'chat' ? 'Resolve' : 'Delete post'}</button>
                       </div>
                     ) : <span className="text-xs text-text-secondary">Reviewed</span>}
                   </td>

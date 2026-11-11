@@ -1,17 +1,17 @@
 # Graph Report - medsos  (2026-11-11)
 
 ## Corpus Check
-- 282 files · ~362,010 words
+- 286 files · ~365,057 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 15 file(s) not represented in the graph (top: (none) 7, .css 2, .exe 2)
 
 ## Summary
-- 1839 nodes · 6161 edges · 101 communities (79 shown, 22 thin omitted)
-- Extraction: 96% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 219 edges (avg confidence: 0.86)
+- 1862 nodes · 6334 edges · 106 communities (84 shown, 22 thin omitted)
+- Extraction: 96% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 226 edges (avg confidence: 0.86)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `c38ff543`
+- Built from commit: `e571ecef`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -21,20 +21,20 @@
 - github.com/goravel/framework/contracts/http.Context
 - package.json
 - validate-coverage-ledger.cjs
-- AppLayout.tsx
+- PostCard.tsx
 - testing.T
-- useAuth
+- react
 - time.Time
 - User
 - Post
-- react
+- AdminDashboardPage.jsx
 - providers.go
 - Messages.tsx
 - jwt/jwt.go
 - Api
 - useLanguage
 - validate-findings.test.cjs
-- issueTokens
+- AuthService
 - Lang
 - Message
 - .UpdatePost
@@ -45,25 +45,25 @@
 - JobRepository
 - Native, managed, and packaged artifacts
 - CreatePostModal.tsx
-- PostCard.tsx
+- AppLayout.tsx
 - AppModern.tsx
 - AccountController
 - PostComment
 - data.ts
-- setAuthCookies
-- canViewPost
+- compress.go
+- SocialController
 - Claims
 - Proposal Investasi & Pengajuan Kemitraan Platform Media Sosial, Komunitas & UMKM Terpadu
 - confirmed
-- MessageController
+- blockedBetween
 - ATTACK-CLASSES.md
-- NetworkRepository
+- MediaItem
 - Security Audit
 - os
 - App.jsx
 - PostController
 - validate-findings.cjs
-- go_pkg_github_com_joho_godotenv
+- ExampleTestSuite
 - gorm.io/gorm.DB
 - postRepo
 - frontend/README.md — Vite + React Template Readme
@@ -112,14 +112,19 @@
 - go_pkg_github_com_golang_migrate_migrate_v4_source_file
 - go_pkg_html
 - go_pkg_sort
+- lucide-react
+- .Upload
+- InspectFile
+- chatPeer
+- rate_limit_middleware_test.go
 
 ## God Nodes (most connected - your core abstractions)
 1. `Attr` - 78 edges
 2. `useLanguage()` - 65 edges
 3. `User` - 61 edges
 4. `Element` - 59 edges
-5. `react` - 55 edges
-6. `authenticatedUserID()` - 52 edges
+5. `react` - 56 edges
+6. `authenticatedUserID()` - 54 edges
 7. `RenderBeranda()` - 51 edges
 8. `useAuth()` - 49 edges
 9. `RenderProfile()` - 47 edges
@@ -144,19 +149,19 @@
 - **Connect Modern documentation suite (index + setup + requirements + providers + checklist)** — doc_readme_doc, local_setup_doc, doc_requirements_status_doc, doc_external_providers_doc, doc_production_checklist_doc [EXTRACTED 0.95]
 - **Connect Modern purple cube brand visual identity** — frontend_public_favicon_svg, frontend_src_assets_hero_png, frontend_index_doc [INFERRED 0.75]
 
-## Communities (101 total, 22 thin omitted)
+## Communities (106 total, 22 thin omitted)
 
 ### Community 0 - "post_service.go"
-Cohesion: 0.12
-Nodes (55): Jobs(), flexBool, messageIntentPayload, LinkPreviewRequest, go_pkg_bytes, go_pkg_context, go_pkg_crypto_aes, go_pkg_crypto_cipher (+47 more)
+Cohesion: 0.13
+Nodes (55): flexBool, messageIntentPayload, LinkPreviewRequest, go_pkg_bytes, go_pkg_context, go_pkg_crypto_aes, go_pkg_crypto_cipher, go_pkg_crypto_rand (+47 more)
 
 ### Community 1 - "dom.go"
 Cohesion: 0.11
 Nodes (109): DashboardStats, LoginData, RegisterData, Attr, GroupNode, Raw, Text, io.Writer (+101 more)
 
 ### Community 2 - "github.com/goravel/framework/contracts/http.Context"
-Cohesion: 0.15
-Nodes (13): dbTransactionResponse(), HealthLive(), HealthReady(), SessionActivity(), SessionInfo(), SocialController, renderPublic(), acceptedFollower() (+5 more)
+Cohesion: 0.12
+Nodes (19): authCookie(), clearAuthCookies(), setAuthCookies(), HealthLive(), HealthReady(), SessionActivity(), SessionInfo(), SocialController (+11 more)
 
 ### Community 3 - "package.json"
 Cohesion: 0.05
@@ -166,53 +171,53 @@ Nodes (43): dependencies, axios, lucide-react, motion, react, react-dom, react-r
 Cohesion: 0.12
 Nodes (42): ATTEMPT_FIELDS, ATTEMPT_STATUSES, canonicalCoverageId(), collectUnitErrors(), createErrorList(), encodeCanonicalRef(), escapeUnsafeDiagnosticCharacters(), fs (+34 more)
 
-### Community 5 - "AppLayout.tsx"
-Cohesion: 0.12
-Nodes (30): postApi, Navbar(), AddPortfolioModal(), AddPortfolioModalProps, AppLayout(), AppLayoutProps, ROUTES, CommentThread() (+22 more)
+### Community 5 - "PostCard.tsx"
+Cohesion: 0.09
+Nodes (36): postApi, AddPortfolioModal(), AddPortfolioModalProps, CommentThread(), CommentThreadProps, errorText(), APP_ONLY, EmbedModal() (+28 more)
 
 ### Community 6 - "testing.T"
-Cohesion: 0.06
-Nodes (45): TestFixedWindowLimiterIsSafeUnderConcurrentLoad(), TestFixedWindowLimiterRejectsAndResets(), TestFetchLinkPreviewRetriesAreBounded(), TestFetchLinkPreviewUpdatesQueuedLink(), TestPostHashCreation(), TestUserBeforeCreateGeneratesUsername(), TestDescriptionCountsWords(), TestPostRules() (+37 more)
+Cohesion: 0.16
+Nodes (19): TestFetchLinkPreviewRetriesAreBounded(), TestFetchLinkPreviewUpdatesQueuedLink(), TestPostHashCreation(), TestUserBeforeCreateGeneratesUsername(), NewMessageRepository(), messageTestDB(), TestDeleteChatHistoryIsPrivateAndNewMessagesDoNotRestoreOldHistory(), TestMutedChatSuppressesNotificationsAndReadingClearsUnread() (+11 more)
 
-### Community 7 - "useAuth"
+### Community 7 - "react"
 Cohesion: 0.09
-Nodes (33): authApi, userApi, IdleSession(), Sidebar(), useAppNavigate(), Props, ProfileHeader(), AuthContext (+25 more)
+Nodes (33): authApi, userApi, IdleSession(), useAppNavigate(), ProfileHeader(), AuthContext, useAuth(), HomePage() (+25 more)
 
 ### Community 8 - "time.Time"
-Cohesion: 0.07
-Nodes (26): User, Post, User, PostLink, User, EffectiveDailyQuota(), TestSubscriptionPlans(), adminReportResponse (+18 more)
+Cohesion: 0.08
+Nodes (23): User, Post, User, User, adminReportResponse, time.Time, ConversationReport, FailedQueueRecord (+15 more)
 
 ### Community 9 - "User"
-Cohesion: 0.11
-Nodes (7): User, PostComment, UserRepository, callSession, callSignalEvent, NetworkRepositoryImpl, userRepo
+Cohesion: 0.08
+Nodes (10): NewNetworkController(), User, PostComment, NetworkRepository, NewNetworkRepository(), UserRepository, callSession, callSignalEvent (+2 more)
 
 ### Community 10 - "Post"
 Cohesion: 0.12
 Nodes (8): Post, PostComment, User, PostRepository, PostService, BerandaData, ProfileData, PostHashtag
 
-### Community 11 - "react"
-Cohesion: 0.13
-Nodes (11): AdminModerationTab(), AdminOverviewTab(), AdminUsersTab(), LinkPreviewCard(), PostCard(), PostForm(), useNotifications(), AdminDashboardPage() (+3 more)
+### Community 11 - "AdminDashboardPage.jsx"
+Cohesion: 0.24
+Nodes (7): adminApi, AdminModerationTab(), AdminOverviewTab(), AdminUsersTab(), useNotifications(), AdminDashboardPage(), AdminDashboardPage
 
 ### Community 12 - "providers.go"
-Cohesion: 0.06
-Nodes (29): Providers(), ExampleTestSuite, go_pkg_github_com_goravel_framework_auth, go_pkg_github_com_goravel_framework_cache, go_pkg_github_com_goravel_framework_crypt, go_pkg_github_com_goravel_framework_database, go_pkg_github_com_goravel_framework_event, go_pkg_github_com_goravel_framework_filesystem (+21 more)
+Cohesion: 0.08
+Nodes (23): Providers(), go_pkg_github_com_goravel_framework_auth, go_pkg_github_com_goravel_framework_cache, go_pkg_github_com_goravel_framework_crypt, go_pkg_github_com_goravel_framework_database, go_pkg_github_com_goravel_framework_event, go_pkg_github_com_goravel_framework_filesystem, go_pkg_github_com_goravel_framework_grpc (+15 more)
 
 ### Community 13 - "Messages.tsx"
-Cohesion: 0.08
-Nodes (27): adminApi, api, goToLogin(), onPublicPage(), PUBLIC_PATHS, readCookie(), refreshSession(), jobApi (+19 more)
+Cohesion: 0.09
+Nodes (28): api, goToLogin(), onPublicPage(), PUBLIC_PATHS, readCookie(), refreshSession(), jobApi, messageApi (+20 more)
 
 ### Community 14 - "jwt/jwt.go"
 Cohesion: 0.05
-Nodes (107): App(), Artisan(), Auth(), Cache(), Config(), Crypt(), DB(), Event() (+99 more)
+Nodes (109): App(), Artisan(), Auth(), Cache(), Config(), Crypt(), DB(), Event() (+101 more)
 
 ### Community 15 - "Api"
-Cohesion: 0.15
-Nodes (22): GetLocalStorageService(), NewAccountController(), NewAuthController(), NewPostController(), NewSocialController(), NewUserController(), AdminMiddleware(), ConcurrentLimit() (+14 more)
+Cohesion: 0.13
+Nodes (23): GetLocalStorageService(), NewAccountController(), NewAuthController(), NewPostController(), NewSocialController(), NewUserController(), AdminMiddleware(), AuthMiddleware() (+15 more)
 
 ### Community 16 - "useLanguage"
-Cohesion: 0.09
-Nodes (30): LanguageSwitch(), AuthLayout(), AuthLayoutProps, Feature, AuthShowcase(), Feed(), FeedProps, emptyResults (+22 more)
+Cohesion: 0.08
+Nodes (29): LanguageSwitch(), Toast(), AuthLayout(), AuthLayoutProps, Feature, AuthShowcase(), Feed(), FeedProps (+21 more)
 
 ### Community 17 - "validate-findings.test.cjs"
 Cohesion: 0.06
@@ -226,21 +231,21 @@ Nodes (34): agents_skills_security_audit_report_schema, LIMITS, archivedAttempt(
   validateDocument,
 }, localCheck(), os (+26 more)
 
-### Community 18 - "issueTokens"
-Cohesion: 0.17
-Nodes (12): AuthResponse, LoginRequest, RefreshRequest, RegisterRequest, issueTokens(), normalizeUsername(), generate(), GenerateAccessToken() (+4 more)
+### Community 18 - "AuthService"
+Cohesion: 0.16
+Nodes (14): AuthResponse, LoginRequest, RefreshRequest, RegisterRequest, AuthService, issueTokens(), normalizeUsername(), generate() (+6 more)
 
 ### Community 19 - "Lang"
 Cohesion: 0.12
 Nodes (13): Lang(), context.Context, github.com/goravel/framework/contracts/translation.Translator, net.Conn, net.IP, FetchLinkPreview, FallbackPreview(), FetchPreview() (+5 more)
 
 ### Community 20 - "Message"
-Cohesion: 0.15
-Nodes (9): NewMessageController(), Conversation, User, Message, User, MessageRepository, NewMessageRepository(), Conversation (+1 more)
+Cohesion: 0.14
+Nodes (8): NewMessageController(), Conversation, User, Message, User, MessageRepository, Conversation, MessageRepositoryImpl
 
 ### Community 21 - ".UpdatePost"
-Cohesion: 0.12
-Nodes (23): CreatePostRequest, MediaItem, ShopPostRequest, UpdatePostRequest, Queue(), PostMedia, ShopProduct, blockedEitherWay() (+15 more)
+Cohesion: 0.13
+Nodes (21): Queue(), PostLink, PostMedia, blockedEitherWay(), buildMedia(), checkSubscriptionQuota(), createMentionNotifications(), dispatchLinkPreview() (+13 more)
 
 ### Community 22 - ".Callback"
 Cohesion: 0.14
@@ -251,8 +256,8 @@ Cohesion: 0.16
 Nodes (15): Connect Modern (product/app name), Goravel Framework, start-local.ps1 (local backend/frontend bootstrap script), stop-local.ps1 (stops background local server), doc/EXTERNAL_PROVIDERS.md — External Provider Configuration, doc/PRODUCTION_CHECKLIST.md — Production Readiness Checklist, doc/README.md — Connect Modern Documentation Index, doc/REQUIREMENTS_STATUS.md — Functional Requirements Status (+7 more)
 
 ### Community 24 - "authenticatedUserID"
-Cohesion: 0.14
-Nodes (10): routeID(), authenticatedUserID(), acceptedFollowingBatch(), blockedBetweenBatch(), canViewPreloadedPost(), followUser(), SocialController, notifyFollow() (+2 more)
+Cohesion: 0.13
+Nodes (7): dbTransactionResponse(), routeID(), authenticatedUserID(), followUser(), notifyFollow(), publicUsers(), NetworkController
 
 ### Community 25 - "Portfolio"
 Cohesion: 0.21
@@ -267,40 +272,40 @@ Cohesion: 0.07
 Nodes (30): Apple app resources, Apple IPS crash reports, Bridge request ceiling, CPython pyc files, Desktop installation directories, DOS MZ with Ghidra, ELF note tables, Erlang BEAM files (+22 more)
 
 ### Community 28 - "CreatePostModal.tsx"
-Cohesion: 0.15
-Nodes (24): CATEGORIES, CreatePostModal(), CreatePostModalProps, CURRENCIES, errorText(), formatDuration(), FULFILLMENT, MediaItem (+16 more)
+Cohesion: 0.16
+Nodes (23): CATEGORIES, CreatePostModal(), CreatePostModalProps, CURRENCIES, errorText(), formatDuration(), FULFILLMENT, MediaItem (+15 more)
 
-### Community 29 - "PostCard.tsx"
-Cohesion: 0.15
-Nodes (17): Toast(), APP_ONLY, EmbedModal(), errorText(), PLATFORMS, REPORT_REASONS, ReportModal(), RepostModal() (+9 more)
+### Community 29 - "AppLayout.tsx"
+Cohesion: 0.21
+Nodes (16): Navbar(), Sidebar(), AppLayout(), AppLayoutProps, ROUTES, emptyResults, Header(), OriginalPost() (+8 more)
 
 ### Community 30 - "AppModern.tsx"
 Cohesion: 0.15
 Nodes (11): ref_components_feed, ref_components_header, ref_components_jobs, ref_components_login, ref_components_messages, ref_components_network, ref_components_profile, ref_components_rightsidebar (+3 more)
 
 ### Community 31 - "AccountController"
-Cohesion: 0.15
+Cohesion: 0.14
 Nodes (13): findUserByTarget(), issueCode(), nullableString(), randomCode(), setPasswordAndRevoke(), validPassword(), valueOf(), verifyCode() (+5 more)
 
 ### Community 32 - "PostComment"
-Cohesion: 0.20
-Nodes (8): PostComment, Post, User, MentionedUsernames(), normalizedUnique(), normalizeHashtags(), NotifyCommentMentions(), TestHashtagAndMentionExtraction()
+Cohesion: 0.50
+Nodes (3): PostComment, Post, User
 
 ### Community 33 - "data.ts"
 Cohesion: 0.13
 Nodes (15): Finalize with Release Please, Inventory before prose, REA changelog update, Write for users and retain credit, initialPosts, mockJobs, mockUsers, HeaderProps (+7 more)
 
-### Community 34 - "setAuthCookies"
-Cohesion: 0.15
-Nodes (11): authCookie(), clearAuthCookies(), setAuthCookies(), AuthMiddleware(), AuthController, go_pkg_crypto_subtle, github.com/goravel/framework/contracts/http.Cookie, NewToken() (+3 more)
+### Community 34 - "compress.go"
+Cohesion: 0.21
+Nodes (15): go_pkg_encoding_binary, go_pkg_image, go_pkg_image_color, go_pkg_image_draw, go_pkg_image_jpeg, go_pkg_image_png, image.Image, applyOrientation() (+7 more)
 
-### Community 35 - "canViewPost"
-Cohesion: 0.20
-Nodes (11): appBaseURL(), formatPrice(), loadPublicPost(), publicPostURL(), routePostID(), shareLinks(), blockedBetween(), canViewPost() (+3 more)
+### Community 35 - "SocialController"
+Cohesion: 0.17
+Nodes (14): appBaseURL(), formatPrice(), loadPublicPost(), publicPostURL(), routePostID(), shareLinks(), acceptedFollowingBatch(), blockedBetweenBatch() (+6 more)
 
 ### Community 36 - "Claims"
 Cohesion: 0.13
-Nodes (19): RoleMiddleware(), LoginSession, UserRole, jwt.RegisteredClaims, Claims, ValidateRefreshToken(), CheckIdle(), End() (+11 more)
+Nodes (20): RoleMiddleware(), LoginSession, UserRole, jwt.RegisteredClaims, Claims, parse(), ValidateAccessToken(), ValidateRefreshToken() (+12 more)
 
 ### Community 37 - "Proposal Investasi & Pengajuan Kemitraan Platform Media Sosial, Komunitas & UMKM Terpadu"
 Cohesion: 0.11
@@ -310,25 +315,25 @@ Nodes (17): 1. Ringkasan Eksekutif & Tesis Investasi (Investment Thesis), 2. Ana
 Cohesion: 0.24
 Nodes (16): Structured hunter result, Cost budget, Coverage and prior runs, Full audit planning, Run profiles and scope, confirmed(), evidence(), needsValidation() (+8 more)
 
-### Community 39 - "MessageController"
-Cohesion: 0.17
-Nodes (8): cleanupStaleCallsLocked(), formatCallDurationText(), messageIntentKey(), queueCallEventLocked(), resolvePostToken(), resolveUserToken(), touchUserPresence(), MessageController
+### Community 39 - "blockedBetween"
+Cohesion: 0.18
+Nodes (9): cleanupStaleCallsLocked(), formatCallDurationText(), MessageController, messageIntentKey(), queueCallEventLocked(), resolvePostToken(), resolveUserToken(), touchUserPresence() (+1 more)
 
 ### Community 40 - "ATTACK-CLASSES.md"
 Cohesion: 0.14
 Nodes (7): Attack Classes, Attack classes — choose and split based on Phase 1, Architecture summary and companion selection, Deterministic coverage ledger, Phase 1: Map the source and plan coverage, Prior-run input, Reconnaissance
 
-### Community 41 - "NetworkRepository"
-Cohesion: 0.25
-Nodes (3): NewNetworkController(), NetworkRepository, NewNetworkRepository()
+### Community 41 - "MediaItem"
+Cohesion: 0.18
+Nodes (11): CreatePostRequest, MediaItem, ShopPostRequest, UpdatePostRequest, ShopProduct, buildShop(), CountWords(), normalizeFulfillment() (+3 more)
 
 ### Community 42 - "Security Audit"
 Cohesion: 0.14
 Nodes (14): Anti-patterns, Core principles, Full audit setup, Full audit workflow, Operating modes, Platform terminology, Recommend the smallest effective source fix, Require a boundary and result (+6 more)
 
 ### Community 44 - "App.jsx"
-Cohesion: 0.18
-Nodes (10): App(), AuthProvider(), applyTheme(), initialTheme, ThemeContext, ThemeProvider(), useTheme(), frontend_src_index (+2 more)
+Cohesion: 0.19
+Nodes (9): App(), AuthProvider(), applyTheme(), initialTheme, ThemeContext, ThemeProvider(), frontend_src_index, AppRouter() (+1 more)
 
 ### Community 45 - "PostController"
 Cohesion: 0.21
@@ -338,12 +343,16 @@ Nodes (5): compactStrings(), splitListInput(), PostType, MediaType, PostControll
 Cohesion: 0.11
 Nodes (40): canonicalKey(), append(), encode(), codePointLength(), collect(), collectDataLimitErrors(), collectFindingSemanticErrors(), collectSchemaErrors() (+32 more)
 
+### Community 47 - "ExampleTestSuite"
+Cohesion: 0.20
+Nodes (6): ExampleTestSuite, go_pkg_github_com_stretchr_testify_suite, github.com/goravel/framework/testing.TestCase, github.com/stretchr/testify/suite.Suite, TestExampleTestSuite(), TestCase
+
 ### Community 48 - "gorm.io/gorm.DB"
 Cohesion: 0.24
 Nodes (6): NewPostHash(), GenerateUsername(), gorm.io/gorm.DB, configEnv(), envInt(), InitDB()
 
 ### Community 49 - "postRepo"
-Cohesion: 0.35
+Cohesion: 0.31
 Nodes (4): postPreloads(), sanitizePostUsers(), withCounters(), postRepo
 
 ### Community 50 - "frontend/README.md — Vite + React Template Readme"
@@ -470,9 +479,25 @@ Nodes (3): Boundaries, Output, Scan
 Cohesion: 0.50
 Nodes (4): `FINDINGS-DETAIL.md`, `NEEDS-VALIDATION.md`, Phase 6: Produce target-neutral reports from final records, `REPORT.md`
 
+### Community 101 - "lucide-react"
+Cohesion: 0.36
+Nodes (4): LinkPreviewCard(), PostCard(), PostForm(), lucide-react
+
+### Community 102 - ".Upload"
+Cohesion: 0.31
+Nodes (3): github.com/goravel/framework/contracts/filesystem.File, StoredMedia, LocalStorageService
+
+### Community 103 - "InspectFile"
+Cohesion: 0.28
+Nodes (9): detectMedia(), envMegabytes(), InspectFile(), maxImageSize(), maxVideoSize(), TestInspectRejectsOversizedFile(), TestDetectMediaContainers(), TestVideoLongerThanThirtyMinutesRejected() (+1 more)
+
+### Community 105 - "rate_limit_middleware_test.go"
+Cohesion: 0.40
+Nodes (4): TestFixedWindowLimiterIsSafeUnderConcurrentLoad(), TestFixedWindowLimiterRejectsAndResets(), go_pkg_github_com_stretchr_testify_assert, go_pkg_sync_atomic
+
 ## Knowledge Gaps
-- **341 isolated node(s):** `fs`, `path`, `{ TextDecoder }`, `REQUIRED_FIELDS`, `REF_FIELDS` (+336 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 569 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **344 isolated node(s):** `fs`, `path`, `{ TextDecoder }`, `REQUIRED_FIELDS`, `REF_FIELDS` (+339 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 572 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **22 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
@@ -480,15 +505,15 @@ _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `confirmed()` connect `confirmed` to `AI, LLM, and Agent Hunting`, `Client-Side and Browser Hunting`, `Cloud and Deployment Hunting`, `Data Isolation and Lifecycle Hunting`, `Desktop, Mobile, and Local IPC Hunting`, `Memory Safety, Binary, and Kernel Hunting`, `Protocols, RPC, and Messaging Hunting`, `ATTACK-CLASSES.md`, `Resource Exhaustion and Availability Hunting`, `Security Audit`, `Vulnerability Hunting`, `Supply Chain and Release Hunting`, `validate-findings.test.cjs`, `HTTP-Protocol and Authentication Hunting`?**
   _High betweenness centrality (0.020) - this node is a cross-community bridge._
-- **Why does `Post` connect `Post` to `post_service.go`, `dom.go`, `canViewPost`, `time.Time`, `PostController`, `gorm.io/gorm.DB`, `postRepo`, `.UpdatePost`, `authenticatedUserID`?**
-  _High betweenness centrality (0.019) - this node is a cross-community bridge._
-- **Why does `User` connect `User` to `post_service.go`, `dom.go`, `github.com/goravel/framework/contracts/http.Context`, `Claims`, `time.Time`, `NetworkRepository`, `Post`, `UserService`, `gorm.io/gorm.DB`, `issueTokens`, `.UpdatePost`, `.Callback`, `authenticatedUserID`, `AccountController`?**
+- **Why does `User` connect `User` to `post_service.go`, `dom.go`, `github.com/goravel/framework/contracts/http.Context`, `Claims`, `time.Time`, `UserService`, `Post`, `gorm.io/gorm.DB`, `AuthService`, `.UpdatePost`, `.Callback`, `authenticatedUserID`, `AccountController`?**
   _High betweenness centrality (0.018) - this node is a cross-community bridge._
+- **Why does `JavaScript and Electron application artifacts` connect `JavaScript and Electron application artifacts` to `reverse-engineer-anything/SKILL.md`?**
+  _High betweenness centrality (0.016) - this node is a cross-community bridge._
 - **What connects `fs`, `path`, `{ TextDecoder }` to the rest of the system?**
-  _341 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _344 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `post_service.go` be split into smaller, more focused modules?**
-  _Cohesion score 0.12396363999600439 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.12995337995337997 - nodes in this community are weakly interconnected._
 - **Should `dom.go` be split into smaller, more focused modules?**
   _Cohesion score 0.11441647597254005 - nodes in this community are weakly interconnected._
 - **Should `github.com/goravel/framework/contracts/http.Context` be split into smaller, more focused modules?**
-  _Cohesion score 0.1497326203208556 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.11748381128584644 - nodes in this community are weakly interconnected._
