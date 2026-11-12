@@ -121,6 +121,7 @@ export default function Messages({ currentUser }: MessagesProps) {
   const [mobileShowChat, setMobileShowChat] = useState<boolean>(Boolean(intentToken));
   const [messages, setMessages] = useState<any[]>([]);
   const [messageText, setMessageText] = useState('');
+  const messageInputRef = useRef<HTMLInputElement | null>(null);
   const [error, setError] = useState('');
   const [sending, setSending] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -504,8 +505,9 @@ export default function Messages({ currentUser }: MessagesProps) {
 
   const handleSendMessage = async () => {
     const text = messageText.trim();
-    if (!text || !selectedConv) return;
+    if (!text || !selectedConv || sending || chatBlocked) return;
 
+    messageInputRef.current?.focus({ preventScroll: true });
     setSending(true);
     setError('');
     try {
@@ -2169,13 +2171,18 @@ export default function Messages({ currentUser }: MessagesProps) {
                   style={{ backgroundColor: 'rgb(var(--surface-low))', color: 'rgb(var(--text-main))' }}
                 >
                   <input
+                    ref={messageInputRef}
                     type="text"
                     placeholder="Type a message..."
                     value={messageText}
                     onChange={(e) => setMessageText(e.target.value)}
-                    disabled={sending || chatBlocked}
+                    disabled={chatBlocked}
+                    readOnly={sending}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !sending) handleSendMessage();
+                      if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
+                        e.preventDefault();
+                        handleSendMessage();
+                      }
                     }}
                     aria-label={t('Ketik pesan')}
                     className="w-full bg-transparent text-xs sm:text-sm text-text-primary outline-none placeholder:text-outline"
@@ -2216,6 +2223,7 @@ export default function Messages({ currentUser }: MessagesProps) {
                 <button
                   type="button"
                   aria-label={t('Kirim pesan')}
+                  onPointerDown={(e) => e.preventDefault()}
                   onClick={handleSendMessage}
                   disabled={sending || chatBlocked || !messageText.trim()}
                   className="w-10 h-10 bg-[#151515] text-white rounded-full shadow-xs hover:brightness-125 active:scale-95 transition-all flex items-center justify-center cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
