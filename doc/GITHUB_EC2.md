@@ -97,3 +97,5 @@ sudo git -C /opt/postter pull --ff-only origin production
 ```
 
 Perintah ini memperbarui source langsung di folder aplikasi aktif. Binary Go dan frontend tetap perlu dibangun, diterapkan, dan diperiksa sebelum update terlihat di website. `systemctl restart postter` saja tidak membangun ulang kode. Jangan jalankan installer awal untuk menimpa aplikasi aktif.
+
+Untuk build di EC2, backup data, aktivasi versi baru, dan konfigurasi TURN, ikuti [UPDATE_EC2.md](UPDATE_EC2.md).
