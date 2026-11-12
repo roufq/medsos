@@ -114,6 +114,20 @@ func (c *MessageController) GetConversations(ctx goravelhttp.Context) goravelhtt
 	if err != nil {
 		return ctx.Response().Json(500, goravelhttp.Json{"error": "Failed to get conversations"})
 	}
+	peerIDs := make([]int64, len(convs))
+	for i := range convs {
+		peerIDs[i] = convs[i].User1ID
+		if peerIDs[i] == userID {
+			peerIDs[i] = convs[i].User2ID
+		}
+	}
+	online, err := peerPresence(userID, peerIDs)
+	if err != nil {
+		return ctx.Response().Json(500, goravelhttp.Json{"error": "Failed to get user presence"})
+	}
+	for i := range convs {
+		convs[i].PeerOnline = online[peerIDs[i]]
+	}
 
 	return ctx.Response().Json(200, convs)
 }
@@ -623,6 +637,7 @@ func (c *MessageController) ResolveIntent(ctx goravelhttp.Context) goravelhttp.R
 }
 
 type callSignalEvent struct {
+	Sequence   uint64       `json:"sequence"`
 	CallID     string       `json:"call_id"`
 	SignalType string       `json:"signal_type"` // offer, answer, candidate, reject, busy, hangup
 	CallMode   string       `json:"call_mode"`   // voice, video
@@ -650,10 +665,11 @@ type callSession struct {
 }
 
 var (
-	callMu       sync.Mutex
-	callSessions = make(map[string]*callSession)
-	callQueues   = make(map[int64][]callSignalEvent)
-	userLastSeen = make(map[int64]int64)
+	callMu            sync.Mutex
+	callSessions      = make(map[string]*callSession)
+	callQueues        = make(map[int64][]callSignalEvent)
+	userLastSeen      = make(map[int64]int64)
+	callEventSequence uint64
 )
 
 func touchUserPresence(userID int64) {
@@ -675,6 +691,8 @@ func cleanupStaleCallsLocked(now int64) {
 }
 
 func queueCallEventLocked(targetUserID int64, ev callSignalEvent) {
+	callEventSequence++
+	ev.Sequence = callEventSequence
 	q := callQueues[targetUserID]
 	if len(q) >= 100 {
 		q = q[len(q)-99:]
@@ -765,7 +783,7 @@ func (c *MessageController) SendCallSignal(ctx goravelhttp.Context) goravelhttp.
 		callMu.Lock()
 		userLastSeen[userID] = now
 		cleanupStaleCallsLocked(now)
-		calleeOnline := now-userLastSeen[calleeID] <= 20
+		calleeOnline := userOnlineLocked(calleeID, now)
 		sess := &callSession{
 			CallID:     callID,
 			CallerID:   userID,
@@ -959,8 +977,15 @@ func (c *MessageController) PollCallSignals(ctx goravelhttp.Context) goravelhttp
 	callMu.Lock()
 	userLastSeen[userID] = now
 	cleanupStaleCallsLocked(now)
-	events := callQueues[userID]
-	delete(callQueues, userID)
+	ack, err := strconv.ParseUint(ctx.Request().Query("ack", "0"), 10, 64)
+	if err != nil {
+		callMu.Unlock()
+		return ctx.Response().Json(400, goravelhttp.Json{"error": "Invalid signaling acknowledgement"})
+	}
+	if ack > callEventSequence {
+		ack = 0
+	}
+	events := pendingCallEventsLocked(userID, ack)
 
 	var activeIncoming *goravelhttp.Json
 	var activeOutgoing *goravelhttp.Json
@@ -988,7 +1013,7 @@ func (c *MessageController) PollCallSignals(ctx goravelhttp.Context) goravelhttp
 			}
 		}
 		if sess.CallerID == userID && now-sess.CreatedAt <= 3600 {
-			calleeOnline := now-userLastSeen[sess.CalleeID] <= 20
+			calleeOnline := userOnlineLocked(sess.CalleeID, now)
 			activeOutgoing = &goravelhttp.Json{
 				"call_id":          sess.CallID,
 				"call_mode":        sess.CallMode,
@@ -998,6 +1023,7 @@ func (c *MessageController) PollCallSignals(ctx goravelhttp.Context) goravelhttp
 			}
 		}
 	}
+	sequence := callEventSequence
 	callMu.Unlock()
 
 	if events == nil {
@@ -1006,6 +1032,7 @@ func (c *MessageController) PollCallSignals(ctx goravelhttp.Context) goravelhttp
 
 	return ctx.Response().Json(200, goravelhttp.Json{
 		"events":          events,
+		"sequence":        sequence,
 		"active_incoming": activeIncoming,
 		"active_outgoing": activeOutgoing,
 	})

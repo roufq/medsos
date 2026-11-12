@@ -53,6 +53,7 @@ Harga (ISO 4217, satuan minor), kategori, kondisi baru/bekas, stok, merek, pengi
 
 ## Pesan: panel Details
 
+- Indikator online/offline pada daftar dan header chat mengikuti aktivitas koneksi di server (batas 20 detik), termasuk percakapan baru. Status online tidak ditampilkan antar-pengguna yang saling memblokir atau untuk akun nonaktif. Saat koneksi pembaca terputus atau data status kedaluwarsa, tampilan menunjukkan status tidak tersedia. Presence memakai memori proses untuk deployment satu instance; restart mengosongkannya sampai heartbeat berikutnya.
 - Tombol info pada header chat membuka panel Details: Mute messages, Members, Nicknames, Block/Unblock, Report, dan Delete chat.
 - Mute dan nickname disimpan per pengguna; nickname hanya terlihat oleh pemilik pengaturan. Mute menghentikan notifikasi pesan, sementara pesan tetap diterima.
 - Members membuka profil lawan chat. Block/Unblock memakai fitur blokir pengguna yang sudah ada.

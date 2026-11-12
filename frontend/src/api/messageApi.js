@@ -1,6 +1,7 @@
 import api from './axios';
 
 export const messageApi = {
+  getPresence: async (userId) => (await api.get(`/messages/users/${userId}/presence`, { timeout: 10000 })).data,
   getSettings: async (userId) => (await api.get(`/messages/users/${userId}/settings`)).data,
   updateSettings: async (userId, settings) => (await api.put(`/messages/users/${userId}/settings`, settings)).data,
   deleteHistory: async (userId) => (await api.delete(`/messages/users/${userId}/history`)).data,
@@ -42,11 +43,12 @@ export const messageApi = {
     return res.data;
   },
   sendCallSignal: async (payload) => {
-    const res = await api.post('/messages/call/signal', payload);
+    const res = await api.post('/messages/call/signal', payload, { timeout: 10000 });
     return res.data;
   },
-  pollCallSignals: async () => {
-    const res = await api.get('/messages/call/poll');
+  getCallConfig: async () => (await api.get('/messages/call/config', { timeout: 10000 })).data,
+  pollCallSignals: async (ack = 0) => {
+    const res = await api.get('/messages/call/poll', { params: { ack }, timeout: 10000 });
     return res.data;
   },
 };

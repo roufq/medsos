@@ -21,6 +21,7 @@ type Conversation struct {
 	HasShopMessage bool      `gorm:"-" json:"has_shop_message"`
 	Muted          bool      `gorm:"-" json:"muted"`
 	Nickname       string    `gorm:"-" json:"nickname"`
+	PeerOnline     bool      `gorm:"-" json:"peer_online"`
 }
 
 func (c *Conversation) BeforeCreate(tx *gorm.DB) error {

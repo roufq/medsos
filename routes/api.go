@@ -131,6 +131,7 @@ func Api() {
 		// Messages
 		router.Get("messages/conversations", msgController.GetConversations)
 		router.Get("messages/users/{id}/settings", msgController.ConversationSettings)
+		router.Get("messages/users/{id}/presence", msgController.GetPresence)
 		router.Put("messages/users/{id}/settings", msgController.UpdateConversationSettings)
 		router.Delete("messages/users/{id}/history", msgController.DeleteConversationHistory)
 		router.Post("messages/users/{id}/report", msgController.ReportConversation)
@@ -141,6 +142,7 @@ func Api() {
 		router.Post("messages/intent/resolve", msgController.ResolveIntent)
 		router.Post("messages/call/signal", msgController.SendCallSignal)
 		router.Get("messages/call/poll", msgController.PollCallSignals)
+  router.Get("messages/call/config", msgController.GetCallConfig)
 
 		// Admin Operations
 		router.Middleware(middleware.AdminMiddleware()).Group(func(admin route.Router) {

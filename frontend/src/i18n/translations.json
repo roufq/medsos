@@ -1811,6 +1811,18 @@
     "id": "akun",
     "en": "accounts"
   },
+  "Online": {
+    "id": "Online",
+    "en": "Online"
+  },
+  "Offline": {
+    "id": "Offline",
+    "en": "Offline"
+  },
+  "Status tidak tersedia": {
+    "id": "Status tidak tersedia",
+    "en": "Status unavailable"
+  },
   "accounts": {
     "id": "akun",
     "en": "accounts"

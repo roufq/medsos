@@ -42,19 +42,13 @@ import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { User } from '../../types';
 import { formatPrice, timeAgo } from '../../utils/postFormat';
 import { postUrl } from '../../utils/postUrl';
+import { acquireCallMedia } from '../../utils/callMedia';
 
 interface MessagesProps {
   currentUser: User;
 }
 
 const QUICK_EMOJIS = ['😀', '😍', '🔥', '👏', '🙌', '❤️', '👍', '🎉', '🙏', '✨', '🤝', '🛒'];
-
-const RTC_CONFIG: RTCConfiguration = {
-  iceServers: [
-    { urls: 'stun:stun.l.google.com:19302' },
-    { urls: 'stun:stun1.l.google.com:19302' },
-  ],
-};
 
 function formatCallDuration(seconds: number): string {
   const s = Math.max(0, Math.floor(seconds));
@@ -131,6 +125,18 @@ export default function Messages({ currentUser }: MessagesProps) {
   const [sending, setSending] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [chatBlocked, setChatBlocked] = useState(false);
+  const [presenceNow, setPresenceNow] = useState(Date.now);
+  useEffect(() => {
+    const refresh = () => setPresenceNow(Date.now());
+    const timer = window.setInterval(refresh, 5000);
+    window.addEventListener('online', refresh);
+    window.addEventListener('offline', refresh);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener('online', refresh);
+      window.removeEventListener('offline', refresh);
+    };
+  }, []);
   const detailsButtonRef = useRef<HTMLButtonElement | null>(null);
   useEffect(() => { setDetailsOpen(false); setChatBlocked(false); }, [selectedConvId]);
   const [uploading, setUploading] = useState(false);
@@ -176,6 +182,10 @@ export default function Messages({ currentUser }: MessagesProps) {
   const [isMicMuted, setIsMicMuted] = useState(false);
   const [isCamOff, setIsCamOff] = useState(false);
   const [isSpeakerMuted, setIsSpeakerMuted] = useState(false);
+  const [audioPlaybackBlocked, setAudioPlaybackBlocked] = useState(false);
+  const callOwnerRef = useRef(false);
+  const startingCallRef = useRef(false);
+  const callConfigRef = useRef<RTCConfiguration | null>(null);
 
   const activeCallRef = useRef<typeof activeCall>(null);
   const incomingCallRef = useRef<typeof incomingCall>(null);
@@ -189,7 +199,7 @@ export default function Messages({ currentUser }: MessagesProps) {
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
   const remoteStreamRef = useRef<MediaStream | null>(null);
-  const pendingIceRef = useRef<RTCIceCandidateInit[]>([]);
+  const pendingIceRef = useRef<{ callId: string; candidate: RTCIceCandidateInit }[]>([]);
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -240,6 +250,8 @@ export default function Messages({ currentUser }: MessagesProps) {
             id: c.id,
             nickname: c.nickname || '',
             muted: Boolean(c.muted),
+            peerOnline: typeof c.peer_online === 'boolean' ? c.peer_online : null,
+            presenceCheckedAt: Date.now(),
             otherUser: String(c.user1_id) === String(currentUser.id) ? c.user2 : c.user1,
             lastMsg,
             unreadCount: c.id === selectedConvIdRef.current ? 0 : Number(c.unread_count || 0),
@@ -275,6 +287,8 @@ export default function Messages({ currentUser }: MessagesProps) {
             id: c.id,
             nickname: c.nickname || '',
             muted: Boolean(c.muted),
+            peerOnline: typeof c.peer_online === 'boolean' ? c.peer_online : null,
+            presenceCheckedAt: Date.now(),
             otherUser: String(c.user1_id) === String(currentUser.id) ? c.user2 : c.user1,
             lastMsg,
             unreadCount: c.id === selectedConvIdRef.current ? 0 : Number(c.unread_count || 0),
@@ -415,6 +429,40 @@ export default function Messages({ currentUser }: MessagesProps) {
     () => conversations.find((c) => c.id === selectedConvId) || null,
     [conversations, selectedConvId]
   );
+
+  const onlineStatus = (conv: any): boolean | null => {
+    if (!navigator.onLine || !conv?.presenceCheckedAt || presenceNow - conv.presenceCheckedAt > 25000) return null;
+    return typeof conv.peerOnline === 'boolean' ? conv.peerOnline : null;
+  };
+  const presenceLabel = (online: boolean | null) => t(online === null ? 'Status tidak tersedia' : online ? 'Online' : 'Offline');
+  const selectedOnline = onlineStatus(selectedConv);
+
+  useEffect(() => {
+    if (!selectedConv || !String(selectedConv.id).startsWith('new-')) return;
+    const draftId = selectedConv.id;
+    const peerId = selectedConv.otherUser.id;
+    let active = true;
+    const refresh = async () => {
+      if (document.visibilityState === 'hidden') return;
+      try {
+        const data = await messageApi.getPresence(peerId);
+        if (active) setConversations(items => items.map(conv => conv.id === draftId
+          ? { ...conv, peerOnline: data.online, presenceCheckedAt: Date.now() } : conv));
+      } catch {
+        if (active) setConversations(items => items.map(conv => conv.id === draftId ? { ...conv, peerOnline: null } : conv));
+      }
+    };
+    refresh();
+    const timer = window.setInterval(refresh, 5000);
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', refresh);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', refresh);
+    };
+  }, [selectedConv?.id, selectedConv?.otherUser?.id]);
 
   // Auto-send Shop Product Card when redirected from a Shop post with both target_user and shop_post
   useEffect(() => {
@@ -716,11 +764,14 @@ export default function Messages({ currentUser }: MessagesProps) {
     setIsMicMuted(false);
     setIsCamOff(false);
     setIsSpeakerMuted(false);
+    setAudioPlaybackBlocked(false);
   };
 
   useEffect(() => {
     return () => {
+      const callId = activeCallRef.current?.callId;
       cleanupCallMedia();
+      if (callId) void messageApi.sendCallSignal({ call_id: callId, signal_type: 'hangup' }).catch(() => {});
     };
   }, []);
 
@@ -784,6 +835,13 @@ export default function Messages({ currentUser }: MessagesProps) {
       }, 35000);
       return () => window.clearTimeout(timeout);
     }
+    if (activeCall.status === 'connecting') {
+      const timeout = window.setTimeout(() => {
+        setError('Koneksi suara/video gagal terbentuk. Periksa jaringan atau konfigurasi TURN server.');
+        endActiveCall();
+      }, 30000);
+      return () => window.clearTimeout(timeout);
+    }
     if (activeCall.status === 'connected') {
       const interval = window.setInterval(() => {
         setCallDuration((prev) => {
@@ -796,7 +854,18 @@ export default function Messages({ currentUser }: MessagesProps) {
     }
   }, [activeCall?.status, activeCall?.callId]);
 
-  // Attach streams to video/audio DOM elements whenever activeCall or streams update
+  const playRemoteAudio = async () => {
+    const audio = remoteAudioRef.current;
+    if (!audio?.srcObject) return;
+    try {
+      await audio.play();
+      if (remoteAudioRef.current === audio) setAudioPlaybackBlocked(false);
+    } catch {
+      if (remoteAudioRef.current === audio) setAudioPlaybackBlocked(true);
+    }
+  };
+
+  // Attach streams after the call overlay mounts; audio has one playback element.
   useEffect(() => {
     if (localVideoRef.current && localStreamRef.current) {
       localVideoRef.current.srcObject = localStreamRef.current;
@@ -806,48 +875,20 @@ export default function Messages({ currentUser }: MessagesProps) {
     }
     if (remoteAudioRef.current && remoteStreamRef.current) {
       remoteAudioRef.current.srcObject = remoteStreamRef.current;
+      void playRemoteAudio();
     }
   }, [activeCall]);
 
-  const createSilentFallbackStream = (): MediaStream => {
-    const Ctx = window.AudioContext || (window as any).webkitAudioContext;
-    if (Ctx) {
-      const ctx = new Ctx();
-      const dst = ctx.createMediaStreamDestination();
-      return dst.stream;
-    }
-    return new MediaStream();
-  };
+  const acquireMediaStream = (mode: 'voice' | 'video'): Promise<MediaStream> =>
+    acquireCallMedia(navigator.mediaDevices, mode, () => setIsCamOff(true));
 
-  const acquireMediaStream = async (mode: 'voice' | 'video'): Promise<MediaStream> => {
-    if (!navigator.mediaDevices?.getUserMedia) {
-      setIsCamOff(true);
-      return createSilentFallbackStream();
-    }
-    if (mode === 'video') {
-      try {
-        return await navigator.mediaDevices.getUserMedia({
-          audio: true,
-          video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' },
-        });
-      } catch {
-        setIsCamOff(true);
-        try {
-          return await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-        } catch {
-          return createSilentFallbackStream();
-        }
-      }
-    }
-    try {
-      return await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-    } catch {
-      return createSilentFallbackStream();
-    }
+  const loadCallConfig = async () => {
+    const config = await messageApi.getCallConfig();
+    callConfigRef.current = { iceServers: config.iceServers };
   };
 
   const setupPeerConnection = (callId: string, stream: MediaStream) => {
-    const pc = new RTCPeerConnection(RTC_CONFIG);
+    const pc = new RTCPeerConnection(callConfigRef.current!);
     pcRef.current = pc;
 
     const remoteStream = new MediaStream();
@@ -861,6 +902,7 @@ export default function Messages({ currentUser }: MessagesProps) {
       });
       if (remoteVideoRef.current) remoteVideoRef.current.srcObject = remoteStream;
       if (remoteAudioRef.current) remoteAudioRef.current.srcObject = remoteStream;
+      void playRemoteAudio();
     };
 
     pc.onicecandidate = (event) => {
@@ -879,6 +921,7 @@ export default function Messages({ currentUser }: MessagesProps) {
       if (pc.connectionState === 'connected') {
         setActiveCall((prev) => (prev ? { ...prev, status: 'connected' } : null));
       } else if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
+        setError('Koneksi suara/video terputus. Periksa jaringan dan konfigurasi TURN server.');
         endActiveCall();
       }
     };
@@ -888,13 +931,20 @@ export default function Messages({ currentUser }: MessagesProps) {
 
   const startCall = async (mode: 'voice' | 'video', targetUserOverride?: any) => {
     const peerUser = targetUserOverride || selectedConv?.otherUser;
-    if (!peerUser || activeCall || incomingCall) return;
+    if (!peerUser || activeCallRef.current || incomingCallRef.current || startingCallRef.current) return;
+    if (!callOwnerRef.current) {
+      setError('Panggilan ditangani tab Messages lain. Tutup tab tersebut, lalu coba lagi.');
+      return;
+    }
+    startingCallRef.current = true;
     setError('');
     try {
+      await loadCallConfig();
       const stream = await acquireMediaStream(mode);
+      if (!callOwnerRef.current) { stream.getTracks().forEach((track) => track.stop()); return; }
       localStreamRef.current = stream;
 
-      const pc = new RTCPeerConnection(RTC_CONFIG);
+      const pc = new RTCPeerConnection(callConfigRef.current!);
       pcRef.current = pc;
       const remoteStream = new MediaStream();
       remoteStreamRef.current = remoteStream;
@@ -907,6 +957,7 @@ export default function Messages({ currentUser }: MessagesProps) {
         event.streams[0]?.getTracks().forEach((track) => remoteStream.addTrack(track));
         if (remoteVideoRef.current) remoteVideoRef.current.srcObject = remoteStream;
         if (remoteAudioRef.current) remoteAudioRef.current.srcObject = remoteStream;
+        void playRemoteAudio();
       };
 
       pc.onicecandidate = (event) => {
@@ -929,6 +980,7 @@ export default function Messages({ currentUser }: MessagesProps) {
         if (pc.connectionState === 'connected') {
           setActiveCall((prev) => (prev ? { ...prev, status: 'connected' } : null));
         } else if (pc.connectionState === 'failed') {
+          setError('Koneksi suara/video gagal. Periksa jaringan dan konfigurasi TURN server.');
           endActiveCall();
         }
       };
@@ -947,6 +999,10 @@ export default function Messages({ currentUser }: MessagesProps) {
       });
 
       assignedCallId = res.call_id;
+      if (!callOwnerRef.current) {
+        void messageApi.sendCallSignal({ call_id: assignedCallId, signal_type: 'hangup' }).catch(() => {});
+        return;
+      }
       const initialStatus = res.callee_online ? 'ringing' : 'calling';
       const nextActive = {
         callId: assignedCallId,
@@ -974,6 +1030,8 @@ export default function Messages({ currentUser }: MessagesProps) {
           err?.message ||
           'Gagal memulai panggilan. Pastikan izin mikrofon/kamera diaktifkan.'
       );
+    } finally {
+      startingCallRef.current = false;
     }
   };
 
@@ -1000,7 +1058,12 @@ export default function Messages({ currentUser }: MessagesProps) {
     setActiveCall(nextActive);
 
     try {
+      await loadCallConfig();
       const stream = await acquireMediaStream(callInfo.mode);
+      if (activeCallRef.current?.callId !== callInfo.callId || !callOwnerRef.current) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
       localStreamRef.current = stream;
 
       const pc = setupPeerConnection(callInfo.callId, stream);
@@ -1017,8 +1080,9 @@ export default function Messages({ currentUser }: MessagesProps) {
         }
       }
       for (const cand of pendingIceRef.current) {
+        if (cand.callId !== callInfo.callId) continue;
         try {
-          await pc.addIceCandidate(new RTCIceCandidate(cand));
+          await pc.addIceCandidate(new RTCIceCandidate(cand.candidate));
         } catch {
           /* ignore */
         }
@@ -1034,7 +1098,6 @@ export default function Messages({ currentUser }: MessagesProps) {
         sdp: JSON.stringify(answer),
       });
 
-      setActiveCall((prev) => (prev ? { ...prev, status: 'connected' } : null));
     } catch (err: any) {
       cleanupCallMedia();
       messageApi
@@ -1114,7 +1177,6 @@ export default function Messages({ currentUser }: MessagesProps) {
 
   const toggleSpeaker = () => {
     const nextMuted = !isSpeakerMuted;
-    if (remoteVideoRef.current) remoteVideoRef.current.muted = nextMuted;
     if (remoteAudioRef.current) remoteAudioRef.current.muted = nextMuted;
     setIsSpeakerMuted(nextMuted);
   };
@@ -1122,19 +1184,29 @@ export default function Messages({ currentUser }: MessagesProps) {
   // Real-time polling for incoming calls and WebRTC signaling events (keeps running even in background tabs)
   useEffect(() => {
     let active = true;
+    let polling = false;
+    let ack = 0;
+    let interval: number | undefined;
+    let release: (() => void) | undefined;
+    const controller = new AbortController();
     const pollSignals = async () => {
-      if (!active) return;
+      if (!active || !callOwnerRef.current || polling) return;
+      polling = true;
       try {
-        const data = await messageApi.pollCallSignals();
+        const data = await messageApi.pollCallSignals(ack);
+        if (!active) return;
+        if (typeof data.sequence === 'number' && data.sequence < ack) ack = 0;
         const events = Array.isArray(data?.events) ? data.events : [];
 
         let receivedOfferInBatch = false;
         for (const ev of events) {
           if (ev.signal_type === 'offer') {
+            // Old offers may be replayed after a tab closes or a response is lost.
+            if (data.active_incoming?.call_id !== ev.call_id) continue;
             if (handledCallIdsRef.current.has(ev.call_id)) {
               continue;
             }
-            if (activeCallRef.current || incomingCallRef.current) {
+            if (activeCallRef.current || incomingCallRef.current || startingCallRef.current) {
               if (
                 activeCallRef.current?.callId !== ev.call_id &&
                 incomingCallRef.current?.callId !== ev.call_id
@@ -1169,17 +1241,22 @@ export default function Messages({ currentUser }: MessagesProps) {
             activeCallRef.current?.callId === ev.call_id &&
             pcRef.current
           ) {
+            const pc = pcRef.current;
+            if (pc.remoteDescription) continue;
             const answerDesc = JSON.parse(ev.sdp);
-            await pcRef.current.setRemoteDescription(new RTCSessionDescription(answerDesc));
+            await pc.setRemoteDescription(new RTCSessionDescription(answerDesc));
             for (const cand of pendingIceRef.current) {
+              if (cand.callId !== ev.call_id) continue;
               try {
-                await pcRef.current.addIceCandidate(new RTCIceCandidate(cand));
+                await pc.addIceCandidate(new RTCIceCandidate(cand.candidate));
               } catch {
                 /* ignore */
               }
             }
             pendingIceRef.current = [];
-            setActiveCall((prev) => (prev ? { ...prev, status: 'connected' } : null));
+            setActiveCall((prev) =>
+              prev && prev.callId === ev.call_id && prev.status !== 'connected' ? { ...prev, status: 'connecting' } : prev
+            );
           } else if (ev.signal_type === 'candidate' && ev.candidate) {
             const candInit = JSON.parse(ev.candidate);
             if (
@@ -1193,7 +1270,8 @@ export default function Messages({ currentUser }: MessagesProps) {
                 /* ignore */
               }
             } else {
-              pendingIceRef.current.push(candInit);
+              pendingIceRef.current.push({ callId: ev.call_id, candidate: candInit });
+              if (pendingIceRef.current.length > 100) pendingIceRef.current.shift();
             }
           } else if (
             ev.signal_type === 'reject' ||
@@ -1254,22 +1332,39 @@ export default function Messages({ currentUser }: MessagesProps) {
           incomingCallRef.current = null;
           setIncomingCall(null);
         }
+        for (const ev of events) ack = Math.max(ack, Number(ev.sequence) || 0);
       } catch {
-        /* ignore poll error */
+        if (active && activeCallRef.current) setError('Sinyal panggilan terganggu. Mencoba menghubungkan kembali...');
+      } finally {
+        polling = false;
       }
     };
 
-    pollSignals();
-    const interval = window.setInterval(pollSignals, 900);
-    window.addEventListener('focus', pollSignals);
-    document.addEventListener('visibilitychange', pollSignals);
+    if (navigator.locks) {
+      void navigator.locks.request(`postter-calls:${currentUser.id}`, { signal: controller.signal }, async () => {
+        if (!active) return;
+        callOwnerRef.current = true;
+        void pollSignals();
+        interval = window.setInterval(pollSignals, 900);
+        window.addEventListener('focus', pollSignals);
+        document.addEventListener('visibilitychange', pollSignals);
+        await new Promise<void>((resolve) => { release = resolve; });
+      }).catch(() => {
+        if (active) setError('Tidak dapat mengaktifkan panggilan. Muat ulang halaman.');
+      });
+    } else {
+      setError('Panggilan memerlukan HTTPS dan browser terbaru yang mendukung Web Locks.');
+    }
     return () => {
       active = false;
+      callOwnerRef.current = false;
+      controller.abort();
+      release?.();
       window.clearInterval(interval);
       window.removeEventListener('focus', pollSignals);
       document.removeEventListener('visibilitychange', pollSignals);
     };
-  }, []);
+  }, [currentUser.id]);
 
   const filteredConversations = useMemo(() => {
     return conversations.filter((conv) => {
@@ -1695,7 +1790,8 @@ export default function Messages({ currentUser }: MessagesProps) {
                         alt={conv.otherUser?.name}
                         className="w-full h-full rounded-full object-cover"
                       />
-                      <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full" />
+                      <span role="img" aria-label={presenceLabel(onlineStatus(conv))} title={presenceLabel(onlineStatus(conv))}
+                        className={`absolute bottom-0 right-0 w-3 h-3 border-2 border-white rounded-full ${onlineStatus(conv) ? 'bg-emerald-500' : 'bg-slate-400'}`} />
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex justify-between items-center gap-2 mb-0.5">
@@ -1765,7 +1861,8 @@ export default function Messages({ currentUser }: MessagesProps) {
                       alt={selectedConv.otherUser?.name}
                       className="w-full h-full rounded-full object-cover"
                     />
-                    <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full" />
+                    <span role="img" aria-label={presenceLabel(selectedOnline)} title={presenceLabel(selectedOnline)}
+                      className={`absolute bottom-0 right-0 w-2.5 h-2.5 border-2 border-white rounded-full ${selectedOnline ? 'bg-emerald-500' : 'bg-slate-400'}`} />
                   </button>
                   <div className="min-w-0">
                     <button
@@ -1782,8 +1879,8 @@ export default function Messages({ currentUser }: MessagesProps) {
                         </span>
                       )}
                     </button>
-                    <div className="text-[11px] text-emerald-600 font-medium truncate">
-                      Online
+                    <div className={`text-[11px] font-medium truncate ${selectedOnline ? 'text-emerald-600' : 'text-text-secondary'}`}>
+                      {presenceLabel(selectedOnline)}
                       {selectedConv.otherUser?.title ? ` • ${selectedConv.otherUser.title}` : ''}
                     </div>
                   </div>
@@ -2351,6 +2448,11 @@ export default function Messages({ currentUser }: MessagesProps) {
         <div className="fixed inset-0 z-[120] bg-[#0d1117]/95 backdrop-blur-md flex flex-col justify-between p-4 sm:p-6 text-white">
           {/* Hidden audio element ensures voice stream plays on all browsers */}
           <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
+          {audioPlaybackBlocked && (
+            <button type="button" onClick={() => void playRemoteAudio()} className="absolute top-24 left-1/2 -translate-x-1/2 z-20 rounded-xl bg-amber-500 px-4 py-2 text-sm font-semibold text-black">
+              Aktifkan suara
+            </button>
+          )}
 
           {/* Top Bar */}
           <div className="flex items-center justify-between gap-4 z-10">
@@ -2384,6 +2486,7 @@ export default function Messages({ currentUser }: MessagesProps) {
                   ref={remoteVideoRef}
                   autoPlay
                   playsInline
+                  muted
                   className="w-full h-full object-cover"
                 />
                 {activeCall.status !== 'connected' && (
