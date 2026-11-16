@@ -88,7 +88,7 @@ const AdminDashboardPage = () => {
       {/* Sidebar */}
       <aside className="fixed left-0 h-screen w-64 bg-surface-container-lowest dark:bg-surface-dim border-r border-border-subtle dark:border-outline-variant shadow-sm flex flex-col p-4 gap-2 z-50">
         <div className="flex flex-col gap-1 mb-6 px-2">
-          <span className="font-headline-md text-headline-md font-black text-primary dark:text-primary-fixed">Connect Modern</span>
+          <span className="font-headline-md text-headline-md font-black text-primary dark:text-primary-fixed">postter.us</span>
           <span className="font-label-md text-label-md text-text-secondary">Professional Suite</span>
         </div>
 

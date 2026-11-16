@@ -52,7 +52,7 @@ export default function RightSidebar({ posts, followedUsers, onFollowSuggestion,
         </div>
       </section>
       <Link to="/network" className="poster-discover"><div><strong>Jelajahi Dunia<br />dengan Postinganmu</strong><p>Bagikan momen terbaikmu<br />di seluruh dunia</p></div><span><ChevronRight size={22} /></span></Link>
-      <footer className="poster-footer"><div><Link to="/network">About</Link><Link to="/settings">Support</Link><Link to="/search">Blog</Link><Link to="/settings">Privacy</Link><Link to="/settings">Terms</Link></div><p>? {new Date().getFullYear()} theposter. All rights reserved.</p></footer>
+      <footer className="poster-footer"><div><Link to="/network">About</Link><Link to="/settings">Support</Link><Link to="/search">Blog</Link><Link to="/settings">Privacy</Link><Link to="/settings">Terms</Link></div><p>© {new Date().getFullYear()} postter.us. Semua hak dilindungi.</p></footer>
     </aside>);
 
 }

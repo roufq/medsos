@@ -2,28 +2,32 @@ import { useLanguage } from "../context/LanguageContext";import { useEffect, use
 import { Loader2, ShoppingBag } from 'lucide-react';
 import AppLayout from '../components/modern/AppLayout';
 import PostCard from '../components/modern/PostCard';
+import { useAuth } from '../context/AuthContext';
 import { postApi } from '../api/postApi';
 const PAGE_SIZE = 20;
 export default function ShopPage() {const { t } = useLanguage();
+  const { user, loading: authLoading } = useAuth();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [error, setError] = useState('');
   useEffect(() => {
+    if (authLoading) return;
     let active = true;
-    postApi.getFeed(PAGE_SIZE, 0, null, null, 'shop').then((data) => {
+    setLoading(true);setError('');setProducts([]);setHasMore(false);
+    postApi.getFeed(PAGE_SIZE, 0, null, null, 'shop', !user).then((data) => {
       if (active) {setProducts(data || []);setHasMore((data || []).length === PAGE_SIZE);}
     }).catch((err) => {if (active) setError(err.response?.data?.error || 'Gagal memuat produk.');}).
     finally(() => {if (active) setLoading(false);});
     return () => {active = false;};
-  }, []);
+  }, [user?.id, authLoading]);
   const addProduct = (post) => {if (post.post_type === 'shop') setProducts((current) => [post, ...current.filter((item) => item.id !== post.id)]);};
   const loadMore = async () => {
     if (loadingMore || !products.length) return;
     setLoadingMore(true);setError('');
     try {
-      const more = await postApi.getFeed(PAGE_SIZE, 0, null, products[products.length - 1].id, 'shop');
+      const more = await postApi.getFeed(PAGE_SIZE, 0, null, products[products.length - 1].id, 'shop', !user);
       setProducts((current) => [...current, ...(more || []).filter((post) => !current.some((item) => item.id === post.id))]);
       setHasMore((more || []).length === PAGE_SIZE);
     } catch (err) {setError(err.response?.data?.error || 'Gagal memuat produk berikutnya.');} finally

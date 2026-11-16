@@ -1,3 +1,4 @@
+import { useAuth } from '../../context/AuthContext';
 import { postUrl } from '../../utils/postUrl';
 import { useLanguage } from "../../context/LanguageContext";
 import { profileUrl } from '../../utils/profileUrl';
@@ -8,7 +9,6 @@ import { timeAgo } from '../../utils/postFormat';
 import { postApi } from '../../api/postApi';
 import { userApi } from '../../api/userApi';
 import { messageApi } from '../../api/messageApi';
-import AddPortfolioModal from './AddPortfolioModal';
 import PostCard from './PostCard';
 import { Modal } from './PostActionModals';
 
@@ -83,12 +83,12 @@ function GridTile({ post }: { post: any; }) {
   const source = post.original_post || post;
   const statsSource = isPureRepost ? source : post;
   return <Link to={postUrl(isPureRepost ? source : post)} className="profile-grid-card">
+    <div className="profile-card-tags postter-grid-tags">{source.is_sponsored && <span className="postter-ad-label">Iklan</span>}{(source.hashtags || []).slice(0,4).map((tag:any)=><span key={tag.tag}>#{tag.tag} </span>)}</div>
     <ProfileMedia post={post} />
     <div className="profile-grid-copy">
       <h3>{source.title || t("Postingan")}</h3>
-      <p>{(post.content || '').trim() || source.content || ''}</p>
+      <p>{((post.content || '').trim() || source.content || '').replace(/#[\p{L}\p{N}_]+/gu,'').trim()}</p>
       {source.location && <span className="profile-card-location"><MapPin size={11} />{source.location}</span>}
-      <div className="profile-card-tags">{(source.hashtags || []).slice(0, 4).map((tag: any) => <span key={tag.tag}>#{tag.tag} </span>)}</div>
     </div>
     <div className="profile-grid-stats">
       <span><Heart size={12} fill={statsSource.is_liked_by_me ? 'currentColor' : 'none'} />{statsSource.likes_count || 0}</span>
@@ -101,6 +101,7 @@ function GridTile({ post }: { post: any; }) {
 export default function Profile({ user, posts, isCurrentUser, onUserChange, onPostsChange }: ProfileProps) {
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const { user: viewer } = useAuth();
   const [layout, setLayout] = useState<'grid' | 'long'>(user.profile_layout === 'long' ? 'long' : 'grid');
   const [tab, setTab] = useState<'posts' | 'reposts' | 'reels' | 'tagged' | 'shop' | 'location' | 'saved'>('posts');
   const [page, setPage] = useState(1);
@@ -110,18 +111,16 @@ export default function Profile({ user, posts, isCurrentUser, onUserChange, onPo
   const [editOpen, setEditOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [portfolios, setPortfolios] = useState<any[]>([]);
-  const [portfolioOpen, setPortfolioOpen] = useState(false);
   const [form, setForm] = useState({ name: '', title: '', company: '', location: '', bio: '', website: '' });
   const avatarInput = useRef<HTMLInputElement>(null);
-  const coverInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => { setLayout(user.profile_layout === 'long' ? 'long' : 'grid'); }, [user.id, user.profile_layout]);
   useEffect(() => { setTab('posts'); setSaved(null); setMenuOpen(false); }, [user.id]);
   useEffect(() => {
     setPortfolios([]);
-    if (user.profile_locked || user.is_blocked_by_me) return;
+    if (!viewer || user.profile_locked || user.is_blocked_by_me) return;
     userApi.getPortfolios(user.id).then((data) => setPortfolios(data || [])).catch(() => setPortfolios([]));
-  }, [user.id, user.profile_locked, user.is_blocked_by_me]);
+  }, [user.id, user.profile_locked, user.is_blocked_by_me, viewer?.id]);
   useEffect(() => {
     if (tab === 'saved' && saved === null) userApi.getSavedPosts().then((data) => setSaved(data || [])).catch(() => setSaved([]));
   }, [tab, saved]);
@@ -157,6 +156,7 @@ export default function Profile({ user, posts, isCurrentUser, onUserChange, onPo
   };
 
   const toggleFollow = async () => {
+    if (!viewer) { navigate('/login'); return; }
     try {
       if (user.follow_status) {
         await userApi.unfollow(user.id);
@@ -172,6 +172,7 @@ export default function Profile({ user, posts, isCurrentUser, onUserChange, onPo
   };
 
   const toggleBlock = async () => {
+    if (!viewer) { navigate('/login'); return; }
     try {
       if (user.is_blocked_by_me) {
         await userApi.unblockUser(user.id);
@@ -239,9 +240,8 @@ export default function Profile({ user, posts, isCurrentUser, onUserChange, onPo
           </div><div><h2>{user.name}{user.is_blue_verified && <span className="ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-sky-500 text-white text-[10px] leading-none align-middle" title="Terverifikasi Centang Biru" aria-label="Centang Biru">✓</span>}{user.is_private && <Lock size={13} aria-label="Akun private" />}</h2><p>@{user.username || 'user'}</p><p className="profile-bio">{user.bio || user.title || t("Belum ada bio.")}</p>{user.website && <a href={user.website} target="_blank" rel="noopener noreferrer nofollow"><LinkIcon size={12} />{user.website.replace(/^https?:\/\//, '')}</a>}</div></div>
           <div className="profile-summary-right"><div className="profile-summary-top"><div className="profile-numbers"><span>Post<strong>{ownPosts.length}</strong></span><button disabled={user.profile_locked} onClick={() => setFollowList('followers')}>{t("Followers")}<strong>{user.followers_count || 0}</strong></button><button disabled={user.profile_locked} onClick={() => setFollowList('following')}>{t("Following")}<strong>{user.following_count || 0}</strong></button></div>
             {isCurrentUser ? <button className="profile-primary" onClick={openEdit}>{t("Edit Profile")}</button> : !user.is_blocked_by_me && <button className="profile-primary" onClick={toggleFollow}>{user.follow_status === 'accepted' ? t("Mengikuti") : user.follow_status === 'pending' ? t("Diminta") : t("Ikuti")}</button>}
-            <div className="profile-options"><button aria-label="Menu profil" onClick={() => setMenuOpen(!menuOpen)}><MoreHorizontal size={20} /></button>{menuOpen && <div className="profile-options-menu">{isCurrentUser ? <><button onClick={() => navigate('/settings')}><Settings size={15} />{t("Pengaturan")}</button><button onClick={() => coverInput.current?.click()} disabled={uploading}><Camera size={15} />Ubah gambar sampul</button><button onClick={() => { setPortfolioOpen(true); setMenuOpen(false); }}>Tambah karya</button></> : <><button onClick={async () => { setMenuOpen(false); try { const { token } = await messageApi.createIntent({ user_id: (user as any).public_hash || user.username || user.id }); navigate(`/messages?t=${encodeURIComponent(token)}`); } catch { navigate('/messages'); } }}>{t("Pesan")}</button><button onClick={toggleBlock}><Ban size={15} />{user.is_blocked_by_me ? t("Buka blokir") : t("Blokir")}</button></>}</div>}</div>
+            <div className="profile-options"><button aria-label="Menu profil" onClick={() => setMenuOpen(!menuOpen)}><MoreHorizontal size={20} /></button>{menuOpen && <div className="profile-options-menu">{isCurrentUser ? <><button onClick={() => navigate('/settings')}><Settings size={15} />{t("Pengaturan")}</button></> : <><button onClick={async () => { setMenuOpen(false); try { const { token } = await messageApi.createIntent({ user_id: (user as any).public_hash || user.username || user.id }); navigate(`/messages?t=${encodeURIComponent(token)}`); } catch { navigate('/messages'); } }}>{t("Pesan")}</button><button onClick={toggleBlock}><Ban size={15} />{user.is_blocked_by_me ? t("Buka blokir") : t("Blokir")}</button></>}</div>}</div>
           </div><div className="profile-engagement"><span><Heart size={22} /><div>{totalLikes.toLocaleString()}<small>{t("Likes")}</small></div></span><span><Eye size={22} /><div>{totalViews.toLocaleString()}<small>Views</small></div></span></div></div>
-          <input ref={coverInput} type="file" accept="image/*" className="hidden" onChange={(e) => uploadImage(e.target.files?.[0], 'cover_url')} />
         </section>
         {user.is_blocked_by_me || user.profile_locked ? <section className="profile-post-panel profile-empty"><Lock size={28} /><h3>{user.is_blocked_by_me ? 'Anda memblokir akun ini' : 'Akun ini private'}</h3><p>{user.is_blocked_by_me ? 'Buka blokir untuk melihat postingannya.' : 'Ikuti akun ini untuk melihat postingannya.'}</p></section> : <section className="profile-post-panel">
           <div className="profile-toolbar"><div className="profile-tabs" aria-label="Jenis postingan">{[['posts', t("Posts")], ['reposts', `Repost${repostPosts.length ? ` (${repostPosts.length})` : ''}`], ['reels', 'Reels'], ['tagged', 'Tagged'], ['shop', 'Shop'], ['location', t("Location")], ...(isCurrentUser ? [['saved', t("Tersimpan")]] : [])].map(([id, label]) => <button key={id} onClick={() => setTab(id as typeof tab)} className={tab === id ? 'active' : ''} aria-pressed={tab === id}>{label}</button>)}</div><div className="profile-layout-buttons"><button className={layout === 'grid' ? 'active' : ''} aria-label={t("Tampilan grid")} aria-pressed={layout === 'grid'} onClick={() => chooseLayout('grid')}><LayoutGrid size={13} />Grid</button><button className={layout === 'long' ? 'active' : ''} aria-label={t("Tampilan list")} aria-pressed={layout === 'long'} onClick={() => chooseLayout('long')}><Rows3 size={13} />List</button></div></div>
@@ -268,7 +268,6 @@ export default function Profile({ user, posts, isCurrentUser, onUserChange, onPo
         </Modal>
       }
 
-      <AddPortfolioModal isOpen={portfolioOpen} onClose={() => setPortfolioOpen(false)} onSuccess={(item: any) => userApi.createPortfolio(item).then((saved) => setPortfolios((list) => [saved, ...list])).catch((e) => alert(errorText(e, 'Gagal menyimpan')))} />
     </div>
   );
 }

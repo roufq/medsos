@@ -104,6 +104,8 @@ func InitDB() {
 
 	// 3. Auto Migrate Models
 	err = DB.AutoMigrate(
+		&models.PlatformSetting{},
+		&models.UserActivity{},
 		&models.User{},
 		&models.Post{},
 		&models.LoginSession{},
@@ -229,11 +231,11 @@ func InitDB() {
 			AccountStatus:   "active",
 			ProfileLayout:   "grid",
 			EmailVerifiedAt: &now,
-			Email:    adminEmail,
-			Password: string(hashedPassword),
-			Role:     models.RoleAdmin,
-			Title:    &title,
-			Company:  &company,
+			Email:           adminEmail,
+			Password:        string(hashedPassword),
+			Role:            models.RoleAdmin,
+			Title:           &title,
+			Company:         &company,
 		}
 		if err := DB.Create(&admin).Error; err != nil {
 			log.Printf("Failed to seed admin user: %v", err)

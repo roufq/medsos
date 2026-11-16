@@ -22,6 +22,7 @@ import (
 	"goravel/app/repositories"
 	"goravel/pkg/db"
 	"goravel/pkg/linkpreview"
+	"goravel/pkg/platform"
 	"goravel/pkg/storage"
 )
 
@@ -297,6 +298,13 @@ func validateShop(shop *dto.ShopPostRequest) error {
 // resolveMentions loads the mentioned users, rejecting unknown, inactive, or
 // blocked accounts (a blocked user must not be reachable through mentions).
 func checkSubscriptionQuota(userID int64, location string, existingPostID ...int64) error {
+	settings, err := platform.Settings()
+	if err != nil {
+		return errors.New("pengaturan upload belum dapat dibaca")
+	}
+	if !settings.UploadLimitsEnabled {
+		return nil
+	}
 	if db.DB == nil {
 		return nil
 	}

@@ -65,7 +65,7 @@ export default function App() {
         id: 'new_user',
         name: email.split('@')[0].split('.').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
         title: 'Senior Creative Executive',
-        company: 'Connect Modern Suite',
+        company: 'postter.us Suite',
         avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBXXivnxn1FP869Ta25uCA13AX-IXdoWJWbmn1VrQuxka63qvxwDuCGh3x3EXC1hTfmbnEnj6ss9bQllAhNYT-aIsVi4a67fyOrFsY0Pl_EI-Ws1_Q9sZIsDrLwwlH0gwIWF4-xOmOPmpDVK6RMlgQA5vnypVHVzg1xhQwz2DB6wbugv6q7eYH32od3s_X3h1Mj-dgZ71P9JNuJeX16rQ76oRTlV3i19rV769qXDtK03LBWCNPKwyqVbNnYhbBVwNeuLbL28Z5vznI',
         coverImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBNRe7599PvPWjme4G1AfCuqcb7I6UtEfFvUtdGPnRFJECAdNMFPb1kcrd9KwQ_87mYgQbHbQ2ctj_ZHqmtJb_doWqfMrutKHzE7NQNjLUInqnZIHZ4XTX8S7sOChktBxP-tn-PkdoXLSH-k4ukJZ4jLc_2aqQjsALi4S_HCg7wMsqDjgVxO13OFWIvo9OuSY2Qsru3E1aCOcXRmRjxobRIn1NFEHlFaK23OQ43zvup3-6gZZfNtg6PyGcHnDft9Db2izkVaYVWIaQ',
         bio: 'Dedicated software designer aiming to maximize scalable network alliances inside professional ecosystems.',
@@ -86,7 +86,7 @@ export default function App() {
       id: 'new_registered',
       name: fullName,
       title: 'Strategic Alliance Architect',
-      company: 'Connect Modern',
+      company: 'postter.us',
       avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBXXivnxn1FP869Ta25uCA13AX-IXdoWJWbmn1VrQuxka63qvxwDuCGh3x3EXC1hTfmbnEnj6ss9bQllAhNYT-aIsVi4a67fyOrFsY0Pl_EI-Ws1_Q9sZIsDrLwwlH0gwIWF4-xOmOPmpDVK6RMlgQA5vnypVHVzg1xhQwz2DB6wbugv6q7eYH32od3s_X3h1Mj-dgZ71P9JNuJeX16rQ76oRTlV3i19rV769qXDtK03LBWCNPKwyqVbNnYhbBVwNeuLbL28Z5vznI',
       coverImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBNRe7599PvPWjme4G1AfCuqcb7I6UtEfFvUtdGPnRFJECAdNMFPb1kcrd9KwQ_87mYgQbHbQ2ctj_ZHqmtJb_doWqfMrutKHzE7NQNjLUInqnZIHZ4XTX8S7sOChktBxP-tn-PkdoXLSH-k4ukJZ4jLc_2aqQjsALi4S_HCg7wMsqDjgVxO13OFWIvo9OuSY2Qsru3E1aCOcXRmRjxobRIn1NFEHlFaK23OQ43zvup3-6gZZfNtg6PyGcHnDft9Db2izkVaYVWIaQ',
       bio: 'Ready to curate creative trajectories and engage high-end professional connections.',
@@ -227,7 +227,7 @@ export default function App() {
               </button>
               
               <div className="mb-4 pt-6 px-2 select-none">
-                <div className="font-headline-md text-headline-md font-black text-primary">Connect Modern</div>
+                <div className="font-headline-md text-headline-md font-black text-primary">postter.us</div>
                 <div className="font-label-sm text-label-sm text-text-secondary">Professional Suite</div>
               </div>
 

@@ -4,9 +4,13 @@ import { useAuth } from '../context/AuthContext';
 import LoginPage from '../pages/LoginPage';
 import RegisterPage from '../pages/RegisterPage';
 import HomePage from '../pages/HomePage';
+import LandingPage from '../pages/LandingPage';
+import PageLoader from '../components/common/PageLoader';
+import { usePlatform } from '../context/PlatformContext';
+const NotificationsPage = lazy(() => import('../pages/NotificationsPage'));
 
 const ProfilePage = lazy(() => import('../pages/ProfilePage'));
-const AdminDashboardPage = lazy(() => import('../pages/admin/AdminDashboardPage'));
+const AdminDashboardPage = lazy(() => import('../pages/admin/AdminWorkspacePage'));
 const FeaturePage = lazy(() => import('../pages/FeaturePage'));
 const ForgotPasswordPage = lazy(() => import('../pages/ForgotPasswordPage'));
 const ThanksPage = lazy(() => import('../pages/ThanksPage'));
@@ -15,14 +19,22 @@ const PricingPage = lazy(() => import('../pages/PricingPage'));
 const PostPage = lazy(() => import('../pages/PostPage'));
 const VideoPage = lazy(() => import('../pages/VideoPage'));
 const SearchPage = lazy(() => import('../pages/SearchPage'));
+const ExplorePage = lazy(() => import('../pages/ExplorePage'));
 const ShopPage = lazy(() => import('../pages/ShopPage'));
 const SavedPage = lazy(() => import('../pages/SavedPage'));
 
-const PageLoader = () => (
-  <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-    <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div>
-  </div>
-);
+const IndexPage = () => {
+  const { isAuthenticated, loading } = useAuth();
+  return loading ? <PageLoader /> : isAuthenticated ? <HomePage /> : <LandingPage />;
+};
+const VideoRoute = () => {
+  const { isAuthenticated, loading } = useAuth();
+  return loading ? <PageLoader /> : isAuthenticated ? <VideoPage /> : <PostPage />;
+};
+const PricingRoute = () => {
+  const { uploadLimitsEnabled } = usePlatform();
+  return uploadLimitsEnabled ? <PrivateRoute><PricingPage /></PrivateRoute> : <Navigate to="/" replace />;
+};
 
 const PrivateRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -77,29 +89,26 @@ const AppRouter = () => {
           <Route
             path="/"
             element={
-              <PrivateRoute>
-                <HomePage />
-              </PrivateRoute>
+              <IndexPage />
             }
           />
           <Route
             path="/profile/:id"
             element={
-              <PrivateRoute>
-                <ProfilePage />
-              </PrivateRoute>
+              <ProfilePage />
             }
           />
-          <Route path="/u/:username" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
+          <Route path="/u/:username" element={<ProfilePage />} />
           <Route path="/settings" element={<PrivateRoute><SettingsPage /></PrivateRoute>} />
-          <Route path="/pricing" element={<PrivateRoute><PricingPage /></PrivateRoute>} />
-          <Route path="/post/:id" element={<PrivateRoute><PostPage /></PrivateRoute>} />
-          <Route path="/posts/:id" element={<PrivateRoute><PostPage /></PrivateRoute>} />
+          <Route path="/pricing" element={<PricingRoute />} />
+          <Route path="/post/:id" element={<PostPage />} />
+          <Route path="/posts/:id" element={<PostPage />} />
           <Route path="/shorts" element={<Navigate to="/videos" replace />} />
           <Route path="/videos" element={<PrivateRoute><VideoPage /></PrivateRoute>} />
-          <Route path="/videos/:token" element={<PrivateRoute><VideoPage /></PrivateRoute>} />
+          <Route path="/videos/:token" element={<VideoRoute />} />
           <Route path="/search" element={<PrivateRoute><SearchPage /></PrivateRoute>} />
-          <Route path="/shop" element={<PrivateRoute><ShopPage /></PrivateRoute>} />
+          <Route path="/home" element={<HomePage />} />
+          <Route path="/shop" element={<ShopPage />} />
           <Route path="/saved" element={<PrivateRoute><SavedPage /></PrivateRoute>} />
           <Route path="/network" element={<PrivateRoute><FeaturePage title="Network" /></PrivateRoute>} />
           <Route path="/jobs" element={<Navigate to="/" replace />} />
@@ -120,6 +129,9 @@ const AppRouter = () => {
             }
           />
 
+          <Route path="/explore" element={<ExplorePage />} />
+          <Route path="/notifications" element={<PrivateRoute><NotificationsPage /></PrivateRoute>} />
+          <Route path="/:username" element={<ProfilePage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>

@@ -34,7 +34,7 @@ export default function SearchPage() {const { t } = useLanguage();
   if (query.trim().toLowerCase() === 'shop') return <Navigate to="/shop" replace />;
 
   return (
-    <AppLayout currentTab="">
+    <AppLayout currentTab="search">
       <div className="w-full flex flex-col gap-4">
         <form onSubmit={(e) => {e.preventDefault();setParams({ q: input.trim() });}} className="flex items-center gap-2 rounded-full bg-white border border-border-subtle px-4 py-2">
           <Search className="w-5 h-5 text-outline" />

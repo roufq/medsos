@@ -1,9 +1,11 @@
 import { useLanguage } from "../../context/LanguageContext";import LanguageSwitch from '../common/LanguageSwitch';
+import Brand from '../common/Brand';
+import { usePlatform } from '../../context/PlatformContext';
 import { postUrl } from '../../utils/postUrl';
 import { profileUrl } from '../../utils/profileUrl';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Bell, Mail, Settings, Menu, Package, FileText, Home, UserRound, ShoppingBag, SquarePlay, SquarePen, ChevronDown, ChevronRight, Sun, Moon, BadgeCheck, Palette, HelpCircle, LogOut, X } from 'lucide-react';
+import { Search, Bell, Mail, Settings, Menu, Package, FileText, Home, Compass, UserRound, ShoppingBag, SquarePlay, SquarePen, ChevronDown, ChevronRight, Sun, Moon, BadgeCheck, Palette, HelpCircle, LogOut, X } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { socialApi } from '../../api/socialApi';
 import { useNotifications } from '../../hooks/useNotifications';
@@ -15,7 +17,7 @@ interface HeaderProps {
   onRequestCreatePost?: () => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  onNavigate: (tab: 'home' | 'network' | 'jobs' | 'messages' | 'profile' | 'admin' | 'analytics') => void;
+  onNavigate: (tab: 'home' | 'explore' | 'network' | 'jobs' | 'messages' | 'profile' | 'admin' | 'analytics') => void;
   onOpenProfile?: (userId: string) => void;
   onToggleMobileSidebar: () => void;
   onLogout?: () => void;
@@ -24,6 +26,7 @@ interface HeaderProps {
 const emptyResults = { users: [], posts: [], jobs: [], products: [] };
 
 export default function Header({ currentUser, searchQuery, setSearchQuery, onNavigate, onOpenProfile, onToggleMobileSidebar, currentTab, onRequestCreatePost, onLogout }: HeaderProps) {const { t } = useLanguage();
+  const { uploadLimitsEnabled } = usePlatform();
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
@@ -94,12 +97,12 @@ export default function Header({ currentUser, searchQuery, setSearchQuery, onNav
             <Menu className="w-6 h-6" />
           </button>
 
-          <div onClick={() => onNavigate('home')} className="poster-logo">theposter</div>
+          <div className="poster-logo"><Brand /></div>
 
-          <div className="poster-search relative hidden md:block">
+          <div className="poster-search relative">
             <div className="poster-search-input flex items-center rounded-full px-4 py-2">
               <Search className="w-5 h-5 text-outline" />
-              <input type="search" value={searchQuery} onFocus={() => setIsFocused(true)} onChange={(event) => setSearchQuery(event.target.value)} onKeyDown={(event) => {if (event.key === 'Enter' && searchQuery.trim().length >= 2) {setIsFocused(false);navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);}}} placeholder="Cari judul, #hashtag, lokasi, @username…" className="bg-transparent border-none outline-none focus:ring-0 text-sm ml-2 w-full text-text-primary placeholder:text-outline" aria-label="Search application" />
+              <input type="search" value={searchQuery} onFocus={() => setIsFocused(true)} onChange={(event) => setSearchQuery(event.target.value)} onKeyDown={(event) => {if (event.key === 'Enter' && searchQuery.trim().length >= 2) {setIsFocused(false);navigate(`${currentTab === 'explore' ? '/explore' : '/search'}?q=${encodeURIComponent(searchQuery.trim())}`);}}} placeholder="Cari judul, #hashtag, lokasi, @username…" className="bg-transparent border-none outline-none focus:ring-0 text-sm ml-2 w-full text-text-primary placeholder:text-outline" aria-label="Search application" />
             </div>
 
             {isFocused && searchQuery.trim().length >= 2 &&
@@ -133,10 +136,10 @@ export default function Header({ currentUser, searchQuery, setSearchQuery, onNav
 
         <nav className="poster-top-nav" aria-label="Navigasi utama">
           <button className={currentTab === 'home' ? 'active' : ''} onClick={() => onNavigate('home')}><Home size={19} />{t("Home")}</button>
-          <button className={currentTab === 'profile' ? 'active' : ''} onClick={() => onNavigate('profile')}><UserRound size={19} />{t("Profile")}</button>
+          <button className={currentTab === 'explore' ? 'active' : ''} onClick={() => onNavigate('explore')}><Compass size={19} />Explore</button>
+          {currentTab !== 'explore' && <button className={currentTab === 'profile' ? 'active' : ''} onClick={() => onNavigate('profile')}><UserRound size={19} />{t("Profile")}</button>}
           <button className={currentTab === 'shop' ? 'active' : ''} aria-current={currentTab === 'shop' ? 'page' : undefined} onClick={() => navigate('/shop')}><ShoppingBag size={19} />Shop</button>
-          <button className={currentTab === 'videos' ? 'active' : ''} onClick={() => navigate('/videos')}><SquarePlay size={19} />Video</button>
-          <button className={currentTab === 'newpost' ? 'active' : ''} onClick={onRequestCreatePost}><SquarePen size={19} />{t("New Post")}</button>
+          {currentTab === 'explore' ? <button onClick={()=>onNavigate('messages')}><Mail size={19}/>{t('Pesan')}</button> : <><button className={currentTab === 'videos' ? 'active' : ''} onClick={() => navigate('/videos')}><SquarePlay size={19} />Video</button><button className={currentTab === 'newpost' ? 'active' : ''} onClick={onRequestCreatePost}><SquarePen size={19} />{t("New Post")}</button></>}
         </nav>
         <div className="poster-account flex items-center gap-5"><LanguageSwitch />
           <button type="button" className="poster-theme-toggle" onClick={toggleTheme} aria-label={theme === 'dark' ? t("Aktifkan mode terang") : t("Aktifkan mode gelap")} title={theme === 'dark' ? t("Mode terang") : t("Mode gelap")} aria-pressed={theme === 'dark'}>{theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}</button>
@@ -216,7 +219,7 @@ export default function Header({ currentUser, searchQuery, setSearchQuery, onNav
                     <span>Profile</span>
                   </button>
 
-                  <button
+                  {uploadLimitsEnabled && <button
                     type="button"
                     onClick={() => { setProfileMenuOpen(false); navigate('/pricing'); }}
                     className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-200 hover:bg-white/10 transition-colors cursor-pointer"
@@ -228,7 +231,7 @@ export default function Header({ currentUser, searchQuery, setSearchQuery, onNav
                     <span className="rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 px-2.5 py-0.5 text-[10px] font-extrabold text-white">
                       Pro
                     </span>
-                  </button>
+                  </button>}
 
                   <button
                     type="button"
@@ -285,8 +288,8 @@ export default function Header({ currentUser, searchQuery, setSearchQuery, onNav
                 </div>
                 <div className="space-y-2.5 text-xs text-slate-300">
                   <p><strong>• Kuota Posting & Centang Biru:</strong> Akun Free mendapat 1x posting/hari (atau 3x/hari selama 1 bulan dengan membagikan kode referral). Paket berbayar mendapat 3x–24x posting/hari + Centang Biru.</p>
-                  <p><strong>• Berhenti Berlangganan:</strong> Jika langganan berhenti/kedaluwarsa, Centang Biru otomatis dinonaktifkan dan kuota kembali ke 1x/hari.</p>
-                  <p><strong>• Kontak Bantuan:</strong> Hubungi tim support di <span className="text-indigo-400">support@theposter.id</span> atau kelola akun di halaman <button type="button" onClick={() => { setHelpOpen(false); navigate('/settings'); }} className="text-indigo-400 underline font-bold cursor-pointer">Settings</button>.</p>
+                  <p><strong>• Berhenti Berlangganan:</strong> Centang biru pemberian admin tetap berlaku tanpa langganan. Kuota paket hanya berlaku ketika pembatasan upload diaktifkan.</p>
+                  <p><strong>• Kontak Bantuan:</strong> Hubungi tim support di <span className="text-indigo-400">support@postter.us</span> atau kelola akun di halaman <button type="button" onClick={() => { setHelpOpen(false); navigate('/settings'); }} className="text-indigo-400 underline font-bold cursor-pointer">Settings</button>.</p>
                 </div>
               </div>
             </div>

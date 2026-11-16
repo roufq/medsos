@@ -1,8 +1,9 @@
 import api from './axios';
 
 export const postApi = {
-  getFeed: async (limit = 50, offset = 0, userId = null, beforeId = null, kind = '') => {
-    let url = `/posts?limit=${limit}&offset=${offset}`;
+  explore: async (params = {}, publicView = false) => (await api.get(publicView ? '/public/explore' : '/explore', { params })).data,
+  getFeed: async (limit = 50, offset = 0, userId = null, beforeId = null, kind = '', publicView = false) => {
+    let url = `${publicView ? "/public/posts" : "/posts"}?limit=${limit}&offset=${offset}`;
     if (kind) {
       url += `&kind=${encodeURIComponent(kind)}`;
     }
@@ -13,6 +14,9 @@ export const postApi = {
       url += `&before_id=${beforeId}`;
     }
     const res = await api.get(url);
+    if (!Array.isArray(res.data)) {
+      throw new Error('Server belum mengirim daftar postingan yang valid. Pastikan backend sudah diperbarui dan dijalankan ulang.');
+    }
     return res.data;
   },
   createPost: async (postData) => {
@@ -49,7 +53,7 @@ export const postApi = {
 	deleteComment: async (id) => (await api.delete(`/comments/${id}`)).data,
 	toggleSave: async (id) => (await api.post(`/posts/${id}/save`)).data,
 	repost: async (id, commentary = '') => (await api.post(`/posts/${id}/repost`, { commentary })).data,
-	getPost: async (id) => (await api.get(`/posts/${id}`)).data,
+	getPost: async (id, publicView = false) => (await api.get(`${publicView ? "/public/posts" : "/posts"}/${id}`)).data,
 	share: async (id, channel = 'copy', extra = {}) => (await api.post(`/posts/${id}/share`, { channel, ...extra })).data,
 	report: async (id, reason, details = '') => (await api.post(`/posts/${id}/report`, { reason, details })).data,
 	recordView: async (id) => (await api.post(`/posts/${id}/view`)).data,

@@ -57,6 +57,9 @@ func (s *authService) availableUsername(requested, name string) (string, error) 
 	}
 	for attempt := 0; attempt < 20; attempt++ {
 		candidate := base
+		if models.ReservedUsername(candidate) {
+			candidate += "_user"
+		}
 		if attempt > 0 {
 			candidate = fmt.Sprintf("%s_%d", base, attempt)
 		}
@@ -121,19 +124,19 @@ func (s *authService) Register(req *dto.RegisterRequest) (*dto.AuthResponse, err
 		}
 		phoneCountry = &country
 	}
-	
+
 	var birthDate *time.Time
 	if req.BirthDate != "" {
 		if t, err := time.Parse("2006-01-02", req.BirthDate); err == nil {
 			birthDate = &t
 		}
 	}
-	
+
 	var gender *string
 	if req.Gender != "" {
 		gender = &req.Gender
 	}
-	
+
 	var interests []string
 	if req.Interests != "" {
 		interests = strings.Split(req.Interests, ",")

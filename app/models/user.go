@@ -17,46 +17,47 @@ const (
 )
 
 type User struct {
-	PublicHash          *string    `gorm:"type:varchar(32);uniqueIndex" json:"public_hash"`
-	ID                  int64      `gorm:"primaryKey;autoIncrement" json:"id"`
-	Name                string     `gorm:"type:varchar(100);not null" json:"name"`
-	Username            *string    `gorm:"type:varchar(50);uniqueIndex" json:"username,omitempty"`
-	Email               string     `gorm:"type:varchar(100);not null;unique" json:"email"`
-	Phone               *string    `gorm:"type:varchar(32);uniqueIndex" json:"phone,omitempty"`
-	Password            string     `gorm:"type:varchar(255);not null" json:"-"`
-	Role                UserRole   `gorm:"type:enum('admin','user');default:'user';not null" json:"role"`
-	AccountType         string     `gorm:"type:varchar(20);not null;default:'personal'" json:"account_type"`
-	AccountStatus       string     `gorm:"type:varchar(24);not null;default:'active';index" json:"account_status"`
-	AvatarURL           *string    `gorm:"type:varchar(500)" json:"avatar_url"`
-	CoverURL            *string    `gorm:"type:varchar(500)" json:"cover_url"`
-	Bio                 *string    `gorm:"type:text" json:"bio"`
-	Title               *string    `gorm:"type:varchar(100)" json:"title"`
-	Company             *string    `gorm:"type:varchar(100)" json:"company"`
-	Location            *string    `gorm:"type:varchar(100)" json:"location"`
-	City                *string    `gorm:"type:varchar(100)" json:"city"`
-	Country             *string    `gorm:"type:varchar(100)" json:"country"`
-	Website             *string    `gorm:"type:varchar(500)" json:"website"`
-	BirthDate           *time.Time `gorm:"type:date" json:"birth_date,omitempty"`
-	BirthPlace          *string    `gorm:"type:varchar(100)" json:"birth_place,omitempty"`
-	PhoneCountry        *string    `gorm:"type:char(2)" json:"phone_country,omitempty"`
-	Gender              *string    `gorm:"type:varchar(20)" json:"gender,omitempty"`
-	Interests           []string   `gorm:"serializer:json;type:text" json:"interests,omitempty"`
-	ShopCategory        *string    `gorm:"type:varchar(100)" json:"shop_category,omitempty"`
+	PublicHash            *string    `gorm:"type:varchar(32);uniqueIndex" json:"public_hash"`
+	ID                    int64      `gorm:"primaryKey;autoIncrement" json:"id"`
+	Name                  string     `gorm:"type:varchar(100);not null" json:"name"`
+	Username              *string    `gorm:"type:varchar(50);uniqueIndex" json:"username,omitempty"`
+	Email                 string     `gorm:"type:varchar(100);not null;unique" json:"email"`
+	Phone                 *string    `gorm:"type:varchar(32);uniqueIndex" json:"phone,omitempty"`
+	Password              string     `gorm:"type:varchar(255);not null" json:"-"`
+	Role                  UserRole   `gorm:"type:enum('admin','user');default:'user';not null" json:"role"`
+	AccountType           string     `gorm:"type:varchar(20);not null;default:'personal'" json:"account_type"`
+	AccountStatus         string     `gorm:"type:varchar(24);not null;default:'active';index" json:"account_status"`
+	AvatarURL             *string    `gorm:"type:varchar(500)" json:"avatar_url"`
+	CoverURL              *string    `gorm:"type:varchar(500)" json:"cover_url"`
+	Bio                   *string    `gorm:"type:text" json:"bio"`
+	Title                 *string    `gorm:"type:varchar(100)" json:"title"`
+	Company               *string    `gorm:"type:varchar(100)" json:"company"`
+	Location              *string    `gorm:"type:varchar(100)" json:"location"`
+	City                  *string    `gorm:"type:varchar(100)" json:"city"`
+	Country               *string    `gorm:"type:varchar(100)" json:"country"`
+	Website               *string    `gorm:"type:varchar(500)" json:"website"`
+	BirthDate             *time.Time `gorm:"type:date" json:"birth_date,omitempty"`
+	BirthPlace            *string    `gorm:"type:varchar(100)" json:"birth_place,omitempty"`
+	PhoneCountry          *string    `gorm:"type:char(2)" json:"phone_country,omitempty"`
+	Gender                *string    `gorm:"type:varchar(20)" json:"gender,omitempty"`
+	Interests             []string   `gorm:"serializer:json;type:text" json:"interests,omitempty"`
+	ShopCategory          *string    `gorm:"type:varchar(100)" json:"shop_category,omitempty"`
 	IsPrivate             bool       `gorm:"not null;default:false;index" json:"is_private"`
 	SubscriptionPlan      string     `gorm:"type:varchar(20);not null;default:'free'" json:"subscription_plan"`
 	IsBlueVerified        bool       `gorm:"not null;default:false" json:"is_blue_verified"`
+	AdminVerified         bool       `gorm:"not null;default:false" json:"admin_verified"`
 	SubscriptionExpiresAt *time.Time `json:"subscription_expires_at,omitempty"`
 	ReferralBonusUntil    *time.Time `json:"referral_bonus_until,omitempty"`
-	ProfileLayout       string     `gorm:"type:varchar(10);not null;default:'grid'" json:"profile_layout"`
-	EmailVerifiedAt     *time.Time `json:"email_verified_at,omitempty"`
-	PhoneVerifiedAt     *time.Time `json:"phone_verified_at,omitempty"`
-	PasswordChangedAt   *time.Time `json:"password_changed_at,omitempty"`
+	ProfileLayout         string     `gorm:"type:varchar(10);not null;default:'grid'" json:"profile_layout"`
+	EmailVerifiedAt       *time.Time `json:"email_verified_at,omitempty"`
+	PhoneVerifiedAt       *time.Time `json:"phone_verified_at,omitempty"`
+	PasswordChangedAt     *time.Time `json:"password_changed_at,omitempty"`
 	// NeedsPassword marks accounts created through OAuth that never chose a
 	// local password; they may set one without supplying a current password.
 	NeedsPassword bool `gorm:"not null;default:false" json:"needs_password"`
 	// TokenVersion is embedded in every issued JWT. Bumping it revokes all of
 	// the user's outstanding access and refresh tokens at once.
-	TokenVersion int64 `gorm:"not null;default:0" json:"-"`
+	TokenVersion        int64      `gorm:"not null;default:0" json:"-"`
 	DeletionRequestedAt *time.Time `gorm:"index" json:"deletion_requested_at,omitempty"`
 	CreatedAt           time.Time  `gorm:"autoCreateTime" json:"created_at"`
 	UpdatedAt           time.Time  `gorm:"autoUpdateTime" json:"updated_at"`
@@ -106,12 +107,12 @@ func (u *User) AfterFind(tx *gorm.DB) error {
 	}
 	if u.SubscriptionPlan != "" && u.SubscriptionPlan != "free" && u.SubscriptionExpiresAt != nil && u.SubscriptionExpiresAt.Before(time.Now()) {
 		u.SubscriptionPlan = "free"
-		u.IsBlueVerified = false
+		u.IsBlueVerified = u.AdminVerified
 		u.SubscriptionExpiresAt = nil
 		if tx != nil && u.ID > 0 {
 			_ = tx.Session(&gorm.Session{SkipHooks: true, NewDB: true}).Model(&User{}).Where("id = ?", u.ID).Updates(map[string]any{
 				"subscription_plan":       "free",
-				"is_blue_verified":        false,
+				"is_blue_verified":        u.AdminVerified,
 				"subscription_expires_at": nil,
 			}).Error
 		}
@@ -149,6 +150,9 @@ func GenerateUsername(tx *gorm.DB, name, email string, excludeID int64) string {
 		base = base[:28]
 	}
 	candidate := base
+	if ReservedUsername(candidate) {
+		candidate += "_user"
+	}
 	for suffix := 1; tx != nil && suffix < 10000; suffix++ {
 		var count int64
 		tx.Model(&User{}).Where("LOWER(username) = ? AND id != ?", candidate, excludeID).Count(&count)

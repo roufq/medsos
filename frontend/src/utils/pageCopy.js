@@ -1,0 +1,17 @@
+export const pageCopy = {
+  post: ['Postingan', 'Nikmati cerita, temukan perspektif baru, dan mulai percakapan.'],
+  home: ['Beranda', 'Cerita dan karya terbaru dari orang-orang di sekitar Anda.'],
+  explore: ['Explore', 'Temukan inspirasi, perspektif baru, dan komunitas pilihan Anda.'],
+  search: ['Pencarian', 'Temukan cerita, produk, dan orang yang ingin Anda kenal.'],
+  profile: ['Profil', 'Cerita, karya, dan koneksi dalam satu ruang pribadi.'],
+  shop: ['Shop', 'Temukan produk pilihan dan dukung karya para penjual.'],
+  videos: ['Video', 'Tonton cerita dan ide dari sudut pandang yang berbeda.'],
+  messages: ['Pesan', 'Mulai percakapan dan tetap terhubung.'],
+  notifications: ['Notifikasi', 'Kabar terbaru dari interaksi dan komunitas Anda.'],
+  network: ['Network', 'Bangun koneksi dan temukan orang dengan minat yang sama.'],
+  saved: ['Tersimpan', 'Simpan inspirasi untuk dibaca dan dinikmati kembali.'],
+  settings: ['Pengaturan', 'Kelola akun dan sesuaikan pengalaman Postter Anda.'],
+  pricing: ['Paket', 'Pilih dukungan yang sesuai untuk perjalanan kreatif Anda.'],
+  admin: ['Administrator', 'Kelola komunitas, dukung kreator, dan jaga ruang bersama.'],
+  analytics: ['Analitik', 'Kenali perkembangan dan interaksi komunitas Anda.'],
+};

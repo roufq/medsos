@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Loader } from 'lucide-react';
 import AppLayout, { useAppNavigate } from '../components/modern/AppLayout';
 import RightSidebar from '../components/modern/RightSidebar';
@@ -11,11 +11,13 @@ import { userApi } from '../api/userApi';
 const PAGE_SIZE = 50;
 
 const HomePage = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const goTo = useAppNavigate();
   const navigate = useNavigate();
+  const location = useLocation();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [activeComposerType, setActiveComposerType] = useState('image');
@@ -27,12 +29,13 @@ const HomePage = () => {
 
   const fetchFeed = async () => {
     setLoading(true);
+    setError('');
     try {
-      const feed = await postApi.getFeed(PAGE_SIZE, 0);
+      const feed = await postApi.getFeed(PAGE_SIZE, 0, null, null, '', !user);
       setPosts(feed || []);
       setHasMore((feed || []).length === PAGE_SIZE);
     } catch (e) {
-      console.error('Failed to fetch feed posts:', e);
+      setError(e.response?.data?.error || e.message || 'Gagal memuat postingan. Silakan coba lagi.');
     } finally {
       setLoading(false);
     }
@@ -43,16 +46,19 @@ const HomePage = () => {
     const last = posts[posts.length - 1];
     if (!last) return;
     setLoadingMore(true);
+    setError('');
     try {
-      const more = await postApi.getFeed(PAGE_SIZE, 0, null, last.id);
+      const more = await postApi.getFeed(PAGE_SIZE, 0, null, last.id, '', !user);
       setPosts((current) => [...current, ...(more || []).filter((p) => !current.some((c) => c.id === p.id))]);
       setHasMore((more || []).length === PAGE_SIZE);
+    } catch (e) {
+      setError(e.response?.data?.error || e.message || 'Gagal memuat postingan berikutnya.');
     } finally {
       setLoadingMore(false);
     }
   };
 
-  useEffect(() => { fetchFeed(); }, []);
+  useEffect(() => { if (!authLoading) fetchFeed(); }, [user?.id, authLoading]);
 
   const addPost = (post) => setPosts((current) => [post, ...current.filter((p) => p.id !== post.id)]);
   const replacePost = (post) => setPosts((current) => current.map((p) => (p.id === post.id ? post : p)));
@@ -76,16 +82,18 @@ const HomePage = () => {
   };
 
   return (
-    <AppLayout currentTab="home" onPostCreated={addPost} composerOpen={composerOpen} setComposerOpen={setComposerOpen} composerType={composerType} setComposerType={setComposerType} onComposerTypeChange={setActiveComposerType}>
+    <AppLayout currentTab={location.pathname === '/explore' ? 'explore' : 'home'} onPostCreated={addPost} composerOpen={composerOpen} setComposerOpen={setComposerOpen} composerType={composerType} setComposerType={setComposerType} onComposerTypeChange={setActiveComposerType}>
+      {error && <div role="alert" className="mb-4 rounded-xl border border-error/30 bg-error/10 p-4 text-sm"><p>{error}</p><button type="button" className="mt-2 font-bold underline" onClick={() => posts.length ? loadMore() : fetchFeed()}>Coba lagi</button></div>}
       {loading && posts.length === 0 ? (
         <div className="flex justify-center py-20"><Loader className="animate-spin text-primary" size={40} /></div>
       ) : (
         <div className="poster-feed-layout">
-          <Feed
+          {(!error || posts.length > 0) && <Feed
+            canCreate={Boolean(user)}
             activeComposerType={composerOpen ? activeComposerType : undefined}
             posts={posts}
             currentUser={currentUser}
-            onRequestCreatePost={(type) => { setComposerType(type); setActiveComposerType(type || 'image'); setComposerOpen(true); }}
+            onRequestCreatePost={(type) => { if (!user) { navigate('/login'); return; } setComposerType(type); setActiveComposerType(type || 'image'); setComposerOpen(true); }}
             onNavigate={goTo}
             onPostDeleted={removePost}
             onPostUpdated={replacePost}
@@ -93,8 +101,8 @@ const HomePage = () => {
             onLoadMore={loadMore}
             hasMore={hasMore}
             loadingMore={loadingMore}
-          />
-          <RightSidebar posts={posts} followedUsers={followedUsers} onFollowSuggestion={handleFollowSuggestion} onNavigate={goTo} onOpenProfile={(id) => navigate(`/profile/${id}`)} />
+          />}
+          {user && <RightSidebar posts={posts} followedUsers={followedUsers} onFollowSuggestion={handleFollowSuggestion} onNavigate={goTo} onOpenProfile={(id) => navigate(`/profile/${id}`)} />}
         </div>
       )}
     </AppLayout>

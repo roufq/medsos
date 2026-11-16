@@ -20,6 +20,7 @@ const ProfilePage = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  useEffect(() => { if (profileUser) document.title = `${profileUser.name} (@${profileUser.username}) · postter.us`; }, [profileUser]);
 
   useEffect(() => {
     let active = true;
@@ -28,12 +29,12 @@ const ProfilePage = () => {
       setError('');
       try {
         if (/^\d+$/.test(String(key || ''))) throw new Error('Numeric ID disallowed');
-        const user = await userApi.getProfile(key);
+        const user = await userApi.getProfile(key, !authUser);
         if (!active) return;
         setProfileUser(user);
         if (user.id === authUser?.id && user.username && authUser?.username !== user.username) updateProfileState({ ...authUser, username: user.username });
         setLoadedKey(key);
-        const userPosts = user.profile_locked || user.is_blocked_by_me ? [] : await postApi.getFeed(50, 0, user.id);
+        const userPosts = user.profile_locked || user.is_blocked_by_me ? [] : await postApi.getFeed(50, 0, user.id, null, '', !authUser);
         if (active) setPosts(userPosts || []);
       } catch (e) {
         if (active) {
@@ -46,7 +47,7 @@ const ProfilePage = () => {
     };
     load();
     return () => { active = false; };
-  }, [key]);
+  }, [key, authUser?.id]);
 
   useEffect(() => {
     if (!profileUser?.username || loading || loadedKey !== key) return;
@@ -66,7 +67,7 @@ const ProfilePage = () => {
   };
 
   return (
-    <AppLayout wide currentTab={isCurrentUser ? 'profile' : ''} onPostCreated={handlePostCreated}>
+    <AppLayout wide currentTab="profile" onPostCreated={handlePostCreated}>
       {loading ? (
         <div className="flex justify-center py-20"><Loader className="animate-spin text-primary" size={40} /></div>
       ) : !profileUser ? (

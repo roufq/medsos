@@ -33,7 +33,7 @@ api.interceptors.request.use((config) => {
 
 // Pages reachable without a session; never bounce these back to /login.
 const PUBLIC_PATHS = ['/login', '/register', '/forgot-password', '/thanks'];
-const onPublicPage = () => PUBLIC_PATHS.some((path) => window.location.pathname.startsWith(path));
+const onPublicPage = () => { const path = window.location.pathname; return PUBLIC_PATHS.some((prefix) => path.startsWith(prefix)) || path === '/' || ['/explore','/home','/shop'].includes(path) || /^\/(?:profile|u|post|posts)\//.test(path) || /^\/[A-Za-z0-9_.-]+\/?$/.test(path) && !['/settings','/pricing','/messages','/notifications','/saved','/shop','/videos','/network','/analytics'].includes(path); };
 
 function goToLogin(reason) {
   if (onPublicPage()) return;

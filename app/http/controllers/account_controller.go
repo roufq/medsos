@@ -39,26 +39,26 @@ func (h *AccountController) UpdateSettings(c goravelhttp.Context) goravelhttp.Re
 		return c.Response().Json(http.StatusUnauthorized, goravelhttp.Json{"error": "Unauthorized"})
 	}
 	var input struct {
-		Username      *string  `json:"username"`
-		Name          *string  `json:"name"`
-		Phone         *string  `json:"phone"`
-		Email         *string  `json:"email"`
-		City          *string  `json:"city"`
-		Country       *string  `json:"country"`
-		BirthDate     *string  `json:"birth_date"`
-		Gender        *string  `json:"gender"`
-		AccountType   *string  `json:"account_type"`
-		Interests     []string `json:"interests"`
-		ShopCategory  *string  `json:"shop_category"`
-		IsPrivate     *bool    `json:"is_private"`
-		ProfileLayout *string  `json:"profile_layout"`
-		Website       *string  `json:"website"`
-		Bio           *string  `json:"bio"`
-		Title         *string  `json:"title"`
-		Company       *string  `json:"company"`
-		Location      *string  `json:"location"`
-		BirthPlace    *string  `json:"birth_place"`
-		PhoneCountry     *string  `json:"phone_country"`
+		Username           *string  `json:"username"`
+		Name               *string  `json:"name"`
+		Phone              *string  `json:"phone"`
+		Email              *string  `json:"email"`
+		City               *string  `json:"city"`
+		Country            *string  `json:"country"`
+		BirthDate          *string  `json:"birth_date"`
+		Gender             *string  `json:"gender"`
+		AccountType        *string  `json:"account_type"`
+		Interests          []string `json:"interests"`
+		ShopCategory       *string  `json:"shop_category"`
+		IsPrivate          *bool    `json:"is_private"`
+		ProfileLayout      *string  `json:"profile_layout"`
+		Website            *string  `json:"website"`
+		Bio                *string  `json:"bio"`
+		Title              *string  `json:"title"`
+		Company            *string  `json:"company"`
+		Location           *string  `json:"location"`
+		BirthPlace         *string  `json:"birth_place"`
+		PhoneCountry       *string  `json:"phone_country"`
 		SubscriptionPlan   *string  `json:"subscription_plan"`
 		SubscriptionMonths *int     `json:"subscription_months"`
 		PaymentMethod      *string  `json:"payment_method"`
@@ -73,7 +73,7 @@ func (h *AccountController) UpdateSettings(c goravelhttp.Context) goravelhttp.Re
 	updates := map[string]any{}
 	if input.Username != nil {
 		username := strings.ToLower(strings.TrimSpace(*input.Username))
-		if !validUsername.MatchString(username) {
+		if !validUsername.MatchString(username) || models.ReservedUsername(username) {
 			return c.Response().Json(400, goravelhttp.Json{"error": "username must be 3-40 lowercase letters, numbers, or underscores"})
 		}
 		updates["username"] = username
@@ -220,13 +220,12 @@ func (h *AccountController) UpdateSettings(c goravelhttp.Context) goravelhttp.Re
 			if _, ok := plan.PricesIDR[months]; !ok {
 				return c.Response().Json(400, goravelhttp.Json{"error": "subscription_months must be 1, 3, 6, 9, or 12"})
 			}
-			hasPayment := input.PaymentMethod != nil && strings.TrimSpace(*input.PaymentMethod) != ""
-			if current.Role != models.RoleAdmin && !hasPayment {
+			if current.Role != models.RoleAdmin {
 				return c.Response().Json(403, goravelhttp.Json{"error": "paid subscription requires admin or payment verification"})
 			}
 		}
 		updates["subscription_plan"] = planKey
-		updates["is_blue_verified"] = plan.BlueVerified
+		updates["is_blue_verified"] = plan.BlueVerified || current.AdminVerified
 		if planKey == "free" {
 			updates["subscription_expires_at"] = nil
 		} else {

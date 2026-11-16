@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"strings"
 	"time"
 
 	"github.com/goravel/framework/contracts/http"
@@ -36,6 +37,8 @@ func Web() {
 	public := facades.Route().Middleware(middleware.ConcurrentLimit(300), middleware.RateLimit("public-post", 240, time.Minute))
 	public.Get("p/{id}", socialController.PublicPostPage)
 	public.Get("embed/posts/{id}", socialController.EmbedPost)
+	public.Get("robots.txt", controllers.Robots)
+	public.Get("sitemap.xml", controllers.Sitemap)
 
 	// Serve Frontend Static Assets
 	facades.Route().Static("frontend/dist", "./frontend/dist")
@@ -70,6 +73,9 @@ func Web() {
 	// ==========================================
 	// Any unmatched route will be sent to the React frontend index.html
 	facades.Route().Fallback(func(c http.Context) http.Response {
-		return c.Response().Header("Cache-Control", "no-store, no-cache, must-revalidate").File("./frontend/dist/index.html")
+		if strings.HasPrefix(c.Request().Origin().URL.Path, "/api/") {
+			return c.Response().Json(404, http.Json{"error": "Endpoint API tidak ditemukan"})
+		}
+		return controllers.PublicDocument(c)
 	})
 }

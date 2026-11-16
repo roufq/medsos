@@ -57,9 +57,16 @@ func Api() {
 	api.Middleware(middleware.RateLimit("oauth-callback", 30, time.Minute)).Get("auth/oauth/{provider}/callback", oauthController.Callback)
 	api.Middleware(middleware.RateLimit("oauth-callback", 30, time.Minute)).Post("auth/oauth/{provider}/callback", oauthController.Callback)
 	api.Get("embed/posts/{id}", socialController.EmbedPost)
+	api.Middleware(middleware.RateLimit("public", 300, time.Minute)).Group(func(public route.Router) {
+		public.Get("platform/settings", controllers.PlatformSettings)
+		public.Get("public/posts", postController.PublicFeed)
+		public.Get("public/explore", controllers.Explore)
+		public.Get("public/posts/{id}", postController.PublicPost)
+		public.Get("public/users/{id}", controllers.PublicProfile)
+	})
 
 	// Authenticated Endpoints
-	api.Middleware(middleware.AuthMiddleware(), middleware.RateLimit("api", 300, time.Minute)).Group(func(router route.Router) {
+	api.Middleware(middleware.AuthMiddleware(), middleware.RateLimit("api", 300, time.Minute), middleware.ActivityLog()).Group(func(router route.Router) {
 		// Auth
 		router.Post("auth/logout", authController.LogoutAPI)
 		router.Get("auth/session", controllers.SessionInfo)
@@ -83,6 +90,7 @@ func Api() {
 		router.Get("users/saved-posts", socialController.SavedPosts)
 
 		// Posts
+		router.Get("explore", controllers.Explore)
 		router.Post("posts", postController.CreatePostAPI)
 		router.Get("posts", postController.GetFeedAPI)
 		router.Get("posts/{id}", postController.GetPostAPI)
@@ -142,11 +150,19 @@ func Api() {
 		router.Post("messages/intent/resolve", msgController.ResolveIntent)
 		router.Post("messages/call/signal", msgController.SendCallSignal)
 		router.Get("messages/call/poll", msgController.PollCallSignals)
-  router.Get("messages/call/config", msgController.GetCallConfig)
+		router.Get("messages/call/config", msgController.GetCallConfig)
 
 		// Admin Operations
 		router.Middleware(middleware.AdminMiddleware()).Group(func(admin route.Router) {
 			admin.Get("admin/stats", userController.AdminGetStatsAPI)
+			admin.Put("admin/settings", controllers.UpdatePlatformSettings)
+			admin.Get("admin/activity", controllers.AdminActivity)
+			admin.Get("admin/sessions", controllers.AdminSessions)
+			admin.Get("admin/posts", controllers.AdminPosts)
+			admin.Delete("admin/posts/{id}", postController.AdminDeletePost)
+			admin.Put("admin/posts/{id}/sponsor", controllers.AdminSponsorPost)
+			admin.Put("admin/users/{id}/verification", controllers.AdminVerifyUser)
+			admin.Delete("admin/users/{id}", postController.AdminDeleteUser)
 			admin.Get("admin/users", userController.AdminGetUsersAPI)
 			admin.Get("admin/reports", socialController.AdminReports)
 			admin.Get("admin/conversation-reports", msgController.AdminConversationReports)

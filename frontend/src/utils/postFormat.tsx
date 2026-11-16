@@ -97,7 +97,7 @@ export function RichText({ text }: { text?: string | null }) {
       const symbol = match[3];
       const token = match[4];
       const target = symbol === '#' ? `/search?q=${encodeURIComponent('#' + token)}` : `/profile/${encodeURIComponent(token.toLowerCase())}`;
-      nodes.push(<Link key={index} to={target} className="text-primary font-semibold hover:underline">{symbol}{token}</Link>);
+      nodes.push(<Link key={index} to={target} className={symbol === '#' ? "text-blue-600 dark:text-blue-400 font-semibold hover:underline" : "text-primary font-semibold hover:underline"}>{symbol}{token}</Link>);
       last = index + match[0].length;
     }
   }

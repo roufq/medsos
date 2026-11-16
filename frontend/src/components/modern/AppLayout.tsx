@@ -1,9 +1,12 @@
 import { postUrl } from '../../utils/postUrl';
 import { profileUrl } from '../../utils/profileUrl';
 import { ReactNode, useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Phone, PhoneIncoming, PhoneOff, Video as VideoIcon } from 'lucide-react';
 import Header from './Header';
+import Brand from '../common/Brand';
+import MobileNav from './MobileNav';
+import { pageCopy } from '../../utils/pageCopy';
 import Sidebar from './Sidebar';
 import CreatePostModal from './CreatePostModal';
 import { useAuth } from '../../context/AuthContext';
@@ -24,14 +27,14 @@ interface AppLayoutProps {
 }
 
 const ROUTES: Record<string, string> = {
-  home: '/', shop: '/shop', shorts: '/videos', videos: '/videos', network: '/network', messages: '/messages', saved: '/saved',
+  home: '/', explore: '/explore', shop: '/shop', shorts: '/videos', videos: '/videos', network: '/network', messages: '/messages', saved: '/saved',
   settings: '/settings', pricing: '/pricing', admin: '/admin/dashboard', analytics: '/analytics',
 };
 
 export function useAppNavigate() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  return (tab: string) => navigate(tab === 'profile' ? profileUrl(user) : ROUTES[tab] || '/');
+  return (tab: string) => navigate(tab === 'profile' ? user ? profileUrl(user) : '/login' : tab === 'home' && !user ? '/home' : ROUTES[tab] || '/');
 }
 
 export default function AppLayout({ currentTab, children, onPostCreated, composerOpen, setComposerOpen, wide, composerType, setComposerType, onComposerTypeChange }: AppLayoutProps) {
@@ -39,12 +42,16 @@ export default function AppLayout({ currentTab, children, onPostCreated, compose
   const navigate = useNavigate();
   const goTo = useAppNavigate();
   const [searchQuery, setSearchQuery] = useState('');
+  const [routeParams] = useSearchParams();
+  useEffect(() => {if(currentTab === 'explore')setSearchQuery(routeParams.get('q') || '');},[routeParams,currentTab]);
+  const copy = pageCopy[currentTab] || ['Postter', 'Berbagi cerita, karya, dan koneksi baru.'];
+  useEffect(() => { document.title = `${copy[0]} · postter.us`; }, [currentTab]);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [ownComposerType, setOwnComposerType] = useState<string | undefined>();
   const [ownComposer, setOwnComposer] = useState(false);
   const isComposerOpen = composerOpen ?? ownComposer;
   const setComposer = setComposerOpen ?? setOwnComposer;
-  const openComposer = () => { onComposerTypeChange?.('image'); (setComposerType ?? setOwnComposerType)(undefined); setComposer(true); };
+  const openComposer = () => { if (!user) { navigate('/login'); return; } onComposerTypeChange?.('image'); (setComposerType ?? setOwnComposerType)(undefined); setComposer(true); };
 
   const currentUser = { id: user?.id, username: user?.username || '', name: user?.name || '', title: user?.title || '', company: user?.company || '', avatar: user?.avatar_url || `${import.meta.env.BASE_URL}favicon.svg` };
 
@@ -152,8 +159,8 @@ export default function AppLayout({ currentTab, children, onPostCreated, compose
   };
 
   return (
-    <div className="poster-app bg-background text-on-background min-h-screen font-sans">
-      <Header
+    <div className={`poster-app ${!user ? 'postter-public-layout' : ''} bg-background text-on-background min-h-screen font-sans`}>
+      {user ? <Header
         currentUser={currentUser as any}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
@@ -163,13 +170,14 @@ export default function AppLayout({ currentTab, children, onPostCreated, compose
         currentTab={isComposerOpen ? 'newpost' : currentTab}
         onRequestCreatePost={openComposer}
         onLogout={handleLogout}
-      />
+      /> : <header className="postter-guest-header"><Brand /><form className="explore-guest-search" onSubmit={event=>{event.preventDefault();navigate(`/explore?q=${encodeURIComponent(searchQuery.trim())}`);}}><input type="search" aria-label="Cari postingan publik" placeholder="Cari postingan, kreator, atau topik…" maxLength={120} value={searchQuery} onChange={event=>setSearchQuery(event.target.value)}/></form><nav>{currentTab!=='explore'&&<a href="/explore">Explore</a>}<a href="/login">Masuk</a><a className="landing-primary" href="/register">Daftar</a></nav></header>}
       <main className={`poster-main ${wide ? 'poster-main-wide' : ''} ${currentTab === 'messages' ? 'poster-main-flush' : ''}`}>
         <Sidebar currentTab={currentTab} onNavigate={goTo} onRequestCreatePost={openComposer} onLogout={handleLogout} />
         {mobileOpen && <Sidebar currentTab={currentTab} onNavigate={goTo} onRequestCreatePost={openComposer} onLogout={handleLogout} mobileOpen onCloseMobile={() => setMobileOpen(false)} />}
-        <div className={`flex-grow min-w-0 ${currentTab === 'messages' ? 'h-full' : ''}`}>{children}</div>
+        <div className={`flex-grow min-w-0 ${currentTab === 'messages' ? 'h-full' : ''}`}>{currentTab !== 'messages' && <p className="postter-page-tagline">{copy[1]}</p>}{children}</div>
       </main>
-      <CreatePostModal onTypeChange={onComposerTypeChange} initialType={setComposerType ? composerType : ownComposerType} isOpen={isComposerOpen} onClose={() => setComposer(false)} onSaved={(post) => (onPostCreated ? onPostCreated(post) : navigate(postUrl(post)))} />
+      <MobileNav user={user} currentTab={isComposerOpen ? 'newpost' : currentTab} onCreate={openComposer} />
+      {user && <CreatePostModal onTypeChange={onComposerTypeChange} initialType={setComposerType ? composerType : ownComposerType} isOpen={isComposerOpen} onClose={() => setComposer(false)} onSaved={(post) => (onPostCreated ? onPostCreated(post) : navigate(postUrl(post)))} />}
 
       {globalIncomingCall && currentTab !== 'messages' && (
         <div className="fixed inset-0 z-[130] bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">

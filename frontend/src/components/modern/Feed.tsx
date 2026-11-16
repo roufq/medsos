@@ -5,6 +5,7 @@ import PostCard from './PostCard';
 
 interface FeedProps {
   posts: any[];
+  canCreate?: boolean;
   activeComposerType?: string;
   currentUser: { name: string; avatar: string; };
   onRequestCreatePost: (type?: string) => void;
@@ -17,7 +18,7 @@ interface FeedProps {
   loadingMore?: boolean;
 }
 
-export default function Feed({ activeComposerType, posts, currentUser, onRequestCreatePost, onNavigate, onPostDeleted, onPostUpdated, onPostCreated, onLoadMore, hasMore, loadingMore }: FeedProps) {
+export default function Feed({ canCreate = true, activeComposerType, posts, currentUser, onRequestCreatePost, onNavigate, onPostDeleted, onPostUpdated, onPostCreated, onLoadMore, hasMore, loadingMore }: FeedProps) {
   const { t } = useLanguage();
 
   // Deduplicate pure reposts against their original post so the same post never renders twice in the same timeline.
@@ -34,7 +35,7 @@ export default function Feed({ activeComposerType, posts, currentUser, onRequest
 
   return (
     <div className="poster-feed">
-      <div className="poster-composer flex flex-col gap-4">
+      {canCreate && <div className="poster-composer flex flex-col gap-4">
         <div className="flex gap-4">
           <button type="button" onClick={() => onNavigate('profile')} className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
             <img src={currentUser.avatar} alt={currentUser.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
@@ -50,6 +51,7 @@ export default function Feed({ activeComposerType, posts, currentUser, onRequest
         </div>
       </div>
 
+      }
       {visiblePosts.length === 0 ?
         <div className="bg-white rounded-2xl p-8 border border-border-subtle/30 text-center shadow-sm">
           <p className="text-text-secondary font-medium mb-1">{t("Belum ada postingan.")}</p>

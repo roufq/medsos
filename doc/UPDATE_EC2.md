@@ -55,7 +55,9 @@ schema saat startup perlu diperiksa sebelum melakukan pemulihan database.
 Source Git tetap pada revisi baru jika runtime terpaksa dipulihkan.
 
 Database pengguna dan konfigurasi runtime tidak diganti dengan data dari lokal.
-Pembaruan saat ini tidak menambah migrasi database. Folder build dan backup
+Revisi 14 November menambahkan tabel pengaturan/aktivitas dan kolom verifikasi/
+iklan melalui AutoMigrate saat startup; cadangan database wajib dipertahankan.
+Folder build dan backup
 dipertahankan untuk pemeriksaan; hapus backup lama sesuai kebijakan retensi
 setelah rilis dinyatakan baik agar disk tidak penuh.
 

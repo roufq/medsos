@@ -12,7 +12,7 @@ import {
 import { postApi } from '../../api/postApi';
 import { messageApi } from '../../api/messageApi';
 import { useAuth } from '../../context/AuthContext';
-import { RichText, formatPrice, timeAgo } from '../../utils/postFormat';
+import { RichText, formatPrice, timeAgo, tokensInText } from '../../utils/postFormat';
 import CommentThread from './CommentThread';
 import CreatePostModal from './CreatePostModal';
 import { EmbedModal, ReportModal, RepostModal, ShareModal } from './PostActionModals';
@@ -59,7 +59,7 @@ export function MediaGallery({ media, onOpen }: { media: any[]; onOpen: (index: 
         <div className={`grid gap-1 rounded-xl overflow-hidden ${images.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
           {images.slice(0, 4).map((image, index) =>
             <button key={image.id || image.media_url} type="button" onClick={() => onOpen(index)} className={`relative bg-surface-container-low ${images.length === 3 && index === 0 ? 'row-span-2' : ''}`}>
-              <img src={image.media_url} alt="" loading="lazy" className={`w-full h-full object-cover ${images.length === 1 ? 'max-h-[520px]' : 'aspect-square'}`} />
+              <img src={image.media_url} alt="" loading="lazy" className={`w-full h-full object-cover ${images.length === 1 ? 'h-auto' : 'aspect-square'}`} />
               {index === 3 && images.length > 4 && <span className="absolute inset-0 bg-black/50 flex items-center justify-center text-white text-2xl font-black">+{images.length - 4}</span>}
             </button>
           )}
@@ -89,7 +89,7 @@ function LinkPreview({ link }: { link: any; }) {
   const pending = link.preview_status === 'pending' || link.preview_status === 'processing';
   return (
     <a href={link.url} target="_blank" rel="noopener noreferrer nofollow ugc" className="block mb-4 border border-border-subtle/60 rounded-xl overflow-hidden hover:border-primary transition-colors">
-      {link.image_url && link.preview_status === 'ready' && <img src={link.image_url} alt="" loading="lazy" className="w-full aspect-[1.91/1] object-cover" referrerPolicy="no-referrer" />}
+      {link.image_url && link.preview_status === 'ready' && <img src={link.image_url} alt="" loading="lazy" className="w-full h-auto object-contain" referrerPolicy="no-referrer" />}
       <div className="p-3 bg-surface-container-low">
         <div className="text-[11px] font-bold uppercase tracking-widest text-text-secondary">{link.site_name || host}</div>
         <div className="font-bold text-sm text-text-primary">{link.title || (pending ? 'Mengambil pratinjau…' : link.url)}</div>
@@ -184,6 +184,7 @@ function OriginalPost({ post, onOpenImage }: { post: any; onOpenImage?: (index: 
 export default function PostCard({ post: initialPost, onDeleted, onUpdated, onReposted, defaultCommentsOpen, hideMedia }: PostCardProps) {
   const { t } = useLanguage();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [post, setPost] = useState(initialPost);
   const [commentsOpen, setCommentsOpen] = useState(Boolean(defaultCommentsOpen));
   const [menuOpen, setMenuOpen] = useState(false);
@@ -240,7 +241,7 @@ export default function PostCard({ post: initialPost, onDeleted, onUpdated, onRe
   // Count a view once the post has been at least half visible for a second.
   useEffect(() => {
     const node = cardRef.current;
-    if (!node || alreadyViewed(displayPost.id) || typeof IntersectionObserver === 'undefined') return;
+    if (!user || !node || alreadyViewed(displayPost.id) || typeof IntersectionObserver === 'undefined') return;
     let timer: number | undefined;
     const observer = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) {
@@ -261,6 +262,7 @@ export default function PostCard({ post: initialPost, onDeleted, onUpdated, onRe
   }, [displayPost.id, displayToken, isPureRepost]);
 
   const toggleLike = async () => {
+    if (!user) { navigate('/login'); return; }
     if (likeBusyRef.current) return;
     likeBusyRef.current = true;
     const wasLiked = Boolean(displayPost.is_liked_by_me);
@@ -278,6 +280,7 @@ export default function PostCard({ post: initialPost, onDeleted, onUpdated, onRe
   };
 
   const toggleSave = async () => {
+    if (!user) { navigate('/login'); return; }
     if (actionBusy) return;
     setMenuOpen(false); setActionBusy(true); setActionNotice(''); setActionError('');
     try {
@@ -387,22 +390,24 @@ export default function PostCard({ post: initialPost, onDeleted, onUpdated, onRe
 
       {isRepost && !isPureRepost ? <OriginalPost post={post.original_post} onOpenImage={setLightbox} /> :
         <>
+          {((displayPost.hashtags || []).length > 0 || (displayPost.mentions || []).length > 0) &&
+            <div className="flex flex-wrap gap-1.5 mb-3 text-xs">
+              {(displayPost.hashtags || []).filter((h: any) => !tokensInText(displayPost.content || '', '#').includes(h.tag)).map((h: any) => <Link key={h.tag} to={`/search?q=${encodeURIComponent('#' + h.tag)}`} className="rounded-full bg-blue-500/10 px-2 py-0.5 font-semibold text-blue-600 dark:text-blue-400">#{h.tag}</Link>)}
+              {(displayPost.mentions || []).map((m: any) => m.user?.username && <Link key={m.mentioned_user_id} to={profileUrl(m.user)} className="rounded-full bg-surface-container px-2 py-0.5 font-semibold text-text-blue-600 dark:text-blue-400">@{m.user.username}</Link>)}
+            </div>
+          }
+          {displayPost.is_sponsored && <div className="postter-ad-label">Iklan · Konten bersponsor</div>}
           {displayPost.shop && <ShopDetails shop={displayPost.shop} post={displayPost} />}
           {!hideMedia && (displayPost.media || []).length > 0 && <MediaGallery media={displayPost.media} onOpen={setLightbox} />}
           {displayPost.link && <LinkPreview link={displayPost.link} />}
-          {((displayPost.hashtags || []).length > 0 || (displayPost.mentions || []).length > 0) &&
-            <div className="flex flex-wrap gap-1.5 mb-3 text-xs">
-              {(displayPost.hashtags || []).map((h: any) => <Link key={h.tag} to={`/search?q=${encodeURIComponent('#' + h.tag)}`} className="rounded-full bg-primary/10 px-2 py-0.5 font-semibold text-primary">#{h.tag}</Link>)}
-              {(displayPost.mentions || []).map((m: any) => m.user?.username && <Link key={m.mentioned_user_id} to={profileUrl(m.user)} className="rounded-full bg-surface-container px-2 py-0.5 font-semibold text-text-primary">@{m.user.username}</Link>)}
-            </div>
-          }
+
         </>
       }
 
       <div className="flex justify-between items-center text-xs text-text-secondary pb-3 border-b border-border-subtle/20">
         <span className="flex items-center gap-1"><Heart className="w-3.5 h-3.5 fill-error text-error" />{displayPost.likes_count || 0}</span>
         <span className="flex gap-3">
-          <button type="button" onClick={() => setCommentsOpen((v) => !v)} className="hover:underline">{displayPost.comments_count || 0} komentar</button>
+          <button type="button" onClick={() => user ? setCommentsOpen((v) => !v) : navigate('/login')} className="hover:underline">{displayPost.comments_count || 0} komentar</button>
           <span>{repostsCount} repost</span>
           <span>{displayPost.shares_count || 0} dibagikan</span>
           <span className="flex items-center gap-1"><Eye className="w-3.5 h-3.5" />{displayPost.views_count || 0}</span>
@@ -413,7 +418,7 @@ export default function PostCard({ post: initialPost, onDeleted, onUpdated, onRe
         <button type="button" onClick={toggleLike} className={`flex items-center justify-center gap-1.5 py-2 rounded-xl hover:bg-surface-container-low ${displayPost.is_liked_by_me ? 'text-error' : 'text-text-secondary'}`} aria-pressed={Boolean(displayPost.is_liked_by_me)}>
           <Heart className={`w-4 h-4 ${displayPost.is_liked_by_me ? 'fill-current' : ''}`} /><span>{displayPost.likes_count || 0}</span>
         </button>
-        <button type="button" onClick={() => setCommentsOpen((v) => !v)} className={`flex items-center justify-center gap-1.5 py-2 rounded-xl hover:bg-surface-container-low ${commentsOpen ? 'text-primary' : 'text-text-secondary'}`}>
+        <button type="button" onClick={() => user ? setCommentsOpen((v) => !v) : navigate('/login')} className={`flex items-center justify-center gap-1.5 py-2 rounded-xl hover:bg-surface-container-low ${commentsOpen ? 'text-primary' : 'text-text-secondary'}`}>
           <MessageCircle className="w-4 h-4" /><span>{displayPost.comments_count || 0}</span>
         </button>
         <button type="button" onClick={() => setModal('repost')} className={`flex items-center justify-center gap-1.5 py-2 rounded-xl hover:bg-surface-container-low ${isRepostedByMe ? 'text-emerald-600 dark:text-emerald-400' : 'text-text-secondary'}`}>

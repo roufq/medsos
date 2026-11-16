@@ -69,7 +69,7 @@ const AdminSettingsTab = () => {
                       <label className="font-label-md text-on-surface-variant block">Site Name</label>
                       <input
                         type="text"
-                        defaultValue="Connect Modern"
+                        defaultValue="postter.us"
                         className="w-full px-4 py-2.5 rounded-xl bg-surface-container-low border border-transparent focus:border-primary focus:bg-white focus:ring-1 focus:ring-primary text-body-md transition-all outline-none"
                       />
                     </div>

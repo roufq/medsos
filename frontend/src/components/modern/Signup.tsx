@@ -154,7 +154,7 @@ export default function Signup({ onRegister, onNavigateToLogin, onOAuth }: Signu
 
         <div className="mb-8">
           <h2 className="text-3xl font-bold text-text-primary mb-2 tracking-tight">{t("Daftar Akun Baru")}</h2>
-          <p className="text-text-secondary text-sm">{t("Isi data di bawah ini untuk membuat akun Postterest.")}</p>
+          <p className="text-text-secondary text-sm">{t("Isi data di bawah ini untuk membuat akun Postter.")}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
@@ -392,7 +392,7 @@ export default function Signup({ onRegister, onNavigateToLogin, onOAuth }: Signu
           <div className="flex items-center gap-2.5 pt-2">
             <input type="checkbox" aria-label={t("Syarat dan Ketentuan")} checked={agree} onChange={e => setAgree(e.target.checked)} required className="w-[15px] h-[15px] accent-gray-900" />
             <p className="text-[11px] text-text-secondary leading-tight">
-              {t("Saya menyetujui")} <a href="#" className="auth-link font-semibold hover:underline">{t("Syarat dan Ketentuan")}</a> {t("serta")} <a href="#" className="auth-link font-semibold hover:underline">{t("Kebijakan Privasi")}</a> {t("Postterest.")}
+              {t("Saya menyetujui")} <a href="#" className="auth-link font-semibold hover:underline">{t("Syarat dan Ketentuan")}</a> {t("serta")} <a href="#" className="auth-link font-semibold hover:underline">{t("Kebijakan Privasi")}</a> {t("Postter.")}
             </p>
           </div>
 

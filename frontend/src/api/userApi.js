@@ -1,8 +1,8 @@
 import api from './axios';
 
 export const userApi = {
-  getProfile: async (id = 'me') => {
-    const res = await api.get(`/users/${id}`);
+  getProfile: async (id = 'me', publicView = false) => {
+    const res = await api.get(`${publicView ? "/public/users" : "/users"}/${id}`);
     return res.data;
   },
   updateProfile: async (profileData) => {

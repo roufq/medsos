@@ -1,5 +1,5 @@
 import { useLanguage } from "../../context/LanguageContext";import {
-  Home, ShoppingBag,
+  Home, ShoppingBag, Compass, MoreHorizontal,
   Users,
   Briefcase,
   MessageSquare,
@@ -37,8 +37,14 @@ export default function Sidebar({
 }: SidebarProps) {const { t } = useLanguage();
   const { user } = useAuth();
 
-  const menuItems: {id: string;label: string;icon: any;}[] = [
+  const menuItems: {id: string;label: string;icon: any;}[] = (currentTab === 'explore' || !user) ? [
+    {id:'home',label:'Home',icon:Home}, {id:'explore',label:'Explore',icon:Compass},
+    {id:'shop',label:'Shop',icon:ShoppingBag}, {id:'newpost',label:'Buat',icon:Plus},
+    {id:'saved',label:'Koleksi',icon:Bookmark}, {id:'profile',label:'Profil',icon:User},
+    {id:'settings',label:'Lainnya',icon:MoreHorizontal},
+  ] : [
   { id: 'home', label: t("Beranda"), icon: Home },
+  { id: 'explore', label: 'Explore', icon: Compass },
   { id: 'shop', label: 'Shop', icon: ShoppingBag },
   { id: 'videos', label: 'Video', icon: Clapperboard },
   { id: 'network', label: 'Network', icon: Users },
@@ -53,7 +59,7 @@ export default function Sidebar({
     menuItems.push({ id: 'analytics', label: 'Analytics', icon: BarChart3 });
   }
 
-  const go = (tab: string) => {onCloseMobile?.();onNavigate(tab);};
+  const go = (tab: string) => {onCloseMobile?.();if(tab==='newpost')onRequestCreatePost();else onNavigate(tab);};
   const asideClass = mobileOpen ?
   'fixed inset-y-0 left-0 z-[60] flex flex-col w-72 max-w-[85vw] gap-2 p-4 bg-white shadow-xl overflow-y-auto md:hidden' :
   'poster-rail hidden md:flex';
@@ -64,8 +70,8 @@ export default function Sidebar({
     <aside className={asideClass}>
       {mobileOpen && <button type="button" onClick={onCloseMobile} className="self-end p-1" aria-label="Tutup menu"><X className="w-5 h-5" /></button>}
       <div className="mb-6 px-2">
-        <div className="font-headline-md text-headline-md font-black text-primary">Connect Modern</div>
-        <div className="font-label-sm text-label-sm text-text-secondary">Professional Suite</div>
+        <div className="font-headline-md text-headline-md font-black text-primary">postter.us</div>
+        <div className="font-label-sm text-label-sm text-text-secondary">Cerita, karya, dan koneksi baru</div>
       </div>
 
       <nav className="flex flex-col gap-1.5 flex-1 select-none">

@@ -1,4 +1,5 @@
 import React from 'react';
+import Brand from '../common/Brand';
 import { useLanguage } from '../../context/LanguageContext';
 import { PlaySquare, Users, ShoppingBag, Edit3 } from 'lucide-react';
 
@@ -15,8 +16,8 @@ interface AuthLayoutProps {
 
 export default function AuthLayout({ children, isLogin = true }: AuthLayoutProps) {
   const { t } = useLanguage();
-  const badgeText = isLogin ? "Sign In to Postterest" : "Bergabung dengan Postterest";
-  const title = isLogin ? "Welcome Back to Postterest" : "Buat Akun Postterest";
+  const badgeText = isLogin ? "Sign In to Postter" : "Bergabung dengan Postter";
+  const title = isLogin ? "Welcome Back to Postter" : "Buat Akun Postter";
   const subtitle = isLogin
     ? "Login to continue exploring amazing content, connect with people, and be part of a global community."
     : "Jadilah bagian dari komunitas global untuk berbagi, menemukan, dan menjelajahi konten menarik setiap hari.";
@@ -35,6 +36,7 @@ export default function AuthLayout({ children, isLogin = true }: AuthLayoutProps
 
   return (
     <div className="auth-layout text-text-primary min-h-screen w-full bg-background flex items-center justify-center font-sans overflow-x-hidden">
+      <div className="auth-brand"><Brand /></div>
       <div className="w-full max-w-[1720px] mx-auto grid grid-cols-1 lg:grid-cols-12 min-h-screen items-center px-4 sm:px-8 lg:px-12 xl:px-16 py-6 sm:py-10 gap-8 xl:gap-12">
 
         {/* MOBILE / TABLET COMPACT HERO */}
