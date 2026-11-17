@@ -280,5 +280,5 @@ func (h *AuthController) HandleLogoutWeb(c goravelhttp.Context) goravelhttp.Resp
 	}
 	h.authService.Logout(c.Request().Cookie("refresh_token"))
 	clearAuthCookies(c)
-	return c.Response().Redirect(http.StatusSeeOther, "/web/login")
+	return c.Response().Redirect(http.StatusSeeOther, "/explore")
 }

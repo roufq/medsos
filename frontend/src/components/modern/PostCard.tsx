@@ -1,3 +1,4 @@
+import { sharePost } from '../../utils/share';
 import Toast from '../common/Toast';
 import { postUrl } from '../../utils/postUrl';
 import { copyToClipboard } from '../../utils/clipboard';
@@ -40,6 +41,8 @@ function markViewed(id: number) {
 }
 
 export function MediaGallery({ media, onOpen }: { media: any[]; onOpen: (index: number) => void; }) {
+  const { t: translateUI } = useLanguage();
+
   const images = media.filter((m) => m.media_type === 'image');
   const video = media.find((m) => m.media_type === 'video');
   return (
@@ -49,10 +52,10 @@ export function MediaGallery({ media, onOpen }: { media: any[]; onOpen: (index: 
           {video.processing_status === 'ready' ?
             <video src={video.media_url} controls preload="metadata" playsInline className="w-full max-h-[520px]" /> :
             <div className="aspect-video flex flex-col items-center justify-center gap-2 text-white/80 text-sm">
-              {video.processing_status === 'failed' ? 'Video gagal diproses.' : <><Loader2 className="w-6 h-6 animate-spin" />Video sedang diproses…</>}
+              {video.processing_status === 'failed' ? translateUI("Video gagal diproses.") : <><Loader2 className="w-6 h-6 animate-spin" />{translateUI("Video sedang diproses…")}</>}
             </div>
           }
-          {video.is_short && <span className="absolute top-2 left-2 rounded-full bg-error px-2 py-0.5 text-[10px] font-black text-white">SHORT</span>}
+          {video.is_short && <span className="absolute top-2 left-2 rounded-full bg-error px-2 py-0.5 text-[10px] font-black text-white">{translateUI("SHORT")}</span>}
         </div>
       }
       {images.length > 0 &&
@@ -76,31 +79,37 @@ export function Lightbox({ images, index, onClose }: { images: string[]; index: 
   return (
     <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4" onClick={onClose}>
       <button type="button" className="absolute top-5 right-5 text-white bg-black/50 rounded-full p-2" onClick={onClose} aria-label={t("Tutup")}><X className="w-6 h-6" /></button>
-      {images.length > 1 && <button type="button" className="absolute left-4 text-white bg-black/50 rounded-full p-2" onClick={(e) => { e.stopPropagation(); move(-1); }} aria-label="Sebelumnya"><ChevronLeft className="w-6 h-6" /></button>}
+      {images.length > 1 && <button type="button" className="absolute left-4 text-white bg-black/50 rounded-full p-2" onClick={(e) => { e.stopPropagation(); move(-1); }} aria-label={t("Sebelumnya")}><ChevronLeft className="w-6 h-6" /></button>}
       <img src={images[current]} alt="" className="max-w-full max-h-[90vh] object-contain rounded-lg" onClick={(e) => e.stopPropagation()} />
-      {images.length > 1 && <button type="button" className="absolute right-4 text-white bg-black/50 rounded-full p-2" onClick={(e) => { e.stopPropagation(); move(1); }} aria-label="Berikutnya"><ChevronRight className="w-6 h-6" /></button>}
+      {images.length > 1 && <button type="button" className="absolute right-4 text-white bg-black/50 rounded-full p-2" onClick={(e) => { e.stopPropagation(); move(1); }} aria-label={t("Berikutnya")}><ChevronRight className="w-6 h-6" /></button>}
     </div>
   );
 }
 
-function LinkPreview({ link }: { link: any; }) {
+function LinkPreview({ link, hasMedia }: { link: any; hasMedia?: boolean; }) {
+  if (!link?.url) return null;
   let host = link.url;
   try { host = new URL(link.url).hostname.replace(/^www\./, ''); } catch {/* keep raw */}
   const pending = link.preview_status === 'pending' || link.preview_status === 'processing';
+  const showBanner = !hasMedia && link.image_url && link.preview_status === 'ready' && !String(link.image_url).includes('google.com/s2/favicons');
   return (
     <a href={link.url} target="_blank" rel="noopener noreferrer nofollow ugc" className="block mb-4 border border-border-subtle/60 rounded-xl overflow-hidden hover:border-primary transition-colors">
-      {link.image_url && link.preview_status === 'ready' && <img src={link.image_url} alt="" loading="lazy" className="w-full h-auto object-contain" referrerPolicy="no-referrer" />}
-      <div className="p-3 bg-surface-container-low">
-        <div className="text-[11px] font-bold uppercase tracking-widest text-text-secondary">{link.site_name || host}</div>
-        <div className="font-bold text-sm text-text-primary">{link.title || (pending ? 'Mengambil pratinjau…' : link.url)}</div>
-        {link.description && <p className="text-xs text-text-secondary line-clamp-2 mt-1">{link.description}</p>}
+      {showBanner && <img src={link.image_url} alt="" loading="lazy" className="w-full h-auto object-contain" referrerPolicy="no-referrer" />}
+      <div className="p-3 bg-surface-container-low flex items-start gap-2.5">
+        <LinkIcon className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+        <div className="min-w-0 flex-1">
+          <div className="text-[11px] font-bold uppercase tracking-widest text-text-secondary truncate">{link.site_name || host}</div>
+          <div className="font-bold text-sm text-primary hover:underline break-all">{link.title || (pending ? 'Mengambil pratinjau…' : link.url)}</div>
+          {link.description && <p className="text-xs text-text-secondary line-clamp-2 mt-1">{link.description}</p>}
+          {link.title && link.title !== link.url && <div className="text-[11px] text-text-secondary truncate mt-0.5">{link.url}</div>}
+        </div>
       </div>
     </a>
   );
 }
 
 function ShopDetails({ shop, post }: { shop: any; post?: any; }) {
-  const { t } = useLanguage();
+  const { t , language: uiLanguage} = useLanguage();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [chatBusy, setChatBusy] = useState(false);
@@ -126,21 +135,19 @@ function ShopDetails({ shop, post }: { shop: any; post?: any; }) {
   return (
     <div className="mb-4 rounded-xl border border-primary/20 bg-primary/5 p-3 text-xs text-text-primary">
       <div className="flex items-center justify-between gap-2 mb-2">
-        <span className="text-xl font-black text-primary">{formatPrice(shop.price_minor, shop.currency)}</span>
+        <span className="text-xl font-black text-primary">{formatPrice(shop.price_minor, shop.currency, uiLanguage)}</span>
         <span className={`rounded-full px-2 py-0.5 font-bold ${shop.condition === 'new' ? 'bg-success/15 text-success' : 'bg-surface-container text-text-secondary'}`}>{shop.condition === 'new' ? t("Baru") : t("Bekas")}</span>
       </div>
       <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-text-secondary">
-        <span>Kategori: <strong className="text-text-primary">{shop.category}</strong></span>
-        {shop.brand && <span>Merek: <strong className="text-text-primary">{shop.brand}</strong></span>}
-        {shop.stock !== undefined && shop.stock !== null && <span>Stok: <strong className="text-text-primary">{shop.stock}</strong></span>}
-        {fulfillment.length > 0 && <span>Pengiriman: <strong className="text-text-primary">{fulfillment.join(', ')}</strong></span>}
-        {shop.payment_method && <span>Pembayaran: <strong className="text-text-primary">{shop.payment_method}</strong></span>}
+        <span>{t("Kategori:")} <strong className="text-text-primary">{shop.category}</strong></span>
+        {shop.brand && <span>{t("Merek:")} <strong className="text-text-primary">{shop.brand}</strong></span>}
+        {shop.stock !== undefined && shop.stock !== null && <span>{t("Stok:")} <strong className="text-text-primary">{shop.stock}</strong></span>}
+        {fulfillment.length > 0 && <span>{t("Pengiriman:")} <strong className="text-text-primary">{fulfillment.join(', ')}</strong></span>}
+        {shop.payment_method && <span>{t("Pembayaran:")} <strong className="text-text-primary">{shop.payment_method}</strong></span>}
       </div>
       {postToken && (
         <div className="mt-3 pt-2.5 border-t border-primary/15 flex items-center justify-between gap-2 flex-wrap">
-          <Link to={postUrl(post)} className="text-xs font-bold text-primary hover:underline">
-            Detail Produk
-          </Link>
+          <Link to={postUrl(post)} className="text-xs font-bold text-primary hover:underline">{t("Detail Produk")}</Link>
           <button
             type="button"
             disabled={chatBusy}
@@ -148,7 +155,7 @@ function ShopDetails({ shop, post }: { shop: any; post?: any; }) {
             className="inline-flex items-center gap-1.5 rounded-full bg-[#e6192b] hover:brightness-110 px-4 py-1.5 text-xs font-bold text-white shadow-xs transition-all cursor-pointer disabled:opacity-60"
           >
             <MessageCircle className="w-3.5 h-3.5" />
-            <span>{isOwner ? 'Kirim Produk ke Chat' : 'Chat Penjual / Beli'}</span>
+            <span>{isOwner ? t("Kirim Produk ke Chat") : t("Chat Penjual / Beli")}</span>
           </button>
         </div>
       )}
@@ -157,7 +164,9 @@ function ShopDetails({ shop, post }: { shop: any; post?: any; }) {
 }
 
 function OriginalPost({ post, onOpenImage }: { post: any; onOpenImage?: (index: number) => void; }) {
-  if (!post) return <div className="mb-4 rounded-xl border border-dashed border-border-subtle p-3 text-xs text-text-secondary">Postingan asli sudah tidak tersedia.</div>;
+  const { t: translateUI , language: uiLanguage} = useLanguage();
+
+  if (!post) return <div className="mb-4 rounded-xl border border-dashed border-border-subtle p-3 text-xs text-text-secondary">{translateUI("Postingan asli sudah tidak tersedia.")}</div>;
   return (
     <div className="mb-4 rounded-xl border border-border-subtle/60 p-3.5 hover:border-primary/60 transition-colors bg-surface-container-low/30">
       <div className="flex items-center gap-2 mb-2 flex-wrap">
@@ -169,20 +178,20 @@ function OriginalPost({ post, onOpenImage }: { post: any; onOpenImage?: (index: 
           {post.user?.is_blue_verified && <span className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-sky-500 text-white text-[9px] leading-none">✓</span>}
         </Link>
         {post.user?.username && <span className="text-[11px] text-text-secondary">@{post.user.username}</span>}
-        {post.post_type === 'shop' && <Link to="/shop" className="inline-flex items-center gap-0.5 text-[11px] font-bold text-primary hover:underline"><ShoppingBag className="w-3 h-3" />Shop</Link>}
-        <Link to={postUrl(post)} className="text-[11px] text-text-secondary hover:underline ml-auto">{timeAgo(post.created_at)}</Link>
+        {post.post_type === 'shop' && <Link to="/shop" className="inline-flex items-center gap-0.5 text-[11px] font-bold text-primary hover:underline"><ShoppingBag className="w-3 h-3" />{translateUI("Shop")}</Link>}
+        <Link to={postUrl(post)} className="text-[11px] text-text-secondary hover:underline ml-auto">{timeAgo(post.created_at, uiLanguage)}</Link>
       </div>
       {post.title && <Link to={postUrl(post)} className="block font-bold text-sm mb-1 hover:underline">{post.title}</Link>}
       {post.content && <p className="text-xs text-text-primary whitespace-pre-wrap break-words line-clamp-4 mb-2.5">{post.content}</p>}
       {post.shop && <ShopDetails shop={post.shop} post={post} />}
       {(post.media || []).length > 0 && <MediaGallery media={post.media} onOpen={onOpenImage || (() => {})} />}
-      {post.link && <LinkPreview link={post.link} />}
+      {post.link && <LinkPreview link={post.link} hasMedia={(post.media || []).length > 0} />}
     </div>
   );
 }
 
 export default function PostCard({ post: initialPost, onDeleted, onUpdated, onReposted, defaultCommentsOpen, hideMedia }: PostCardProps) {
-  const { t } = useLanguage();
+  const { t , language: uiLanguage} = useLanguage();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [post, setPost] = useState(initialPost);
@@ -307,9 +316,8 @@ export default function PostCard({ post: initialPost, onDeleted, onUpdated, onRe
     if (actionBusy) return;
     setMenuOpen(false); setActionBusy(true); setActionNotice(''); setActionError('');
     try {
-      const result = await postApi.share(targetOriginToken, 'copy');
-      await copyToClipboard(result.share_url);
-      updateDisplay({ shares_count: result.shares_count ?? ((displayPost.shares_count || 0) + 1) });
+      const outcome = await sharePost(targetOriginToken, 'copy', { share: postApi.share, copy: copyToClipboard });
+      if (outcome.counted) updateDisplay({ shares_count: outcome.result.shares_count });
       setActionNotice('Link berhasil disalin.');
     } catch (err: any) { setActionError(err?.response?.data?.error || 'Gagal menyalin link.'); }
     finally { setActionBusy(false); }
@@ -329,10 +337,10 @@ export default function PostCard({ post: initialPost, onDeleted, onUpdated, onRe
         <div className="flex items-center gap-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400 mb-3 pb-2 border-b border-border-subtle/15">
           <Repeat2 className="w-4 h-4 shrink-0" />
           <Link to={profileUrl(post.user || { id: post.user_id })} className="hover:underline font-bold">
-            {post.user_id === user?.id ? 'Anda' : post.user?.name}
+            {post.user_id === user?.id ? t("Anda") : post.user?.name}
           </Link>
-          <span>merepost</span>
-          <span className="text-text-secondary font-normal">• {timeAgo(post.created_at)}</span>
+          <span>{t("merepost")}</span>
+          <span className="text-text-secondary font-normal">• {timeAgo(post.created_at, uiLanguage)}</span>
         </div>
       }
       <header className="flex justify-between items-start mb-3">
@@ -342,12 +350,12 @@ export default function PostCard({ post: initialPost, onDeleted, onUpdated, onRe
           </Link>
           <div className="min-w-0">
             <Link to={profileUrl(displayPost.user || { id: displayPost.user_id })} className="font-bold text-text-primary text-sm hover:underline inline-flex items-center gap-1">
-              {displayPost.user?.name || 'Pengguna'}
-              {displayPost.user?.is_blue_verified && <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-sky-500 text-white text-[10px] leading-none" title="Terverifikasi Centang Biru" aria-label="Centang Biru">✓</span>}
+              {displayPost.user?.name || t("Pengguna")}
+              {displayPost.user?.is_blue_verified && <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-sky-500 text-white text-[10px] leading-none" title={t("Terverifikasi Centang Biru")} aria-label={t("Centang Biru")}>✓</span>}
             </Link>
             {displayPost.user?.username && <span className="ml-1 text-xs text-text-secondary">@{displayPost.user.username}</span>}
             <div className="flex flex-wrap items-center text-xs text-text-secondary gap-1 mt-0.5">
-              <Link to={postUrl(displayPost)} className="hover:underline">{timeAgo(displayPost.created_at)}</Link>
+              <Link to={postUrl(displayPost)} className="hover:underline">{timeAgo(displayPost.created_at, uiLanguage)}</Link>
               <span>•</span>
               {displayPost.visibility === 'followers' ? <Users className="w-3 h-3" aria-label={t("Hanya pengikut")} /> : <Globe className="w-3 h-3" aria-label={t("Publik")} />}
               {displayPost.location &&
@@ -355,7 +363,7 @@ export default function PostCard({ post: initialPost, onDeleted, onUpdated, onRe
                   <MapPin className="w-3 h-3" />{displayPost.location}
                 </a>
               }
-              {displayPost.post_type === 'shop' && (!isRepost || isPureRepost) && <Link to="/shop" className="flex items-center gap-0.5 font-bold text-primary hover:underline" aria-label="Lihat produk di Shop"><ShoppingBag className="w-3 h-3" />Shop</Link>}
+              {displayPost.post_type === 'shop' && (!isRepost || isPureRepost) && <Link to="/shop" className="flex items-center gap-0.5 font-bold text-primary hover:underline" aria-label={t("Lihat produk di Shop")}><ShoppingBag className="w-3 h-3" />{t("Shop")}</Link>}
             </div>
           </div>
         </div>
@@ -364,10 +372,10 @@ export default function PostCard({ post: initialPost, onDeleted, onUpdated, onRe
           {menuOpen &&
             <div className="absolute right-0 top-9 z-20 w-52 rounded-xl border border-border-subtle bg-white py-1 shadow-lg" role="menu" aria-label={t("Opsi postingan")}>
               {isMine && !isRepost && <button type="button" role="menuitem" className={menuItem} onClick={() => { setMenuOpen(false); setModal('edit'); }}><Pencil className="w-4 h-4" />{t("Edit postingan")}</button>}
-              {isMine && <button type="button" role="menuitem" className={`${menuItem} text-error`} onClick={remove}><Trash2 className="w-4 h-4" />{isRepost ? 'Batalkan repost' : t("Hapus postingan")}</button>}
+              {isMine && <button type="button" role="menuitem" className={`${menuItem} text-error`} onClick={remove}><Trash2 className="w-4 h-4" />{isRepost ? t("Batalkan repost") : t("Hapus postingan")}</button>}
               <button type="button" role="menuitem" className={menuItem} onClick={toggleSave}>{displayPost.is_saved_by_me ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}{displayPost.is_saved_by_me ? t('Hapus dari tersimpan') : t("Simpan postingan")}</button>
               <button type="button" role="menuitem" className={menuItem} onClick={copyLink}><LinkIcon className="w-4 h-4" />{t("Salin link")}</button>
-              {displayPost.visibility !== 'followers' && <button type="button" role="menuitem" className={menuItem} onClick={() => { setMenuOpen(false); setModal('embed'); }}><Code className="w-4 h-4" />Embed</button>}
+              {displayPost.visibility !== 'followers' && <button type="button" role="menuitem" className={menuItem} onClick={() => { setMenuOpen(false); setModal('embed'); }}><Code className="w-4 h-4" />{t("Embed")}</button>}
               {!isMine && <button type="button" role="menuitem" className={`${menuItem} text-error`} onClick={() => { setMenuOpen(false); setModal('report'); }}><Flag className="w-4 h-4" />{t("Laporkan")}</button>}
             </div>
           }
@@ -384,7 +392,7 @@ export default function PostCard({ post: initialPost, onDeleted, onUpdated, onRe
       {content &&
         <div className="text-sm text-text-primary leading-relaxed mb-3 whitespace-pre-wrap break-words">
           <RichText text={long && !expanded ? content.slice(0, 600) + '…' : content} />
-          {long && <button type="button" onClick={() => setExpanded((v) => !v)} className="ml-1 text-primary font-semibold text-xs">{expanded ? 'Lebih sedikit' : 'Lihat selengkapnya'}</button>}
+          {long && <button type="button" onClick={() => setExpanded((v) => !v)} className="ml-1 text-primary font-semibold text-xs">{expanded ? t("Lebih sedikit") : t("Lihat selengkapnya")}</button>}
         </div>
       }
 
@@ -396,10 +404,10 @@ export default function PostCard({ post: initialPost, onDeleted, onUpdated, onRe
               {(displayPost.mentions || []).map((m: any) => m.user?.username && <Link key={m.mentioned_user_id} to={profileUrl(m.user)} className="rounded-full bg-surface-container px-2 py-0.5 font-semibold text-text-blue-600 dark:text-blue-400">@{m.user.username}</Link>)}
             </div>
           }
-          {displayPost.is_sponsored && <div className="postter-ad-label">Iklan · Konten bersponsor</div>}
+          {displayPost.is_sponsored && <div className="postter-ad-label">{t("Iklan · Konten bersponsor")}</div>}
           {displayPost.shop && <ShopDetails shop={displayPost.shop} post={displayPost} />}
           {!hideMedia && (displayPost.media || []).length > 0 && <MediaGallery media={displayPost.media} onOpen={setLightbox} />}
-          {displayPost.link && <LinkPreview link={displayPost.link} />}
+          {displayPost.link && <LinkPreview link={displayPost.link} hasMedia={(displayPost.media || []).length > 0} />}
 
         </>
       }
@@ -407,9 +415,9 @@ export default function PostCard({ post: initialPost, onDeleted, onUpdated, onRe
       <div className="flex justify-between items-center text-xs text-text-secondary pb-3 border-b border-border-subtle/20">
         <span className="flex items-center gap-1"><Heart className="w-3.5 h-3.5 fill-error text-error" />{displayPost.likes_count || 0}</span>
         <span className="flex gap-3">
-          <button type="button" onClick={() => user ? setCommentsOpen((v) => !v) : navigate('/login')} className="hover:underline">{displayPost.comments_count || 0} komentar</button>
-          <span>{repostsCount} repost</span>
-          <span>{displayPost.shares_count || 0} dibagikan</span>
+          <button type="button" onClick={() => user ? setCommentsOpen((v) => !v) : navigate('/login')} className="hover:underline">{displayPost.comments_count || 0} {t("komentar")}</button>
+          <span>{repostsCount} {t("repost")}</span>
+          <span>{displayPost.shares_count || 0} {t("dibagikan")}</span>
           <span className="flex items-center gap-1"><Eye className="w-3.5 h-3.5" />{displayPost.views_count || 0}</span>
         </span>
       </div>
@@ -422,7 +430,7 @@ export default function PostCard({ post: initialPost, onDeleted, onUpdated, onRe
           <MessageCircle className="w-4 h-4" /><span>{displayPost.comments_count || 0}</span>
         </button>
         <button type="button" onClick={() => setModal('repost')} className={`flex items-center justify-center gap-1.5 py-2 rounded-xl hover:bg-surface-container-low ${isRepostedByMe ? 'text-emerald-600 dark:text-emerald-400' : 'text-text-secondary'}`}>
-          <Repeat2 className="w-4 h-4" /><span>{repostsCount ? `${repostsCount} ` : ''}<span className="hidden sm:inline">Repost</span></span>
+          <Repeat2 className="w-4 h-4" /><span>{repostsCount ? `${repostsCount} ` : ''}<span className="hidden sm:inline">{t("Repost")}</span></span>
         </button>
         <button type="button" onClick={() => setModal('share')} className="flex items-center justify-center gap-1.5 py-2 rounded-xl hover:bg-surface-container-low text-text-secondary">
           <Share2 className="w-4 h-4" /><span>{displayPost.shares_count || 0}</span>

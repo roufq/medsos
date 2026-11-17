@@ -187,7 +187,7 @@ export default function AddPortfolioModal({ isOpen, onClose, onSuccess }: AddPor
               disabled={isSubmitting || !title || !selectedFile}
               className="px-5 py-2 bg-primary text-white hover:brightness-105 transition-colors font-bold text-xs rounded-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
 
-              {isSubmitting ? 'Saving...' : 'Save Portfolio'}
+              {isSubmitting ? t("Saving...") : t("Save Portfolio")}
             </button>
           </div>
 

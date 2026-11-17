@@ -108,6 +108,10 @@ func TestValidVariants(t *testing.T) {
 			d.media = []dto.MediaItem{{URL: "v", Type: models.MediaTypeVideo, DurationSeconds: 30 * 60}}
 		},
 		"link":       func(d *postDraft) { d.postType, d.linkURL = models.PostTypeLink, "https://example.com/a" },
+		"image with bare domain link": func(d *postDraft) {
+			d.postType, d.media, d.linkURL = models.PostTypeImage, []dto.MediaItem{image}, "postter.us"
+			d.normalize()
+		},
 		"no mention": func(d *postDraft) { d.mentions = nil },
 		"shop with short description and no mention": func(d *postDraft) {
 			d.postType, d.content, d.mentions = models.PostTypeShop, "Sepatu lari ukuran 42", nil

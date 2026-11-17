@@ -1,6 +1,9 @@
+import {useLanguage} from '../../context/LanguageContext';
 import { useState } from 'react';
 
 const AdminUsersTab = ({ users, stats, searchQuery = '', onToggleBlock, onOpenProfile }) => {
+const {language:uiLanguage}=useLanguage();
+
   const [roleFilter, setRoleFilter] = useState('all');
   const normalizedSearch = searchQuery.trim().toLowerCase();
   const filteredUsers = (users || []).filter((user) => {
@@ -129,7 +132,7 @@ const AdminUsersTab = ({ users, stats, searchQuery = '', onToggleBlock, onOpenPr
                     </div>
                   </td>
                   <td className="px-6 py-4 font-body-md text-body-md text-text-secondary">
-                    {new Date(u.created_at).toLocaleDateString()}
+                    {new Date(u.created_at).toLocaleDateString(uiLanguage === 'en' ? 'en-US' : 'id-ID')}
                   </td>
                   <td className="px-6 py-4 text-right">
                     {u.role !== 'admin' && (

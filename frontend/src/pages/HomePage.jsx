@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useLanguage } from '../context/LanguageContext';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Loader } from 'lucide-react';
 import AppLayout, { useAppNavigate } from '../components/modern/AppLayout';
@@ -7,10 +8,13 @@ import Feed from '../components/modern/Feed';
 import { useAuth } from '../context/AuthContext';
 import { postApi } from '../api/postApi';
 import { userApi } from '../api/userApi';
+import './HomePage.css';
 
 const PAGE_SIZE = 50;
 
 const HomePage = () => {
+  const { t: translateUI } = useLanguage();
+
   const { user, loading: authLoading } = useAuth();
   const goTo = useAppNavigate();
   const navigate = useNavigate();
@@ -27,38 +31,51 @@ const HomePage = () => {
 
   const currentUser = { name: user?.name || '', avatar: user?.avatar_url || '/favicon.svg' };
 
-  const fetchFeed = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const feed = await postApi.getFeed(PAGE_SIZE, 0, null, null, '', !user);
+  const userId = user?.id;
+  const requestVersion = useRef(0);
+  const requestKey = `${userId || ''}:${authLoading}`;
+  const [loadedRequest, setLoadedRequest] = useState(requestKey);
+  if (loadedRequest !== requestKey) {
+    setLoadedRequest(requestKey); setLoading(true); setError(''); setPosts([]); setHasMore(false); setLoadingMore(false); setFollowedUsers([]);
+  }
+  const fetchFeed = useCallback(() => {
+    const version = ++requestVersion.current;
+    return postApi.getFeed(PAGE_SIZE, 0, null, null, '', !userId).then(feed => {
+      if (version !== requestVersion.current) return;
       setPosts(feed || []);
       setHasMore((feed || []).length === PAGE_SIZE);
-    } catch (e) {
-      setError(e.response?.data?.error || e.message || 'Gagal memuat postingan. Silakan coba lagi.');
-    } finally {
-      setLoading(false);
-    }
-  };
+    }).catch(e => {
+      if (version === requestVersion.current) setError(e.response?.data?.error || e.message || 'Gagal memuat postingan. Silakan coba lagi.');
+    }).finally(() => {
+      if (version === requestVersion.current) setLoading(false);
+    });
+  }, [userId]);
 
   // Cursor pagination (before_id) stays correct while new posts arrive.
   const loadMore = async () => {
     const last = posts[posts.length - 1];
-    if (!last) return;
+    if (!last || loadingMore) return;
+    const version = requestVersion.current;
     setLoadingMore(true);
     setError('');
     try {
-      const more = await postApi.getFeed(PAGE_SIZE, 0, null, last.id, '', !user);
+      const more = await postApi.getFeed(PAGE_SIZE, 0, null, last.id, '', !userId);
+      if (version !== requestVersion.current) return;
       setPosts((current) => [...current, ...(more || []).filter((p) => !current.some((c) => c.id === p.id))]);
       setHasMore((more || []).length === PAGE_SIZE);
     } catch (e) {
-      setError(e.response?.data?.error || e.message || 'Gagal memuat postingan berikutnya.');
+      if (version === requestVersion.current) setError(e.response?.data?.error || e.message || 'Gagal memuat postingan berikutnya.');
     } finally {
-      setLoadingMore(false);
+      if (version === requestVersion.current) setLoadingMore(false);
     }
   };
 
-  useEffect(() => { if (!authLoading) fetchFeed(); }, [user?.id, authLoading]);
+  useEffect(() => {
+    if (authLoading) return;
+    const requests = requestVersion;
+    fetchFeed();
+    return () => { requests.current++; };
+  }, [fetchFeed, authLoading]);
 
   const addPost = (post) => setPosts((current) => [post, ...current.filter((p) => p.id !== post.id)]);
   const replacePost = (post) => setPosts((current) => current.map((p) => (p.id === post.id ? post : p)));
@@ -83,7 +100,7 @@ const HomePage = () => {
 
   return (
     <AppLayout currentTab={location.pathname === '/explore' ? 'explore' : 'home'} onPostCreated={addPost} composerOpen={composerOpen} setComposerOpen={setComposerOpen} composerType={composerType} setComposerType={setComposerType} onComposerTypeChange={setActiveComposerType}>
-      {error && <div role="alert" className="mb-4 rounded-xl border border-error/30 bg-error/10 p-4 text-sm"><p>{error}</p><button type="button" className="mt-2 font-bold underline" onClick={() => posts.length ? loadMore() : fetchFeed()}>Coba lagi</button></div>}
+      {error && <div role="alert" className="mb-4 rounded-xl border border-error/30 bg-error/10 p-4 text-sm"><p>{translateUI(error)}</p><button type="button" className="mt-2 font-bold underline" onClick={() => { if (posts.length) loadMore(); else { setLoading(true); setError(''); fetchFeed(); } }}>{translateUI("Coba lagi")}</button></div>}
       {loading && posts.length === 0 ? (
         <div className="flex justify-center py-20"><Loader className="animate-spin text-primary" size={40} /></div>
       ) : (

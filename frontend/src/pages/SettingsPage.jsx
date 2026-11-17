@@ -1,7 +1,7 @@
 import { useLanguage } from "../context/LanguageContext";import LanguageSwitch from '../components/common/LanguageSwitch';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle2, AlertCircle, LogOut, BadgeCheck } from 'lucide-react';
+import { CheckCircle2, AlertCircle, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { userApi } from '../api/userApi';
 import { authApi } from '../api/authApi';
@@ -24,19 +24,21 @@ const errorText = (error, fallback) => error?.response?.data?.error || fallback;
 const dialCode = (iso) => COUNTRIES.find((c) => c[0] === iso)?.[2] || '';
 
 function Section({ title, children, description }) {
+  const {t}=useLanguage();
   return (
     <section className="rounded-2xl bg-white p-5 sm:p-6 shadow-sm border border-border-subtle/30">
       <h2 className="text-lg font-bold">{title}</h2>
-      {description && <p className="text-xs text-text-secondary mt-1">{description}</p>}
+      {description && <p className="text-xs text-text-secondary mt-1">{t(description)}</p>}
       <div className="mt-4">{children}</div>
     </section>);
 
 }
 
 function Notice({ state }) {
+  const {t}=useLanguage();
   if (!state?.text) return null;
   const ok = state.type === 'ok';
-  return <p className={`mt-3 flex items-center gap-2 rounded-lg p-3 text-sm ${ok ? 'bg-success/10 text-success' : 'bg-error/10 text-error'}`}>{ok ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}{state.text}</p>;
+  return <p className={`mt-3 flex items-center gap-2 rounded-lg p-3 text-sm ${ok ? 'bg-success/10 text-success' : 'bg-error/10 text-error'}`}>{ok ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}{t(state.text)}</p>;
 }
 
 export default function SettingsPage() {const { t } = useLanguage();
@@ -48,7 +50,7 @@ export default function SettingsPage() {const { t } = useLanguage();
   const handleLogout = async () => {
     if (loggingOut) return;
     setLoggingOut(true);
-    try {await logout();navigate('/thanks', { replace: true });} finally {setLoggingOut(false);}
+    try {await logout();navigate('/explore', { replace: true });} finally {setLoggingOut(false);}
   };
   const [saving, setSaving] = useState(false);
   const [codes, setCodes] = useState({ email: '', phone: '' });
@@ -59,8 +61,11 @@ export default function SettingsPage() {const { t } = useLanguage();
   const [deletion, setDeletion] = useState({ password: '', confirm: '' });
   const [deleteNotice, setDeleteNotice] = useState({});
 
-  useEffect(() => {
-    if (!user) return;
+  const [formUser, setFormUser] = useState(null);
+  if (user !== formUser) {
+    setFormUser(user);
+    if (!user) setForm(null);
+    else {
     const country = user.phone_country || 'ID';
     const dial = dialCode(country);
     const phone = user.phone || '';
@@ -72,7 +77,8 @@ export default function SettingsPage() {const { t } = useLanguage();
       gender: user.gender || '', account_type: user.account_type || 'personal', city: user.city || '', country: user.country || '',
       interests: user.interests || [], shop_category: user.shop_category || '', is_private: Boolean(user.is_private), profile_layout: user.profile_layout || 'grid'
     });
-  }, [user]);
+    }
+  }
 
   useEffect(() => {userApi.getBlockedUsers().then((list) => setBlocked(list || [])).catch(() => setBlocked([]));}, []);
 
@@ -151,13 +157,13 @@ export default function SettingsPage() {const { t } = useLanguage();
     try {
       await userApi.deleteAccount(deletion.password, deletion.confirm);
       await logout();
-      navigate('/thanks');
+      navigate('/explore', { replace: true });
     } catch (err) {
       setDeleteNotice({ type: 'error', text: errorText(err, 'Gagal menghapus akun') });
     }
   };
 
-  const verifiedBadge = (at) => at ? <span className="text-xs font-semibold text-success">✓ Terverifikasi</span> : <span className="text-xs font-semibold text-error">Belum diverifikasi</span>;
+  const verifiedBadge = (at) => at ? <span className="text-xs font-semibold text-success">{t("✓ Terverifikasi")}</span> : <span className="text-xs font-semibold text-error">{t("Belum diverifikasi")}</span>;
 
   return (
     <AppLayout currentTab="settings">
@@ -168,7 +174,7 @@ export default function SettingsPage() {const { t } = useLanguage();
           <Section title={t("Profil")}>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <label className={label}>{t("Nama lengkap")}<input value={form.name} onChange={(e) => set('name', e.target.value)} className={input} required minLength={2} maxLength={100} /></label>
-              <label className={label}>Username<input value={form.username} onChange={(e) => set('username', e.target.value.toLowerCase())} className={input} pattern="[a-z0-9_]{3,40}" title="3–40 huruf kecil, angka, atau garis bawah" /></label>
+              <label className={label}>{t("Username")}<input value={form.username} onChange={(e) => set('username', e.target.value.toLowerCase())} className={input} pattern="[a-z0-9_]{3,40}" title={t("3–40 huruf kecil, angka, atau garis bawah")} /></label>
               <label className={label}>{t("Jabatan / peran")}<input value={form.title} onChange={(e) => set('title', e.target.value)} className={input} maxLength={100} /></label>
               <label className={label}>{t("Perusahaan")}<input value={form.company} onChange={(e) => set('company', e.target.value)} className={input} maxLength={100} /></label>
               <label className={label}>{t("Lokasi")}<input value={form.location} onChange={(e) => set('location', e.target.value)} className={input} maxLength={100} /></label>
@@ -177,55 +183,53 @@ export default function SettingsPage() {const { t } = useLanguage();
             </div>
           </Section>
 
-          <Section title="Kontak" description="Mengubah email atau nomor akan membutuhkan verifikasi ulang.">
+          <Section title={t("Kontak")} description="Mengubah email atau nomor akan membutuhkan verifikasi ulang.">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <label className={label}>Email {verifiedBadge(user.email_verified_at)}<input type="email" value={form.email} onChange={(e) => set('email', e.target.value)} className={input} required /></label>
-              <div className={label}>Nomor telepon {user.phone && verifiedBadge(user.phone_verified_at)}
+              <label className={label}>{t("Email")} {verifiedBadge(user.email_verified_at)}<input type="email" value={form.email} onChange={(e) => set('email', e.target.value)} className={input} required /></label>
+              <div className={label}>{t("Nomor telepon")} {user.phone && verifiedBadge(user.phone_verified_at)}
                 <div className="mt-1 flex gap-2">
-                  <select value={form.phone_country} onChange={(e) => set('phone_country', e.target.value)} className="rounded-lg border border-border-subtle p-2.5 text-sm w-36" aria-label="Kode negara">
+                  <select value={form.phone_country} onChange={(e) => set('phone_country', e.target.value)} className="rounded-lg border border-border-subtle p-2.5 text-sm w-36" aria-label={t("Kode negara")}>
                     {COUNTRIES.map(([iso, name, dial]) => <option key={iso} value={iso}>{iso} +{dial} {name}</option>)}
                   </select>
-                  <input inputMode="tel" value={form.phone_local} onChange={(e) => set('phone_local', e.target.value)} placeholder="81234567890" className="flex-1 rounded-lg border border-border-subtle p-2.5 text-sm" aria-label="Nomor telepon" />
+                  <input inputMode="tel" value={form.phone_local} onChange={(e) => set('phone_local', e.target.value)} placeholder="81234567890" className="flex-1 rounded-lg border border-border-subtle p-2.5 text-sm" aria-label={t("Nomor telepon")} />
                 </div>
               </div>
             </div>
           </Section>
 
-          <Section title="Data pribadi">
+          <Section title={t("Data pribadi")}>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <label className={label}>Jenis akun
-                <select value={form.account_type} onChange={(e) => set('account_type', e.target.value)} className={input}>
-                  <option value="personal">Pribadi</option><option value="business">Bisnis</option><option value="team">Tim</option>
+              <label className={label}>{t("Jenis akun")}<select value={form.account_type} onChange={(e) => set('account_type', e.target.value)} className={input}>
+                  <option value="personal">{t("Pribadi")}</option><option value="business">{t("Bisnis")}</option><option value="team">{t("Tim")}</option>
                 </select>
               </label>
-              <label className={label}>{t("Gender")}{form.account_type !== 'personal' && <span className="text-xs text-text-secondary">(opsional untuk bisnis/tim)</span>}
+              <label className={label}>{t("Gender")}{form.account_type !== 'personal' && <span className="text-xs text-text-secondary">{t("(opsional untuk bisnis/tim)")}</span>}
                 <select value={form.gender} onChange={(e) => set('gender', e.target.value)} className={input}>
-                  <option value="">Tidak disebutkan</option><option value="male">{t("Laki-laki")}</option><option value="female">{t("Perempuan")}</option><option value="other">{t("Lainnya")}</option>
+                  <option value="">{t("Tidak disebutkan")}</option><option value="male">{t("Laki-laki")}</option><option value="female">{t("Perempuan")}</option><option value="other">{t("Lainnya")}</option>
                 </select>
               </label>
-              <label className={label}>Tempat lahir<input value={form.birth_place} onChange={(e) => set('birth_place', e.target.value)} className={input} maxLength={100} /></label>
-              <label className={label}>Tanggal lahir<input type="date" value={form.birth_date} max={new Date().toISOString().slice(0, 10)} onChange={(e) => set('birth_date', e.target.value)} className={input} /></label>
-              <label className={label}>Kota<input value={form.city} onChange={(e) => set('city', e.target.value)} className={input} maxLength={100} /></label>
+              <label className={label}>{t("Tempat lahir")}<input value={form.birth_place} onChange={(e) => set('birth_place', e.target.value)} className={input} maxLength={100} /></label>
+              <label className={label}>{t("Tanggal lahir")}<input type="date" value={form.birth_date} max={new Date().toISOString().slice(0, 10)} onChange={(e) => set('birth_date', e.target.value)} className={input} /></label>
+              <label className={label}>{t("Kota")}<input value={form.city} onChange={(e) => set('city', e.target.value)} className={input} maxLength={100} /></label>
               <label className={label}>{t("Negara")}<input value={form.country} onChange={(e) => set('country', e.target.value)} className={input} maxLength={100} list="country-names" /></label>
               <datalist id="country-names">{COUNTRIES.map(([iso, name]) => <option key={iso} value={name} />)}</datalist>
             </div>
           </Section>
 
-          <Section title="Minat & Shop" description="Dipakai untuk rekomendasi konten dan produk.">
+          <Section title={t("Minat & Shop")} description="Dipakai untuk rekomendasi konten dan produk.">
             <div className="flex flex-wrap gap-2">
               {INTERESTS.map((item) => {
                 const active = form.interests.includes(item);
-                return <button key={item} type="button" onClick={() => set('interests', active ? form.interests.filter((i) => i !== item) : [...form.interests, item])} className={`rounded-full px-3 py-1.5 text-xs font-semibold ${active ? 'bg-primary text-white' : 'bg-surface-container text-text-secondary'}`}>{item}</button>;
+                return <button key={item} type="button" onClick={() => set('interests', active ? form.interests.filter((i) => i !== item) : [...form.interests, item])} className={`rounded-full px-3 py-1.5 text-xs font-semibold ${active ? 'bg-primary text-white' : 'bg-surface-container text-text-secondary'}`}>{t(item)}</button>;
               })}
             </div>
-            <label className={`${label} block mt-4`}>Kategori shop utama
-              <select value={form.shop_category} onChange={(e) => set('shop_category', e.target.value)} className={input}>{SHOP_CATEGORIES.map((c) => <option key={c} value={c}>{c || 'Tidak ada'}</option>)}</select>
+            <label className={`${label} block mt-4`}>{t("Kategori shop utama")}<select value={form.shop_category} onChange={(e) => set('shop_category', e.target.value)} className={input}>{SHOP_CATEGORIES.map((c) => <option key={c} value={c}>{t(c || "Tidak ada")}</option>)}</select>
             </label>
           </Section>
 
-          <Section title="Privasi & tampilan">
-            <label className="flex items-start gap-3 text-sm"><input type="checkbox" checked={form.is_private} onChange={(e) => set('is_private', e.target.checked)} className="mt-1" /><span><strong>Akun private</strong><br /><span className="text-text-secondary text-xs">Hanya pengikut yang Anda setujui yang dapat melihat postingan.</span></span></label>
-            <div className="mt-4 text-sm font-medium">Tampilan profil</div>
+          <Section title={t("Privasi & tampilan")}>
+            <label className="flex items-start gap-3 text-sm"><input type="checkbox" checked={form.is_private} onChange={(e) => set('is_private', e.target.checked)} className="mt-1" /><span><strong>{t("Akun private")}</strong><br /><span className="text-text-secondary text-xs">{t("Hanya pengikut yang Anda setujui yang dapat melihat postingan.")}</span></span></label>
+            <div className="mt-4 text-sm font-medium">{t("Tampilan profil")}</div>
             <div className="mt-2 grid grid-cols-2 gap-3">
               {[['grid', 'Grid card', 'Kotak-kotak ringkas seperti galeri'], ['long', 'Long card', 'Kartu penuh selebar layar']].map(([value, title, desc]) =>
               <label key={value} className={`cursor-pointer rounded-xl border-2 p-3 text-sm ${form.profile_layout === value ? 'border-primary bg-primary/5' : 'border-border-subtle'}`}>
@@ -237,8 +241,8 @@ export default function SettingsPage() {const { t } = useLanguage();
           </Section>
 
           <div className="sticky bottom-4 z-10">
-            <button disabled={saving} className="w-full rounded-full bg-primary p-3 font-semibold text-white shadow-lg disabled:opacity-60">{saving ? 'Menyimpan…' : t("Simpan perubahan")}</button>
-            <Notice state={notice} />
+            <button disabled={saving} className="w-full rounded-full bg-primary p-3 font-semibold text-white shadow-lg disabled:opacity-60">{saving ? t("Menyimpan…") : t("Simpan perubahan")}</button>
+            <Notice state={t(notice)} />
           </div>
         </form>
 
@@ -249,10 +253,10 @@ export default function SettingsPage() {const { t } = useLanguage();
             {[['email', 'verify_email', 'Email', user.email_verified_at], ['sms', 'verify_phone', 'SMS', user.phone_verified_at], ['whatsapp', 'verify_phone', 'WhatsApp', user.phone_verified_at]].map(([channel, purpose, name, verified]) =>
             <div key={channel} className="flex flex-wrap items-center gap-2">
                 <span className="w-24 text-sm font-medium">{name}</span>
-                {verified ? <span className="text-xs font-semibold text-success">✓ Terverifikasi</span> :
+                {verified ? <span className="text-xs font-semibold text-success">{t("✓ Terverifikasi")}</span> :
               <>
                     <button type="button" disabled={channel !== 'email' && !user.phone} onClick={() => requestCode(channel)} className="rounded-full bg-secondary-container px-3 py-1.5 text-xs font-bold disabled:opacity-40">{t("Kirim kode")}</button>
-                    <input value={codes[channel === 'email' ? 'email' : 'phone']} onChange={(e) => setCodes({ ...codes, [channel === 'email' ? 'email' : 'phone']: e.target.value })} inputMode="numeric" maxLength={6} placeholder="6 digit" className="w-28 rounded-lg border border-border-subtle p-1.5 text-sm" />
+                    <input value={codes[channel === 'email' ? 'email' : 'phone']} onChange={(e) => setCodes({ ...codes, [channel === 'email' ? 'email' : 'phone']: e.target.value })} inputMode="numeric" maxLength={6} placeholder={t("6 digit")} className="w-28 rounded-lg border border-border-subtle p-1.5 text-sm" />
                     <button type="button" onClick={() => confirmCode(purpose, codes[channel === 'email' ? 'email' : 'phone'])} className="rounded-full bg-primary px-3 py-1.5 text-xs font-bold text-white">{t("Verifikasi")}</button>
                   </>
               }
@@ -264,10 +268,10 @@ export default function SettingsPage() {const { t } = useLanguage();
 
         <Section title={user.needs_password ? t("Buat password") : t("Ubah password")} description={user.needs_password ? 'Akun Anda dibuat lewat login sosial. Tambahkan password agar bisa masuk dengan email/username.' : 'Mengubah password akan mengeluarkan semua sesi lain.'}>
           <form onSubmit={changePassword} className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            {!user.needs_password && <input type="password" autoComplete="current-password" value={passwords.current} onChange={(e) => setPasswords({ ...passwords, current: e.target.value })} placeholder="Password saat ini" className="rounded-lg border border-border-subtle p-2.5 text-sm" required />}
-            <input type="password" autoComplete="new-password" value={passwords.next} onChange={(e) => setPasswords({ ...passwords, next: e.target.value })} placeholder="Password baru (8–72)" minLength={8} maxLength={72} className="rounded-lg border border-border-subtle p-2.5 text-sm" required />
-            <input type="password" autoComplete="new-password" value={passwords.confirm} onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })} placeholder="Ulangi password baru" className="rounded-lg border border-border-subtle p-2.5 text-sm" required />
-            <button className="sm:col-span-3 rounded-full bg-primary py-2 text-sm font-bold text-white">{user.needs_password ? 'Simpan password' : t("Ubah password")}</button>
+            {!user.needs_password && <input type="password" autoComplete="current-password" value={passwords.current} onChange={(e) => setPasswords({ ...passwords, current: e.target.value })} placeholder={t("Password saat ini")} className="rounded-lg border border-border-subtle p-2.5 text-sm" required />}
+            <input type="password" autoComplete="new-password" value={passwords.next} onChange={(e) => setPasswords({ ...passwords, next: e.target.value })} placeholder={t("Password baru (8–72)")} minLength={8} maxLength={72} className="rounded-lg border border-border-subtle p-2.5 text-sm" required />
+            <input type="password" autoComplete="new-password" value={passwords.confirm} onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })} placeholder={t("Ulangi password baru")} className="rounded-lg border border-border-subtle p-2.5 text-sm" required />
+            <button className="sm:col-span-3 rounded-full bg-primary py-2 text-sm font-bold text-white">{user.needs_password ? t("Simpan password") : t("Ubah password")}</button>
           </form>
           <Notice state={passwordNotice} />
         </Section>
@@ -289,8 +293,8 @@ export default function SettingsPage() {const { t } = useLanguage();
         <Section title={t("Hapus akun")} description="Akun dinonaktifkan segera dan dihapus permanen setelah 30 hari. Masuk kembali dalam 30 hari untuk mengaktifkannya lagi.">
           <form onSubmit={deleteAccount} className="flex flex-wrap gap-2">
             {user.needs_password ?
-            <input value={deletion.confirm} onChange={(e) => setDeletion({ ...deletion, confirm: e.target.value })} placeholder='Ketik "DELETE"' className="flex-1 rounded-lg border border-border-subtle p-2.5 text-sm" required /> :
-            <input type="password" autoComplete="current-password" value={deletion.password} onChange={(e) => setDeletion({ ...deletion, password: e.target.value })} placeholder="Konfirmasi password" className="flex-1 rounded-lg border border-border-subtle p-2.5 text-sm" required />}
+            <input value={deletion.confirm} onChange={(e) => setDeletion({ ...deletion, confirm: e.target.value })} placeholder={t("Ketik \"DELETE\"")} className="flex-1 rounded-lg border border-border-subtle p-2.5 text-sm" required /> :
+            <input type="password" autoComplete="current-password" value={deletion.password} onChange={(e) => setDeletion({ ...deletion, password: e.target.value })} placeholder={t("Konfirmasi password")} className="flex-1 rounded-lg border border-border-subtle p-2.5 text-sm" required />}
             <button className="rounded-full bg-error px-5 py-2 text-sm font-bold text-white">{t("Hapus akun")}</button>
           </form>
           <Notice state={deleteNotice} />

@@ -1,9 +1,12 @@
+import {useLanguage} from '../../context/LanguageContext';
 import { useState, useEffect } from 'react';
 import { Briefcase, MapPin, DollarSign, Calendar, Search, CheckCircle } from 'lucide-react';
 import { jobApi } from '../../api/jobApi';
 import { Job } from '../../types';
 
 export default function Jobs() {
+const {language:uiLanguage}=useLanguage();
+
   const [jobs, setJobs] = useState<Job[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState<string>('All');
@@ -154,7 +157,7 @@ export default function Jobs() {
                     <div className="flex justify-between items-center pt-3 border-t border-border-subtle/10 mt-auto select-none">
                       <span className="text-[11px] text-outline flex items-center gap-1">
                         <Calendar className="w-3.5 h-3.5" />
-                        Posted {new Date((job as any).created_at).toLocaleDateString()}
+                        Posted {new Date((job as any).created_at).toLocaleDateString(uiLanguage === 'en' ? 'en-US' : 'id-ID')}
                       </span>
                       {hasApplied ? (
                         <div className="bg-success text-white px-5 py-2 rounded-xl font-bold text-xs flex items-center gap-1.5 animate-fadeIn">

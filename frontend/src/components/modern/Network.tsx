@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
-import { Users, UserCheck, MessageSquare, ShieldAlert, Check, X, Search } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { MessageSquare, Check, X, Search, Loader2 } from 'lucide-react';
 import { networkApi } from '../../api/networkApi';
 import { User } from '../../types';
 
@@ -9,73 +10,82 @@ interface NetworkProps {
 }
 
 export default function Network({ onNavigateToMessages, onOpenProfile }: NetworkProps) {
+  const { t: translateUI } = useLanguage();
+
   const [connections, setConnections] = useState<User[]>([]);
   const [pendingRequests, setPendingRequests] = useState<User[]>([]);
-  const [suggestions, setSuggestions] = useState<User[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchNetwork = async () => {
-      try {
-        const [connRes, reqRes, sugRes] = await Promise.all([
-          networkApi.getConnections(),
-          networkApi.getPendingRequests(),
-          networkApi.getSuggestions()
-        ]);
+  const [error, setError] = useState('');
+  const requestVersion = useRef(0);
+  const loadNetwork = useCallback(() => {
+    const version = ++requestVersion.current;
+    return Promise.all([networkApi.getConnections(), networkApi.getPendingRequests()])
+      .then(([connRes, reqRes]) => {
+        if (version !== requestVersion.current) return;
         setConnections(connRes || []);
         setPendingRequests(reqRes || []);
-        setSuggestions(sugRes || []);
-      } catch (err) {
-        console.error('Failed to fetch network data', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchNetwork();
+      }).catch(err => {
+        if (version === requestVersion.current) setError(err.response?.data?.error || 'Gagal memuat jaringan.');
+      }).finally(() => {
+        if (version === requestVersion.current) setLoading(false);
+      });
   }, []);
+  useEffect(() => {
+    const requests = requestVersion;
+    loadNetwork();
+    return () => { requests.current++; };
+  }, [loadNetwork]);
+  const retry = () => { setLoading(true); setError(''); loadNetwork(); };
 
   const handleAccept = async (user: User) => {
+    setError('');
     try {
       await networkApi.acceptRequest(user.id);
       setConnections(prev => [...prev, user]);
       setPendingRequests(prev => prev.filter(req => req.id !== user.id));
     } catch (err) {
       console.error(err);
+      setError('Gagal menerima permintaan koneksi.');
     }
   };
 
   const handleDecline = async (userId: string) => {
+    setError('');
     try {
       await networkApi.declineRequest(userId);
       setPendingRequests(prev => prev.filter(req => req.id !== userId));
     } catch (err) {
       console.error(err);
+      setError('Gagal menolak permintaan koneksi.');
     }
   };
 
   const filteredConnections = connections.filter(conn => 
-    conn.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (conn.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
     (conn.title && conn.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
     (conn.company && conn.company.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   return (
     <div className="flex-1 w-full py-4 select-none">
+      {loading && <p role="status" className="flex items-center gap-2 mb-4"><Loader2 size={18} className="animate-spin" />{translateUI("Memuat…")}</p>}
+      {error && <div role="alert" className="mb-4 rounded-xl bg-error/10 p-4 text-sm text-error"><p>{translateUI(error)}</p><button type="button" disabled={loading} onClick={retry} className="mt-2 underline">{translateUI("Coba lagi")}</button></div>}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         
         {/* Left Column Stats card */}
         <div className="lg:col-span-1 flex flex-col gap-6">
           <div className="bg-white rounded-2xl p-6 border border-border-subtle/50 shadow-sm flex flex-col gap-5">
-            <h3 className="font-bold text-text-primary text-base border-b border-border-subtle/10 pb-3">My Network</h3>
+            <h3 className="font-bold text-text-primary text-base border-b border-border-subtle/10 pb-3">{translateUI("My Network")}</h3>
             <div className="flex justify-between items-center text-sm">
-              <span className="text-text-secondary font-medium">Connections</span>
+              <span className="text-text-secondary font-medium">{translateUI("Connections")}</span>
               <span className="font-bold text-primary bg-secondary-container px-2.5 py-1 rounded-lg text-xs">
                 {connections.length}
               </span>
             </div>
             <div className="flex justify-between items-center text-sm">
-              <span className="text-text-secondary font-medium">Pending Requests</span>
+              <span className="text-text-secondary font-medium">{translateUI("Pending Requests")}</span>
               <span className="font-bold text-[#cb4400] bg-[#cb4400]/10 px-2.5 py-1 rounded-lg text-xs animate-pulse">
                 {pendingRequests.length}
               </span>
@@ -89,7 +99,7 @@ export default function Network({ onNavigateToMessages, onOpenProfile }: Network
           {/* Pending Invitations block if any exists */}
           {pendingRequests.length > 0 && (
             <div className="bg-white rounded-2xl p-6 border border-border-subtle/50 shadow-sm">
-              <h3 className="font-bold text-text-primary text-sm mb-4">Pending Invitations ({pendingRequests.length})</h3>
+              <h3 className="font-bold text-text-primary text-sm mb-4">{translateUI("Pending Invitations (")}{pendingRequests.length})</h3>
               <div className="flex flex-col gap-4">
                 {pendingRequests.map((req) => (
                   <div key={req.id} className="flex gap-4 items-center justify-between p-3.5 bg-surface-container-low rounded-2xl border border-border-subtle/20">
@@ -106,14 +116,14 @@ export default function Network({ onNavigateToMessages, onOpenProfile }: Network
                       <button 
                         onClick={() => handleDecline(req.id)}
                         className="p-2 border border-border-subtle hover:bg-surface-container hover:text-error transition-all rounded-full cursor-pointer"
-                        title="Ignore Request"
+                        title={translateUI("Ignore Request")}
                       >
                         <X className="w-4 h-4" />
                       </button>
                       <button 
                         onClick={() => handleAccept(req)}
                         className="bg-primary text-white p-2 hover:brightness-110 transition-all rounded-full flex items-center justify-center cursor-pointer"
-                        title="Accept Connection"
+                        title={translateUI("Accept Connection")}
                       >
                         <Check className="w-4 h-4" />
                       </button>
@@ -127,14 +137,14 @@ export default function Network({ onNavigateToMessages, onOpenProfile }: Network
           {/* Active Existing Connections Search & List */}
           <div className="bg-white rounded-2xl p-6 border border-border-subtle/50 shadow-sm">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-              <h3 className="font-bold text-text-primary text-sm select-none">All Connections</h3>
+              <h3 className="font-bold text-text-primary text-sm select-none">{translateUI("All Connections")}</h3>
               
               {/* Search inside connections */}
               <div className="message-composer-input flex items-center bg-surface-container-low rounded-xl px-3 py-1.5 border border-transparent focus-within:border-primary transition-all w-full md:max-w-xs">
                 <Search className="w-4 h-4 text-outline" />
                 <input 
                   type="text" 
-                  placeholder="Search connections..." 
+                  placeholder={translateUI("Search connections...")}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="bg-transparent border-none outline-none focus:ring-0 text-xs ml-2 w-full text-text-primary"
@@ -142,8 +152,8 @@ export default function Network({ onNavigateToMessages, onOpenProfile }: Network
               </div>
             </div>
 
-            {filteredConnections.length === 0 ? (
-              <p className="text-xs text-outline text-center py-8">No connections match your search query.</p>
+            {!loading && !error && filteredConnections.length === 0 ? (
+              <p className="text-xs text-outline text-center py-8">{translateUI("No connections match your search query.")}</p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                 {filteredConnections.map((conn) => (
@@ -164,7 +174,7 @@ export default function Network({ onNavigateToMessages, onOpenProfile }: Network
                         className="w-full py-1.5 bg-secondary-container hover:bg-secondary-container/80 text-primary transition-colors font-bold text-xs rounded-xl flex items-center justify-center gap-1 cursor-pointer"
                       >
                         <MessageSquare className="w-3.5 h-3.5" />
-                        <span>Message</span>
+                        <span>{translateUI("Message")}</span>
                       </button>
                     </div>
                   </div>

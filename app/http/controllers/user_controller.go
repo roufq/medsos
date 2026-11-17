@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"bytes"
+	"gorm.io/gorm"
 	"net/http"
 	"strconv"
 	"strings"
@@ -331,13 +332,13 @@ func (h *UserController) ShowAdminDashboardWeb(c goravelhttp.Context) goravelhtt
 	}
 
 	var buf bytes.Buffer
-	
+
 	var stats backend.DashboardStats
 	db.DB.Model(&models.User{}).Count(&stats.TotalUsers)
 	db.DB.Model(&models.Post{}).Where("created_at > ?", time.Now().Add(-30*24*time.Hour)).Count(&stats.NewPosts)
 	db.DB.Model(&models.PostReport{}).Where("status = ?", "pending").Count(&stats.ActiveReports)
 	db.DB.Model(&models.ShopProduct{}).Count(&stats.TotalShops)
-	
+
 	_ = backend.RenderDashboardAdminIkhtisarV3NewBrand(&buf, user, stats)
 
 	return c.Response().Data(http.StatusOK, "text/html; charset=utf-8", buf.Bytes())
@@ -390,8 +391,10 @@ func (h *UserController) HandleAdminDeletePostWeb(c goravelhttp.Context) goravel
 		return c.Response().String(http.StatusBadRequest, "Invalid post ID")
 	}
 
-	if err := h.postService.DeletePostAsAdmin(postID); err != nil {
-		return c.Response().String(http.StatusInternalServerError, "Failed to delete post")
+	if err := db.DB.Transaction(func(tx *gorm.DB) error {
+		return services.ModeratePost(tx, user.ID, postID, c.Request().Input("reason"), false)
+	}); err != nil {
+		return c.Response().String(http.StatusBadRequest, "Moderasi gagal. Alasan wajib berisi 5–300 karakter dan konten harus masih aktif.")
 	}
 
 	return c.Response().Redirect(http.StatusSeeOther, "/web/admin/posts")

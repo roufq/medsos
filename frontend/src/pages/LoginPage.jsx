@@ -1,20 +1,15 @@
+import { useLanguage } from '../context/LanguageContext';
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Login from '../components/modern/Login';
 import { authApi } from '../api/authApi';
 
-export const OAUTH_REASONS = {
-  session_idle_expired: 'Sesi berakhir karena tidak aktif selama 30 menit. Silakan masuk kembali.',
-  account_inactive: 'Akun Anda tidak aktif (diblokir atau sedang dalam proses penghapusan).',
-  session_revoked: 'Sesi Anda telah berakhir. Silakan masuk kembali.',
-  oauth_not_configured: 'Layanan login sosial belum dikonfigurasi di server.',
-  oauth_cancelled: 'Proses login sosial dibatalkan.',
-  oauth_expired: 'Sesi login sosial telah kedaluwarsa. Silakan coba lagi.',
-  oauth_failed: 'Gagal masuk melalui akun sosial. Silakan coba lagi.',
-};
+import { OAUTH_REASONS } from '../utils/oauthReasons';
 
 const LoginPage = () => {
+  const { t: translateUI } = useLanguage();
+
   const { login } = useAuth();
   const navigate = useNavigate();
   const [params] = useSearchParams();
@@ -53,9 +48,9 @@ const LoginPage = () => {
     <>
       {(error || message) && (
         <div className="fixed top-4 inset-x-4 z-50 mx-auto max-w-md rounded-xl bg-white p-4 shadow-lg border border-border-subtle text-sm" role="alert">
-          {error && <p className="text-error font-semibold">{error}</p>}
+          {error && <p className="text-error font-semibold">{translateUI(error)}</p>}
           {message && <p className="text-success font-semibold">{message}</p>}
-          {pending && <button type="button" onClick={reactivate} className="mt-2 rounded-full bg-primary px-4 py-2 text-xs font-bold text-white">Aktifkan kembali akun saya</button>}
+          {pending && <button type="button" onClick={reactivate} className="mt-2 rounded-full bg-primary px-4 py-2 text-xs font-bold text-white">{translateUI("Aktifkan kembali akun saya")}</button>}
         </div>
       )}
       <Login

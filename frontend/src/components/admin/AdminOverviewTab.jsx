@@ -1,4 +1,7 @@
+import {useLanguage} from '../../context/LanguageContext';
 const AdminOverviewTab = ({ stats }) => {
+const {language:uiLanguage}=useLanguage();
+
   const growth = stats?.growth || [];
   const recentUsers = stats?.recent_users || [];
   const maxActivity = Math.max(1, ...growth.flatMap((item) => [item.users || 0, item.posts || 0]));
@@ -24,7 +27,7 @@ const AdminOverviewTab = ({ stats }) => {
               <span className="material-symbols-outlined text-[24px]">{metric.icon}</span>
             </div>
             <p className="text-text-secondary font-label-md text-label-md uppercase tracking-widest mb-1">{metric.label}</p>
-            <h3 className="font-display-lg text-display-lg text-text-primary">{metric.value.toLocaleString()}</h3>
+            <h3 className="font-display-lg text-display-lg text-text-primary">{metric.value.toLocaleString(uiLanguage === 'en' ? 'en-US' : 'id-ID')}</h3>
           </div>
         ))}
       </div>
@@ -64,7 +67,7 @@ const AdminOverviewTab = ({ stats }) => {
                 <div className="min-w-0">
                   <p className="font-body-md text-body-md text-text-primary font-bold truncate">{recentUser.name}</p>
                   <p className="font-label-sm text-label-sm text-text-secondary truncate">{recentUser.email}</p>
-                  <p className="text-[11px] text-text-secondary">{new Date(recentUser.created_at).toLocaleString()}</p>
+                  <p className="text-[11px] text-text-secondary">{new Date(recentUser.created_at).toLocaleString(uiLanguage === 'en' ? 'en-US' : 'id-ID')}</p>
                 </div>
               </div>
             ))}

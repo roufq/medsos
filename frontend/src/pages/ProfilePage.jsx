@@ -22,6 +22,7 @@ const ProfilePage = () => {
   const [error, setError] = useState('');
   useEffect(() => { if (profileUser) document.title = `${profileUser.name} (@${profileUser.username}) · postter.us`; }, [profileUser]);
 
+  const authId = authUser?.id;
   useEffect(() => {
     let active = true;
     const load = async () => {
@@ -29,12 +30,11 @@ const ProfilePage = () => {
       setError('');
       try {
         if (/^\d+$/.test(String(key || ''))) throw new Error('Numeric ID disallowed');
-        const user = await userApi.getProfile(key, !authUser);
+        const user = await userApi.getProfile(key, !authId);
         if (!active) return;
         setProfileUser(user);
-        if (user.id === authUser?.id && user.username && authUser?.username !== user.username) updateProfileState({ ...authUser, username: user.username });
         setLoadedKey(key);
-        const userPosts = user.profile_locked || user.is_blocked_by_me ? [] : await postApi.getFeed(50, 0, user.id, null, '', !authUser);
+        const userPosts = user.profile_locked || user.is_blocked_by_me ? [] : await postApi.getFeed(50, 0, user.id, null, '', !authId);
         if (active) setPosts(userPosts || []);
       } catch (e) {
         if (active) {
@@ -47,13 +47,19 @@ const ProfilePage = () => {
     };
     load();
     return () => { active = false; };
-  }, [key, authUser?.id]);
+  }, [key, authId]);
+
+  useEffect(() => {
+    if (profileUser?.id === authUser?.id && profileUser?.username && authUser.username !== profileUser.username) {
+      updateProfileState({ ...authUser, username: profileUser.username });
+    }
+  }, [profileUser, authUser, updateProfileState]);
 
   useEffect(() => {
     if (!profileUser?.username || loading || loadedKey !== key) return;
     const canonical = profileUrl(profileUser);
     if (location.pathname !== canonical) navigate(canonical + location.search + location.hash, { replace: true });
-  }, [profileUser?.username, profileUser?.id, loading, loadedKey, key, location.pathname, location.search, location.hash, navigate]);
+  }, [profileUser, loading, loadedKey, key, location.pathname, location.search, location.hash, navigate]);
 
   const isCurrentUser = profileUser?.id === authUser?.id;
 

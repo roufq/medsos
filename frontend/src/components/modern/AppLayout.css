@@ -1,0 +1,45 @@
+.poster-app { --sidebar-width: 220px; }
+.poster-app > .poster-header,
+.poster-app > .postter-guest-header { position: sticky; top: 0; z-index: 50; }
+
+@media (min-width: 768px) {
+  .poster-app[data-page] .poster-main { padding-left: calc(var(--sidebar-width) + 24px); }
+  .poster-app[data-page] .poster-main.poster-main-flush { padding-left: var(--sidebar-width) !important; }
+  .poster-app[data-page] .poster-rail {
+    width: var(--sidebar-width);
+    padding: 22px 14px;
+    background: rgb(var(--card-bg));
+    overscroll-behavior: contain;
+  }
+  .poster-app[data-page] .poster-rail nav { gap: 6px; }
+  .poster-app[data-page] .poster-rail nav > button {
+    width: 100%;
+    height: auto;
+    min-height: 46px;
+    padding: 12px 14px;
+    justify-content: flex-start;
+    gap: 14px;
+    border-radius: 10px;
+    color: rgb(var(--text-main));
+  }
+  .poster-app[data-page] .poster-rail nav > button span { display: inline; font-size: 14px; }
+  .poster-app[data-page] .poster-rail nav > button svg { flex: none; }
+  .poster-app[data-page] .poster-rail nav > button[aria-current="page"] { background: rgb(var(--text-main)); color: rgb(var(--card-bg)); }
+  .poster-app[data-page] .poster-rail nav > button:hover:not([aria-current="page"]) { background: rgb(var(--surface-low)); }
+}
+
+@media (min-width: 768px) and (max-width: 1199px) {
+  .poster-app { --sidebar-width: 190px; }
+  .poster-app[data-page] .poster-rail { padding-inline: 10px; }
+}
+
+@media (min-width: 1200px) {
+  .poster-app[data-page] .poster-right {
+    position: sticky;
+    top: 128px;
+    max-height: calc(100dvh - 152px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+}

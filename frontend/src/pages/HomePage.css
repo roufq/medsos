@@ -1,0 +1,25 @@
+.poster-app[data-page="home"] .poster-feed-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 720px);
+  justify-content: center;
+  gap: 26px;
+  margin-inline: auto;
+}
+
+.poster-app[data-page="home"] .postter-page-tagline {
+  max-width: 680px;
+  margin-inline: auto;
+}
+
+@media (min-width: 1200px) {
+  .poster-app[data-page="home"] .poster-feed-layout:has(.poster-right) {
+    grid-template-columns: minmax(0, 720px) minmax(260px, 350px);
+    max-width: 1120px;
+  }
+  .poster-app[data-page="home"] .poster-feed-layout .poster-right { display: flex; }
+  .poster-app[data-page="home"]:has(.poster-right) .postter-page-tagline { max-width: 988px; }
+}
+
+@media (min-width: 768px) and (max-width: 1199px) {
+  .poster-app[data-page="home"] .poster-right { display: none; }
+}

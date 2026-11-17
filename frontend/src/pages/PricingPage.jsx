@@ -1,8 +1,9 @@
+import { useLanguage } from '../context/LanguageContext';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, BadgeCheck, Check, Crown, Gift, Headphones, Lock, ShieldCheck,
-  Sparkles, TrendingUp, Zap, CreditCard, Building2, Mail, Phone, ChevronRight
+  Sparkles, TrendingUp, Zap, CreditCard, Mail, Phone, ChevronRight
 } from 'lucide-react';
 import AppLayout from '../components/modern/AppLayout';
 import { useAuth } from '../context/AuthContext';
@@ -10,7 +11,7 @@ import { userApi } from '../api/userApi';
 
 const BILLING_MONTHS = [1, 3, 6, 9, 12];
 
-export const PRICING_PLANS = [
+const PRICING_PLANS = [
   {
     id: 'free',
     title: 'Free',
@@ -181,6 +182,8 @@ const PAYMENT_METHODS = [
 ];
 
 export default function PricingPage() {
+  const { t: translateUI } = useLanguage();
+
   const { user, updateProfileState } = useAuth();
   const navigate = useNavigate();
   const [currency, setCurrency] = useState('IDR');
@@ -294,22 +297,18 @@ export default function PricingPage() {
                   onClick={() => { setCheckoutPlan(null); setNotice(null); }}
                   className="inline-flex items-center gap-2 text-xs font-semibold text-slate-300 hover:text-white mb-6 cursor-pointer"
                 >
-                  <ArrowLeft className="w-4 h-4" /> Back to Pricing
-                </button>
+                  <ArrowLeft className="w-4 h-4" />{translateUI("Back to Pricing")}</button>
 
                 <div className="inline-flex items-center gap-2 rounded-full border border-indigo-400/30 bg-indigo-500/15 px-3.5 py-1 text-xs font-bold text-indigo-200 mb-3">
-                  <Crown className="w-3.5 h-3.5 text-amber-400" /> Premium Subscription
-                </div>
+                  <Crown className="w-3.5 h-3.5 text-amber-400" />{translateUI("Premium Subscription")}</div>
 
-                <h1 className="text-3xl font-extrabold tracking-tight">Upgrade to Pro</h1>
-                <p className="mt-1.5 text-xs sm:text-sm text-slate-400">
-                  Unlock more features and grow your presence with Postter Premium.
-                </p>
+                <h1 className="text-3xl font-extrabold tracking-tight">{translateUI("Upgrade to Pro")}</h1>
+                <p className="mt-1.5 text-xs sm:text-sm text-slate-400">{translateUI("Unlock more features and grow your presence with Postter Premium.")}</p>
 
                 {/* Glowing Plan Box */}
                 <div className="relative mt-7 rounded-2xl border-2 border-indigo-500/70 bg-gradient-to-b from-indigo-950/50 to-[#121521] p-6 shadow-[0_0_40px_rgba(99,102,241,0.25)]">
                   <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-sky-400 to-indigo-500 px-3.5 py-0.5 text-[11px] font-extrabold text-white shadow">
-                    {activeCheckout.popular ? 'Most Popular' : activeCheckout.title}
+                    {activeCheckout.popular ? translateUI("Most Popular") : activeCheckout.title}
                   </span>
 
                   <div className="flex items-start justify-between gap-3">
@@ -320,11 +319,10 @@ export default function PricingPage() {
                     <div className="text-right">
                       <div className="text-2xl font-extrabold">
                         {activeCheckout.periods[checkoutMonths]?.usd}
-                        <span className="text-xs font-normal text-slate-400"> / {checkoutMonths} mo</span>
+                        <span className="text-xs font-normal text-slate-400"> / {checkoutMonths} {translateUI("mo")}</span>
                       </div>
                       <div className="text-xs font-bold text-indigo-300">
-                        {activeCheckout.periods[checkoutMonths]?.idr} / {checkoutMonths} bulan
-                      </div>
+                        {activeCheckout.periods[checkoutMonths]?.idr} / {checkoutMonths}{translateUI("bulan")}</div>
                     </div>
                   </div>
 
@@ -335,37 +333,36 @@ export default function PricingPage() {
                     </li>
                     <li className="flex items-center gap-2.5">
                       <Check className="w-4 h-4 text-indigo-400 shrink-0" />
-                      <span className="inline-flex items-center gap-1.5">
-                        Verified Badge <BadgeCheck className="w-4 h-4 text-sky-400 fill-sky-400/20" />
+                      <span className="inline-flex items-center gap-1.5">{translateUI("Verified Badge")}<BadgeCheck className="w-4 h-4 text-sky-400 fill-sky-400/20" />
                       </span>
                     </li>
                     <li className="flex items-center gap-2.5">
                       <Check className="w-4 h-4 text-indigo-400 shrink-0" />
-                      <span>Access to premium templates</span>
+                      <span>{translateUI("Access to premium templates")}</span>
                     </li>
                     <li className="flex items-center gap-2.5">
                       <Check className="w-4 h-4 text-indigo-400 shrink-0" />
-                      <span>Advanced analytics</span>
+                      <span>{translateUI("Advanced analytics")}</span>
                     </li>
                     <li className="flex items-center gap-2.5">
                       <Check className="w-4 h-4 text-indigo-400 shrink-0" />
-                      <span>Priority support</span>
+                      <span>{translateUI("Priority support")}</span>
                     </li>
                   </ul>
 
                   <div className="mt-5 pt-4 border-t border-white/10 flex items-center justify-between gap-3">
                     <div>
-                      <div className="text-[11px] font-bold text-slate-300">Plan Details</div>
-                      <div className="text-xs text-slate-400">{activeCheckout.title} Plan • {checkoutMonths} Month(s)</div>
+                      <div className="text-[11px] font-bold text-slate-300">{translateUI("Plan Details")}</div>
+                      <div className="text-xs text-slate-400">{activeCheckout.title} {translateUI("Plan •")} {checkoutMonths} {translateUI("Month(s)")}</div>
                     </div>
                     <select
                       value={checkoutMonths}
                       onChange={(e) => setCheckoutMonths(Number(e.target.value))}
-                      aria-label="Pilih durasi bulan"
+                      aria-label={translateUI("Pilih durasi bulan")}
                       className="rounded-xl border border-white/15 bg-[#1b1f30] px-3 py-2 text-xs font-bold text-white outline-none focus:border-indigo-400"
                     >
                       {BILLING_MONTHS.map((m) => (
-                        <option key={m} value={m}>{m} Month{m > 1 ? 's' : ''} — {activeCheckout.periods[m]?.idr}</option>
+                        <option key={m} value={m}>{m} {translateUI("Month")}{m > 1 ? translateUI("s") : ''} — {activeCheckout.periods[m]?.idr}</option>
                       ))}
                     </select>
                   </div>
@@ -377,8 +374,8 @@ export default function PricingPage() {
                   <ShieldCheck className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="text-xs font-bold">Secure & Encrypted Payment</div>
-                  <div className="text-[11px] text-slate-400">Your payment information is safe with us.</div>
+                  <div className="text-xs font-bold">{translateUI("Secure & Encrypted Payment")}</div>
+                  <div className="text-[11px] text-slate-400">{translateUI("Your payment information is safe with us.")}</div>
                 </div>
               </div>
             </div>
@@ -390,25 +387,25 @@ export default function PricingPage() {
                 <div className="mb-6 flex items-center justify-between text-xs font-bold text-slate-400">
                   <div className="flex items-center gap-2 text-indigo-400">
                     <span className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-white text-[11px]">1</span>
-                    <span>Plan</span>
+                    <span>{translateUI("Plan")}</span>
                   </div>
                   <div className="h-px flex-1 bg-indigo-500/40 mx-3" />
                   <div className="flex items-center gap-2 text-white">
                     <span className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-white text-[11px] shadow-[0_0_12px_rgba(99,102,241,0.8)]">2</span>
-                    <span>Payment</span>
+                    <span>{translateUI("Payment")}</span>
                   </div>
                   <div className="h-px flex-1 bg-white/10 mx-3" />
                   <div className="flex items-center gap-2">
                     <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-slate-400 text-[11px]">3</span>
-                    <span>Confirmation</span>
+                    <span>{translateUI("Confirmation")}</span>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3 mb-5">
                   <CreditCard className="w-6 h-6 text-indigo-400" />
                   <div>
-                    <h2 className="text-xl font-extrabold">Choose Payment Method</h2>
-                    <p className="text-xs text-slate-400">Select your preferred payment method to complete the subscription.</p>
+                    <h2 className="text-xl font-extrabold">{translateUI("Choose Payment Method")}</h2>
+                    <p className="text-xs text-slate-400">{translateUI("Select your preferred payment method to complete the subscription.")}</p>
                   </div>
                 </div>
 
@@ -451,11 +448,9 @@ export default function PricingPage() {
 
                 {/* Billing Details */}
                 <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.02] p-4 sm:p-5">
-                  <div className="text-sm font-bold mb-3">Billing Details</div>
+                  <div className="text-sm font-bold mb-3">{translateUI("Billing Details")}</div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <label className="block text-xs text-slate-300">
-                      Email Address
-                      <div className="mt-1 flex items-center gap-2 rounded-xl border border-white/10 bg-[#0d0f17] px-3 py-2.5">
+                    <label className="block text-xs text-slate-300">{translateUI("Email Address")}<div className="mt-1 flex items-center gap-2 rounded-xl border border-white/10 bg-[#0d0f17] px-3 py-2.5">
                         <Mail className="w-4 h-4 text-slate-400" />
                         <input
                           type="email"
@@ -467,9 +462,7 @@ export default function PricingPage() {
                         />
                       </div>
                     </label>
-                    <label className="block text-xs text-slate-300">
-                      Phone Number (Optional)
-                      <div className="mt-1 flex items-center gap-2 rounded-xl border border-white/10 bg-[#0d0f17] px-3 py-2.5">
+                    <label className="block text-xs text-slate-300">{translateUI("Phone Number (Optional)")}<div className="mt-1 flex items-center gap-2 rounded-xl border border-white/10 bg-[#0d0f17] px-3 py-2.5">
                         <Phone className="w-4 h-4 text-slate-400" />
                         <input
                           type="tel"
@@ -489,8 +482,7 @@ export default function PricingPage() {
                       onChange={(e) => setAgreeTerms(e.target.checked)}
                       className="h-4 w-4 accent-indigo-500 rounded"
                     />
-                    <span>
-                      I agree to the <span className="text-indigo-400 underline">Terms of Service</span> and <span className="text-indigo-400 underline">Privacy Policy</span>.
+                    <span>{translateUI("I agree to the")}<span className="text-indigo-400 underline">{translateUI("Terms of Service")}</span> {translateUI("and")} <span className="text-indigo-400 underline">{translateUI("Privacy Policy")}</span>.
                     </span>
                   </label>
                 </div>
@@ -503,11 +495,9 @@ export default function PricingPage() {
                   className="w-full rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-600 py-3.5 px-6 text-sm font-extrabold text-white shadow-[0_0_30px_rgba(99,102,241,0.45)] hover:opacity-95 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <Lock className="w-4 h-4" />
-                  {busy ? 'Processing...' : `Subscribe Now (${activeCheckout.periods[checkoutMonths]?.idr}) →`}
+                  {busy ? translateUI("Processing...") : `Subscribe Now (${activeCheckout.periods[checkoutMonths]?.idr}) →`}
                 </button>
-                <p className="mt-2.5 text-center text-[11px] text-slate-400">
-                  🔒 Jika berhenti berlangganan, Centang Biru otomatis hilang dan kuota kembali ke 1x posting/hari.
-                </p>
+                <p className="mt-2.5 text-center text-[11px] text-slate-400">{translateUI("🔒 Jika berhenti berlangganan, Centang Biru otomatis hilang dan kuota kembali ke 1x posting/hari.")}</p>
               </div>
             </form>
           </div>
@@ -520,14 +510,9 @@ export default function PricingPage() {
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
               <div>
                 <div className="inline-flex items-center gap-2 rounded-full border border-amber-400/30 bg-amber-500/10 px-3.5 py-1 text-xs font-bold text-amber-300 mb-3">
-                  <Crown className="w-3.5 h-3.5 text-amber-400" /> Upgrade Your Experience
-                </div>
-                <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
-                  Choose the Perfect Plan<br className="hidden sm:inline" /> for Your Needs
-                </h1>
-                <p className="mt-2 max-w-xl text-xs sm:text-sm text-slate-300">
-                  Post more, grow faster, and get the verified badge with Postter Premium.
-                </p>
+                  <Crown className="w-3.5 h-3.5 text-amber-400" />{translateUI("Upgrade Your Experience")}</div>
+                <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">{translateUI("Choose the Perfect Plan")}<br className="hidden sm:inline" />{translateUI("for Your Needs")}</h1>
+                <p className="mt-2 max-w-xl text-xs sm:text-sm text-slate-300">{translateUI("Post more, grow faster, and get the verified badge with Postter Premium.")}</p>
 
                 {/* Currency Switcher */}
                 <div className="mt-5 inline-flex rounded-full border border-white/15 bg-[#151824] p-1">
@@ -550,10 +535,8 @@ export default function PricingPage() {
               {user?.username && (
                 <div className="rounded-2xl border border-indigo-500/30 bg-indigo-950/30 p-4 max-w-sm">
                   <div className="flex items-center gap-2 text-xs font-bold text-indigo-300">
-                    <Gift className="w-4 h-4 text-amber-400" /> Referral Free Account (Bonus 3x/Day)
-                  </div>
-                  <p className="mt-1 text-[11px] text-slate-300">
-                    Bagikan kode referral <strong className="text-white">@{user.username}</strong> ke teman untuk mendapat kuota <strong>3x posting/hari selama 1 bulan</strong>.
+                    <Gift className="w-4 h-4 text-amber-400" />{translateUI("Referral Free Account (Bonus 3x/Day)")}</div>
+                  <p className="mt-1 text-[11px] text-slate-300">{translateUI("Bagikan kode referral")}<strong className="text-white">@{user.username}</strong> {translateUI("ke teman untuk mendapat kuota")} <strong>{translateUI("3x posting/hari selama 1 bulan")}</strong>.
                   </p>
                   <button
                     type="button"
@@ -562,8 +545,7 @@ export default function PricingPage() {
                       setNotice({ type: 'ok', text: `Link & kode referral (${user.username}) berhasil disalin!` });
                     }}
                     className="mt-2.5 rounded-xl bg-white/10 hover:bg-white/20 px-3 py-1.5 text-[11px] font-bold text-white cursor-pointer"
-                  >
-                    Salin Link Referral (@{user.username})
+                  >{translateUI("Salin Link Referral (@")}{user.username})
                   </button>
                 </div>
               )}
@@ -590,9 +572,7 @@ export default function PricingPage() {
                     }`}
                   >
                     {card.popular && (
-                      <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-sky-400 to-indigo-500 px-3 py-0.5 text-[10px] font-extrabold text-white shadow">
-                        ★ Most Popular
-                      </span>
+                      <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-sky-400 to-indigo-500 px-3 py-0.5 text-[10px] font-extrabold text-white shadow">{translateUI("★ Most Popular")}</span>
                     )}
                     {card.eliteGlow && (
                       <Sparkles className="absolute top-4 right-4 w-4 h-4 text-purple-300" />
@@ -602,9 +582,7 @@ export default function PricingPage() {
                       <div className="flex items-center justify-between gap-2">
                         <h3 className="text-base font-extrabold">{card.title}</h3>
                         {isCurrent && (
-                          <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[10px] font-bold text-emerald-300">
-                            Active
-                          </span>
+                          <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[10px] font-bold text-emerald-300">{translateUI("Active")}</span>
                         )}
                       </div>
                       <p className="text-[11px] text-slate-400 mt-0.5">{card.subtitle}</p>
@@ -631,7 +609,7 @@ export default function PricingPage() {
                       <div className="mt-3">
                         <div className="text-2xl font-extrabold">
                           {currency === 'USD' ? activeData.usdMonthly : activeData.idrMonthly}
-                          <span className="text-xs font-normal text-slate-400"> / month</span>
+                          <span className="text-xs font-normal text-slate-400"> {translateUI("/ month")}</span>
                         </div>
                         <div className="text-xs font-bold text-slate-300">
                           {currency === 'USD' ? `${activeData.idrMonthly} / bulan` : `${activeData.usdMonthly} / month`}
@@ -647,15 +625,14 @@ export default function PricingPage() {
                         {card.blue ? (
                           <li className="flex items-center gap-2">
                             <Check className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-                            <span className="inline-flex items-center gap-1">
-                              Verified Badge <BadgeCheck className="w-3.5 h-3.5 text-sky-400" />
+                            <span className="inline-flex items-center gap-1">{translateUI("Verified Badge")}<BadgeCheck className="w-3.5 h-3.5 text-sky-400" />
                             </span>
                           </li>
                         ) : (
                           <>
                             <li className="flex items-start gap-2">
                               <Check className="w-3.5 h-3.5 text-indigo-400 shrink-0 mt-0.5" />
-                              <span>Post: Poster, Video, Shop, Link, Hashtags, Location</span>
+                              <span>{translateUI("Post: Poster, Video, Shop, Link, Hashtags, Location")}</span>
                             </li>
                             <li className="flex items-start gap-2 text-amber-300">
                               <Gift className="w-3.5 h-3.5 shrink-0 mt-0.5" />
@@ -668,9 +645,7 @@ export default function PricingPage() {
                       {/* Billing Period Radio List */}
                       {activeData.periods && (
                         <div className="mt-3.5 border-t border-white/10 pt-2.5">
-                          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-                            Choose Billing Period
-                          </div>
+                          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">{translateUI("Choose Billing Period")}</div>
                           <div className="space-y-1">
                             {BILLING_MONTHS.map((m) => {
                               const p = activeData.periods[m];
@@ -690,7 +665,7 @@ export default function PricingPage() {
                                       onChange={() => setSelectedMonths((prev) => ({ ...prev, [activePlanId]: m }))}
                                       className="h-3 w-3 accent-indigo-400"
                                     />
-                                    {m} Month{m > 1 ? 's' : ''}
+                                    {m} {translateUI("Month")}{m > 1 ? translateUI("s") : ''}
                                   </span>
                                   <span className="flex items-center gap-2">
                                     <span className="text-slate-400">{p.usd}</span>
@@ -712,7 +687,7 @@ export default function PricingPage() {
                         onClick={handleSelectFree}
                         className="mt-4 w-full rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 py-2.5 text-xs font-extrabold text-white transition-all cursor-pointer"
                       >
-                        {currentPlanId === 'free' ? 'Get Started' : 'Berhenti Berlangganan (Ke Free)'}
+                        {currentPlanId === 'free' ? translateUI("Get Started") : translateUI("Berhenti Berlangganan (Ke Free)")}
                       </button>
                     ) : (
                       <button
@@ -725,9 +700,7 @@ export default function PricingPage() {
                             ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white hover:opacity-95'
                             : 'border border-white/15 bg-white/5 hover:bg-white/15 text-white'
                         }`}
-                      >
-                        Subscribe
-                      </button>
+                      >{translateUI("Subscribe")}</button>
                     )}
                   </div>
                 );
@@ -741,8 +714,8 @@ export default function PricingPage() {
                   <BadgeCheck className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="text-xs font-bold">Verified Badge</div>
-                  <div className="text-[11px] text-slate-400">Get the blue checkmark</div>
+                  <div className="text-xs font-bold">{translateUI("Verified Badge")}</div>
+                  <div className="text-[11px] text-slate-400">{translateUI("Get the blue checkmark")}</div>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -750,8 +723,8 @@ export default function PricingPage() {
                   <Zap className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="text-xs font-bold">Daily Posting Boost</div>
-                  <div className="text-[11px] text-slate-400">Post up to 24x daily</div>
+                  <div className="text-xs font-bold">{translateUI("Daily Posting Boost")}</div>
+                  <div className="text-[11px] text-slate-400">{translateUI("Post up to 24x daily")}</div>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -759,8 +732,8 @@ export default function PricingPage() {
                   <TrendingUp className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="text-xs font-bold">Advanced Analytics</div>
-                  <div className="text-[11px] text-slate-400">Understand your audience</div>
+                  <div className="text-xs font-bold">{translateUI("Advanced Analytics")}</div>
+                  <div className="text-[11px] text-slate-400">{translateUI("Understand your audience")}</div>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -768,8 +741,8 @@ export default function PricingPage() {
                   <Headphones className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="text-xs font-bold">Priority Support</div>
-                  <div className="text-[11px] text-slate-400">Get help first</div>
+                  <div className="text-xs font-bold">{translateUI("Priority Support")}</div>
+                  <div className="text-[11px] text-slate-400">{translateUI("Get help first")}</div>
                 </div>
               </div>
               <button
@@ -779,9 +752,8 @@ export default function PricingPage() {
               >
                 <div>
                   <div className="flex items-center gap-1.5 text-xs font-extrabold">
-                    <Crown className="w-3.5 h-3.5 text-amber-300" /> Go Premium Today
-                  </div>
-                  <div className="text-[10px] text-indigo-100">Unlock more features & grow</div>
+                    <Crown className="w-3.5 h-3.5 text-amber-300" />{translateUI("Go Premium Today")}</div>
+                  <div className="text-[10px] text-indigo-100">{translateUI("Unlock more features & grow")}</div>
                 </div>
                 <ChevronRight className="w-4 h-4 text-white" />
               </button>

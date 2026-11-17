@@ -160,6 +160,7 @@ func Api() {
 			admin.Get("admin/sessions", controllers.AdminSessions)
 			admin.Get("admin/posts", controllers.AdminPosts)
 			admin.Delete("admin/posts/{id}", postController.AdminDeletePost)
+			admin.Post("admin/posts/{id}/restore", controllers.AdminRestorePost)
 			admin.Put("admin/posts/{id}/sponsor", controllers.AdminSponsorPost)
 			admin.Put("admin/users/{id}/verification", controllers.AdminVerifyUser)
 			admin.Delete("admin/users/{id}", postController.AdminDeleteUser)

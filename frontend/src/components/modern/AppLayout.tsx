@@ -1,3 +1,6 @@
+import { useLanguage } from '../../context/LanguageContext';
+import './AppLayout.css';
+import './ReferenceLayout.css';
 import { postUrl } from '../../utils/postUrl';
 import { profileUrl } from '../../utils/profileUrl';
 import { ReactNode, useEffect, useRef, useState } from 'react';
@@ -5,6 +8,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Phone, PhoneIncoming, PhoneOff, Video as VideoIcon } from 'lucide-react';
 import Header from './Header';
 import Brand from '../common/Brand';
+import LanguageSwitch from '../common/LanguageSwitch';
 import MobileNav from './MobileNav';
 import { pageCopy } from '../../utils/pageCopy';
 import Sidebar from './Sidebar';
@@ -38,14 +42,16 @@ export function useAppNavigate() {
 }
 
 export default function AppLayout({ currentTab, children, onPostCreated, composerOpen, setComposerOpen, wide, composerType, setComposerType, onComposerTypeChange }: AppLayoutProps) {
+  const { t: translateUI } = useLanguage();
+
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const goTo = useAppNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [routeParams] = useSearchParams();
-  useEffect(() => {if(currentTab === 'explore')setSearchQuery(routeParams.get('q') || '');},[routeParams,currentTab]);
+  useEffect(() => {if(currentTab === 'explore' || currentTab === 'search')setSearchQuery(routeParams.get('q') || '');},[routeParams,currentTab]);
   const copy = pageCopy[currentTab] || ['Postter', 'Berbagi cerita, karya, dan koneksi baru.'];
-  useEffect(() => { document.title = `${copy[0]} · postter.us`; }, [currentTab]);
+  useEffect(() => { document.title = `${translateUI(copy[0])} · postter.us`; }, [currentTab, translateUI]);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [ownComposerType, setOwnComposerType] = useState<string | undefined>();
   const [ownComposer, setOwnComposer] = useState(false);
@@ -155,11 +161,11 @@ export default function AppLayout({ currentTab, children, onPostCreated, compose
 
   const handleLogout = async () => {
     await logout();
-    navigate('/thanks');
+    navigate('/explore', { replace: true });
   };
 
   return (
-    <div className={`poster-app ${!user ? 'postter-public-layout' : ''} bg-background text-on-background min-h-screen font-sans`}>
+    <div data-page={currentTab} className={`poster-app ${!user ? 'postter-public-layout' : ''} bg-background text-on-background min-h-screen font-sans`}>
       {user ? <Header
         currentUser={currentUser as any}
         searchQuery={searchQuery}
@@ -170,11 +176,11 @@ export default function AppLayout({ currentTab, children, onPostCreated, compose
         currentTab={isComposerOpen ? 'newpost' : currentTab}
         onRequestCreatePost={openComposer}
         onLogout={handleLogout}
-      /> : <header className="postter-guest-header"><Brand /><form className="explore-guest-search" onSubmit={event=>{event.preventDefault();navigate(`/explore?q=${encodeURIComponent(searchQuery.trim())}`);}}><input type="search" aria-label="Cari postingan publik" placeholder="Cari postingan, kreator, atau topik…" maxLength={120} value={searchQuery} onChange={event=>setSearchQuery(event.target.value)}/></form><nav>{currentTab!=='explore'&&<a href="/explore">Explore</a>}<a href="/login">Masuk</a><a className="landing-primary" href="/register">Daftar</a></nav></header>}
+      /> : <header className="postter-guest-header"><Brand /><form className="explore-guest-search" onSubmit={event=>{event.preventDefault();navigate(`/explore?q=${encodeURIComponent(searchQuery.trim())}`);}}><input type="search" aria-label={translateUI("Cari postingan publik")} placeholder={translateUI("Cari postingan, kreator, atau topik…")} maxLength={120} value={searchQuery} onChange={event=>setSearchQuery(event.target.value)}/></form><nav><LanguageSwitch />{currentTab!=='explore'&&<a href="/explore">{translateUI("Explore")}</a>}<a href="/login">{translateUI("Masuk")}</a><a className="landing-primary" href="/register">{translateUI("Daftar")}</a></nav></header>}
       <main className={`poster-main ${wide ? 'poster-main-wide' : ''} ${currentTab === 'messages' ? 'poster-main-flush' : ''}`}>
         <Sidebar currentTab={currentTab} onNavigate={goTo} onRequestCreatePost={openComposer} onLogout={handleLogout} />
         {mobileOpen && <Sidebar currentTab={currentTab} onNavigate={goTo} onRequestCreatePost={openComposer} onLogout={handleLogout} mobileOpen onCloseMobile={() => setMobileOpen(false)} />}
-        <div className={`flex-grow min-w-0 ${currentTab === 'messages' ? 'h-full' : ''}`}>{currentTab !== 'messages' && <p className="postter-page-tagline">{copy[1]}</p>}{children}</div>
+        <div className={`flex-grow min-w-0 ${currentTab === 'messages' ? 'h-full' : ''}`}>{currentTab !== 'messages' && <p className="postter-page-tagline">{translateUI(copy[1])}</p>}{children}</div>
       </main>
       <MobileNav user={user} currentTab={isComposerOpen ? 'newpost' : currentTab} onCreate={openComposer} />
       {user && <CreatePostModal onTypeChange={onComposerTypeChange} initialType={setComposerType ? composerType : ownComposerType} isOpen={isComposerOpen} onClose={() => setComposer(false)} onSaved={(post) => (onPostCreated ? onPostCreated(post) : navigate(postUrl(post)))} />}
@@ -194,17 +200,17 @@ export default function AppLayout({ currentTab, children, onPostCreated, compose
               {globalIncomingCall.mode === 'video' ? (
                 <>
                   <VideoIcon className="w-3.5 h-3.5" />
-                  <span>Video Call Masuk...</span>
+                  <span>{translateUI("Video Call Masuk...")}</span>
                 </>
               ) : (
                 <>
                   <PhoneIncoming className="w-3.5 h-3.5" />
-                  <span>Panggilan Suara Masuk...</span>
+                  <span>{translateUI("Panggilan Suara Masuk...")}</span>
                 </>
               )}
             </div>
             <h3 className="text-lg font-extrabold text-white truncate max-w-full">
-              {globalIncomingCall.fromUser?.name || 'Pengguna'}
+              {globalIncomingCall.fromUser?.name || translateUI("Pengguna")}
             </h3>
             {globalIncomingCall.fromUser?.username && (
               <p className="text-xs text-slate-400 mt-0.5">@{globalIncomingCall.fromUser.username}</p>
@@ -218,7 +224,7 @@ export default function AppLayout({ currentTab, children, onPostCreated, compose
                 <span className="w-14 h-14 rounded-full bg-rose-600 group-hover:bg-rose-500 flex items-center justify-center text-white shadow-lg transition-transform active:scale-95">
                   <PhoneOff className="w-6 h-6" />
                 </span>
-                <span className="text-[11px] font-semibold text-slate-300">Tolak</span>
+                <span className="text-[11px] font-semibold text-slate-300">{translateUI("Tolak")}</span>
               </button>
               <button
                 type="button"
@@ -232,7 +238,7 @@ export default function AppLayout({ currentTab, children, onPostCreated, compose
                     <Phone className="w-6 h-6" />
                   )}
                 </span>
-                <span className="text-[11px] font-semibold text-slate-300">Terima</span>
+                <span className="text-[11px] font-semibold text-slate-300">{translateUI("Terima")}</span>
               </button>
             </div>
           </div>

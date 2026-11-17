@@ -27,14 +27,14 @@ export default function HashtagInput({ value, onChange, textTags, maximum, minim
     setEntry(''); setNotice(limited ? `Maksimal ${maximum} hashtag unik.` : '');
   };
   return <div className="new-post-hashtags">
-    <label htmlFor="post-hashtag-entry">Hashtag</label>
+    <label htmlFor="post-hashtag-entry">{t("Hashtag")}</label>
     <div className="new-post-hashtag-entry"><input id="post-hashtag-entry" className="new-post-input" value={entry} placeholder={t("Ketik hashtag, lalu Enter")} onChange={(event) => {
       const raw = event.target.value;
       if (/[\s,]/.test(raw)) commit(raw); else { setEntry(raw); setNotice(''); }
-    }} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ',') { event.preventDefault(); commit(); } }} onBlur={() => { if (entry.trim()) commit(); }} onPaste={(event) => { const pasted = event.clipboardData.getData('text'); if (/[\s,#]/.test(pasted)) { event.preventDefault(); commit(entry + pasted); } }} /><button type="button" aria-label="Tambah hashtag" onMouseDown={(event) => event.preventDefault()} onClick={() => commit()} disabled={!entry.trim()}><Plus size={17} /></button></div>
+    }} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ',') { event.preventDefault(); commit(); } }} onBlur={() => { if (entry.trim()) commit(); }} onPaste={(event) => { const pasted = event.clipboardData.getData('text'); if (/[\s,#]/.test(pasted)) { event.preventDefault(); commit(entry + pasted); } }} /><button type="button" aria-label={t("Tambah hashtag")} onMouseDown={(event) => event.preventDefault()} onClick={() => commit()} disabled={!entry.trim()}><Plus size={17} /></button></div>
     {tags.length > 0 && <div className="new-post-hashtag-chips">{tags.map((tag) => <span key={tag}><button type="button" aria-label={`Ubah hashtag ${tag}`} onMouseDown={(event) => event.preventDefault()} onClick={() => { setEntry(tag); onChange(tags.filter((item) => item !== tag).map((item) => '#' + item).join(' ')); document.getElementById('post-hashtag-entry')?.focus(); }}>#{tag}</button><button type="button" aria-label={`Hapus hashtag ${tag}`} onMouseDown={(event) => event.preventDefault()} onClick={() => onChange(tags.filter((item) => item !== tag).map((item) => '#' + item).join(' '))}><X size={12} /></button></span>)}</div>}
-    <small>{count}/{maximum} hashtag ? minimal {minimum}. Pisahkan dengan Enter, koma, atau spasi.</small>
-    {textTags.length > 0 && <small>{language === 'en' ? 'Hashtags in the description are also counted.' : 'Hashtag dalam deskripsi ikut dihitung.'}</small>}
-    {notice && <p role="alert">{notice}</p>}
+    <small>{count}/{maximum} {t("hashtag ? minimal")} {minimum}{t(". Pisahkan dengan Enter, koma, atau spasi.")}</small>
+    {textTags.length > 0 && <small>{language === 'en' ? t("Hashtags in the description are also counted.") : t("Hashtag dalam deskripsi ikut dihitung.")}</small>}
+    {notice && <p role="alert">{t(notice)}</p>}
   </div>;
 }

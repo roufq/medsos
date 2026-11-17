@@ -7,13 +7,14 @@ const LOGOUT_KEY = 'theposter-logout';
 export default function IdleSession() {
   const { user, logout } = useAuth(); const { language } = useLanguage();
   const [remaining, setRemaining] = useState(null); const resume = useRef(() => {});
+  const userId = user?.id;
   useEffect(() => {
-    if (!user) { setRemaining(null); return; }
-    let disposed = false, timer, trailing, idleLimit = 1800000, lastActivity = Date.now(), lastPing = 0, key = '', ending = false;
+    if (!userId) return;
+    let disposed = false, timer, trailing, idleLimit = 12 * 60 * 60 * 1000, lastActivity = Date.now(), lastPing = 0, key = '', ending = false;
     const readActivity = () => { try { return Number(localStorage.getItem(key)) || lastActivity; } catch { return lastActivity; } };
     const end = async () => {
       if (ending || disposed) return; ending = true; clearInterval(timer); clearTimeout(trailing);
-      await logout(); window.location.assign('/login?reason=session_idle_expired');
+      await logout(); window.location.replace('/explore');
     };
     const check = () => {
       if (!key || ending) return;
@@ -35,14 +36,14 @@ export default function IdleSession() {
     };
     resume.current = activity;
     const storage = (event) => {
-      if (event.key === LOGOUT_KEY) { disposed = true; window.location.assign('/login'); }
+      if (event.key === LOGOUT_KEY) { disposed = true; window.location.replace('/explore'); }
       else if (event.key === key) check();
     };
     const wake = () => { if (document.visibilityState === 'visible') check(); };
     authApi.session().then((info) => {
       if (disposed) return;
       idleLimit = info.idle_timeout_seconds * 1000;
-      key = `theposter-session-activity-${info.session_id || user.id}`;
+      key = `theposter-session-activity-${info.session_id || userId}`;
       lastActivity = new Date(info.last_activity).getTime() || Date.now();
       lastActivity = Math.max(lastActivity, readActivity()); check();
       timer = window.setInterval(check, 1000);
@@ -51,7 +52,7 @@ export default function IdleSession() {
     events.forEach((name) => window.addEventListener(name, activity, { passive: true }));
     window.addEventListener('storage', storage); window.addEventListener('focus', check); document.addEventListener('visibilitychange', wake);
     return () => { disposed = true; clearInterval(timer); clearTimeout(trailing); events.forEach((name) => window.removeEventListener(name, activity)); window.removeEventListener('storage', storage); window.removeEventListener('focus', check); document.removeEventListener('visibilitychange', wake); };
-  }, [user?.id]);
+  }, [userId, logout]);
   if (!user || remaining === null) return null;
   return <div className="idle-session-warning" role="alert"><Clock size={21}/><div><strong>{language === 'en' ? 'Your session is about to expire' : 'Sesi Anda akan berakhir'}</strong><p>{language === 'en' ? `You will be logged out in ${remaining} seconds due to inactivity.` : `Anda akan keluar dalam ${remaining} detik karena tidak aktif.`}</p></div><button type="button" onClick={() => resume.current()}>{language === 'en' ? 'Stay signed in' : 'Tetap masuk'}</button></div>;
 }

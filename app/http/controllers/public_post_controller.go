@@ -53,16 +53,32 @@ func routePostID(c goravelhttp.Context) (int64, error) {
 // web share intent, so the client copies the link and opens the app instead.
 func shareLinks(postID int64, title string) map[string]string {
 	link := publicPostURL(postID)
+	image := "/frontend/dist/images/postter-logo.png"
+	var media models.PostMedia
+	if db.DB.Where("post_id = ? AND media_type = ?", postID, models.MediaTypeImage).Order("id asc").First(&media).Error == nil {
+		image = media.MediaURL
+	} else {
+		var postLink models.PostLink
+		if db.DB.Where("post_id = ?", postID).First(&postLink).Error == nil && postLink.ImageURL != nil && *postLink.ImageURL != "" {
+			image = *postLink.ImageURL
+		}
+	}
+	base, _ := url.Parse(appBaseURL() + "/")
+	imageURL, err := url.Parse(image)
+	if err != nil || imageURL.IsAbs() && imageURL.Scheme != "http" && imageURL.Scheme != "https" {
+		imageURL, _ = url.Parse("/frontend/dist/images/postter-logo.png")
+	}
+	image = base.ResolveReference(imageURL).String()
 	u, t := url.QueryEscape(link), url.QueryEscape(title)
 	both := url.QueryEscape(strings.TrimSpace(title + " " + link))
 	return map[string]string{
 		"facebook":  "https://www.facebook.com/sharer/sharer.php?u=" + u,
-		"x":         "https://twitter.com/intent/tweet?url=" + u + "&text=" + t,
-		"threads":   "https://www.threads.net/intent/post?text=" + both,
+		"x":         "https://x.com/intent/tweet?url=" + u + "&text=" + t,
+		"threads":   "https://www.threads.com/intent/post?text=" + both,
 		"linkedin":  "https://www.linkedin.com/sharing/share-offsite/?url=" + u,
 		"telegram":  "https://t.me/share/url?url=" + u + "&text=" + t,
 		"whatsapp":  "https://wa.me/?text=" + both,
-		"pinterest": "https://pinterest.com/pin/create/button/?url=" + u + "&description=" + t,
+		"pinterest": "https://www.pinterest.com/pin/create/button/?url=" + u + "&description=" + t + "&media=" + url.QueryEscape(image),
 		"instagram": "",
 		"tiktok":    "",
 		"copy":      link,

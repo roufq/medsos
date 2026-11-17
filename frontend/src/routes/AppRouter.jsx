@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from 'react';
+import { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import LoginPage from '../pages/LoginPage';
@@ -110,10 +110,10 @@ const AppRouter = () => {
           <Route path="/home" element={<HomePage />} />
           <Route path="/shop" element={<ShopPage />} />
           <Route path="/saved" element={<PrivateRoute><SavedPage /></PrivateRoute>} />
-          <Route path="/network" element={<PrivateRoute><FeaturePage title="Network" /></PrivateRoute>} />
+          <Route path="/network" element={<PrivateRoute><FeaturePage page="network" /></PrivateRoute>} />
           <Route path="/jobs" element={<Navigate to="/" replace />} />
-          <Route path="/messages" element={<PrivateRoute><FeaturePage title="Messages" /></PrivateRoute>} />
-          <Route path="/analytics" element={<AdminRoute><FeaturePage title="Analytics" /></AdminRoute>} />
+          <Route path="/messages" element={<PrivateRoute><FeaturePage page="messages" /></PrivateRoute>} />
+          <Route path="/analytics" element={<AdminRoute><FeaturePage page="analytics" /></AdminRoute>} />
 
           {/* Admin Routes */}
           <Route

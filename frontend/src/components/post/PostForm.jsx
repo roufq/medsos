@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { postApi } from '../../api/postApi';
-import { Image, Video, Link as LinkIcon, X, Loader, MapPin, Globe, Lock, ShoppingBag, Store } from 'lucide-react';
+import { Image, Video, Link as LinkIcon, X, Loader, MapPin, Globe, Lock, Store } from 'lucide-react';
 import LinkPreviewCard from './LinkPreviewCard';
 
 const PostForm = ({ onPostCreated }) => {
@@ -67,7 +67,7 @@ const PostForm = ({ onPostCreated }) => {
     try {
       const data = await postApi.getLinkPreview(linkUrl);
       setLinkPreview(data);
-    } catch (e) {
+    } catch {
       setLinkPreview({
         url: linkUrl,
         title: 'Shared Link',
@@ -399,7 +399,7 @@ const PostForm = ({ onPostCreated }) => {
               onClick={() => setShowLinkInput(!showLinkInput)}
               disabled={!!mediaFile}
               className={`flex items-center gap-2 px-3 py-2 hover:bg-[#f0f2f5] rounded-lg transition-colors text-[#65676B] hover:text-blue-600 text-xs font-bold ${
-                !!mediaFile ? 'opacity-50 cursor-not-allowed' : ''
+                mediaFile ? 'opacity-50 cursor-not-allowed' : ''
               }`}
             >
               <LinkIcon size={18} />

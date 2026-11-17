@@ -1,13 +1,11 @@
 import { useLanguage } from "../../context/LanguageContext";import {
-  Home, ShoppingBag, Compass, MoreHorizontal,
+  Home, ShoppingBag, Compass,
   Users,
-  Briefcase,
   MessageSquare,
   User,
   LayoutGrid,
   BarChart3,
   HelpCircle,
-  Shield,
   Plus,
   Clapperboard,
   Bookmark,
@@ -37,15 +35,11 @@ export default function Sidebar({
 }: SidebarProps) {const { t } = useLanguage();
   const { user } = useAuth();
 
-  const menuItems: {id: string;label: string;icon: any;}[] = (currentTab === 'explore' || !user) ? [
-    {id:'home',label:'Home',icon:Home}, {id:'explore',label:'Explore',icon:Compass},
-    {id:'shop',label:'Shop',icon:ShoppingBag}, {id:'newpost',label:'Buat',icon:Plus},
-    {id:'saved',label:'Koleksi',icon:Bookmark}, {id:'profile',label:'Profil',icon:User},
-    {id:'settings',label:'Lainnya',icon:MoreHorizontal},
-  ] : [
+  const menuItems: {id: string;label: string;icon: any;}[] = [
   { id: 'home', label: t("Beranda"), icon: Home },
   { id: 'explore', label: 'Explore', icon: Compass },
   { id: 'shop', label: 'Shop', icon: ShoppingBag },
+  { id: 'newpost', label: 'Buat', icon: Plus },
   { id: 'videos', label: 'Video', icon: Clapperboard },
   { id: 'network', label: 'Network', icon: Users },
   { id: 'messages', label: t("Pesan"), icon: MessageSquare },
@@ -68,10 +62,10 @@ export default function Sidebar({
     <>
     {mobileOpen && <div className="fixed inset-0 z-[55] bg-black/40 md:hidden" onClick={onCloseMobile} />}
     <aside className={asideClass}>
-      {mobileOpen && <button type="button" onClick={onCloseMobile} className="self-end p-1" aria-label="Tutup menu"><X className="w-5 h-5" /></button>}
+      {mobileOpen && <button type="button" onClick={onCloseMobile} className="self-end p-1" aria-label={t("Tutup menu")}><X className="w-5 h-5" /></button>}
       <div className="mb-6 px-2">
         <div className="font-headline-md text-headline-md font-black text-primary">postter.us</div>
-        <div className="font-label-sm text-label-sm text-text-secondary">Cerita, karya, dan koneksi baru</div>
+        <div className="font-label-sm text-label-sm text-text-secondary">{t("Cerita, karya, dan koneksi baru")}</div>
       </div>
 
       <nav className="flex flex-col gap-1.5 flex-1 select-none">
@@ -105,7 +99,7 @@ export default function Sidebar({
               className="w-full py-3 bg-primary text-white font-bold rounded-full shadow-sm hover:brightness-110 active:scale-95 transition-all text-sm flex items-center justify-center gap-2 cursor-pointer">
 
             <Plus className="w-4 h-4" />
-            <span>Create Post</span>
+            <span>{t("Create Post")}</span>
           </button>
         </div>
       </nav>
@@ -117,7 +111,7 @@ export default function Sidebar({
             className="flex items-center gap-3 text-text-secondary hover:text-primary transition-colors text-sm text-left select-none cursor-pointer">
 
           <HelpCircle className="w-4 h-4 text-outline" />
-          <span className="text-xs font-semibold">Support</span>
+          <span className="text-xs font-semibold">{t("Support")}</span>
         </button>
 
       </div>

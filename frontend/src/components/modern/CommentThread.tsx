@@ -16,7 +16,7 @@ interface CommentThreadProps {
 const errorText = (error: any, fallback: string) => error?.response?.data?.error || fallback;
 
 export default function CommentThread({ postId, postOwnerId, onCountChange }: CommentThreadProps) {
-  const { t } = useLanguage();
+  const { t , language: uiLanguage} = useLanguage();
   const { user } = useAuth();
   const [comments, setComments] = useState<any[]>([]);
   const [openReplies, setOpenReplies] = useState<Record<number, boolean>>({});
@@ -124,8 +124,8 @@ export default function CommentThread({ postId, postOwnerId, onCountChange }: Co
         <div className="flex-1 min-w-0">
           <div className="bg-surface-container-low rounded-2xl px-3 py-2">
             <div className="flex items-center justify-between gap-2">
-              <Link to={profileUrl(comment.user)} className="text-xs font-bold text-text-primary hover:underline">{comment.user?.name || 'Pengguna'}</Link>
-              <span className="text-[10px] text-outline">{timeAgo(comment.created_at)}</span>
+              <Link to={profileUrl(comment.user)} className="text-xs font-bold text-text-primary hover:underline">{comment.user?.name || t("Pengguna")}</Link>
+              <span className="text-[10px] text-outline">{timeAgo(comment.created_at, uiLanguage)}</span>
             </div>
             {isEditing ? (
               <div className="mt-1 flex gap-2">
@@ -139,9 +139,7 @@ export default function CommentThread({ postId, postOwnerId, onCountChange }: Co
                 <button type="button" onClick={saveEdit} className="text-xs font-bold text-primary">
                   {t('Simpan')}
                 </button>
-                <button type="button" onClick={() => setEditing(null)} className="text-xs text-text-secondary">
-                  Batal
-                </button>
+                <button type="button" onClick={() => setEditing(null)} className="text-xs text-text-secondary">{t("Batal")}</button>
               </div>
             ) : (
               <p className="text-xs text-text-primary whitespace-pre-wrap break-words">
@@ -160,18 +158,14 @@ export default function CommentThread({ postId, postOwnerId, onCountChange }: Co
               }}
               className="hover:text-primary flex items-center gap-1"
             >
-              <CornerDownRight className="w-3 h-3" />
-              Balas
-            </button>
+              <CornerDownRight className="w-3 h-3" />{t("Balas")}</button>
             {mine && !isEditing && (
               <button
                 type="button"
                 onClick={() => setEditing({ id: comment.id, text: comment.content })}
                 className="hover:text-primary flex items-center gap-1"
               >
-                <Pencil className="w-3 h-3" />
-                Edit
-              </button>
+                <Pencil className="w-3 h-3" />{t("Edit")}</button>
             )}
             {canDelete && (
               <button
@@ -179,9 +173,7 @@ export default function CommentThread({ postId, postOwnerId, onCountChange }: Co
                 onClick={() => remove(comment)}
                 className="hover:text-error flex items-center gap-1"
               >
-                <Trash2 className="w-3 h-3" />
-                Hapus
-              </button>
+                <Trash2 className="w-3 h-3" />{t("Hapus")}</button>
             )}
           </div>
 
@@ -222,15 +214,14 @@ export default function CommentThread({ postId, postOwnerId, onCountChange }: Co
           onClick={() => load(comments[0]?.id)}
           className="text-xs font-semibold text-primary hover:underline self-start disabled:opacity-50"
         >
-          {loading ? 'Memuat…' : 'Lihat komentar sebelumnya'}
+          {loading ? t("Memuat…") : t("Lihat komentar sebelumnya")}
         </button>
       )}
       {comments.map((comment) => renderComment(comment))}
-      {!loading && comments.length === 0 && <p className="text-xs text-text-secondary">Belum ada komentar.</p>}
-      {error && <p className="text-xs text-error">{error}</p>}
+      {!loading && comments.length === 0 && <p className="text-xs text-text-secondary">{t("Belum ada komentar.")}</p>}
+      {error && <p className="text-xs text-error">{t(error)}</p>}
       {replyTo && (
-        <div className="text-[11px] text-text-secondary flex items-center gap-2">
-          Membalas <strong>{replyTo.user?.name}</strong>
+        <div className="text-[11px] text-text-secondary flex items-center gap-2">{t("Membalas")}<strong>{replyTo.user?.name}</strong>
           <button
             type="button"
             onClick={() => {
@@ -238,9 +229,7 @@ export default function CommentThread({ postId, postOwnerId, onCountChange }: Co
               setDraft('');
             }}
             className="text-primary"
-          >
-            batal
-          </button>
+          >{t("batal")}</button>
         </div>
       )}
       <div className="flex gap-2">
@@ -251,7 +240,7 @@ export default function CommentThread({ postId, postOwnerId, onCountChange }: Co
             if (e.key === 'Enter') submit();
           }}
           maxLength={5000}
-          placeholder={replyTo ? 'Tulis balasan… (@username untuk mention)' : 'Tulis komentar… (@username untuk mention)'}
+          placeholder={replyTo ? t("Tulis balasan… (@username untuk mention)") : t("Tulis komentar… (@username untuk mention)")}
           className="flex-1 rounded-full border border-border-subtle bg-surface-container-low px-4 py-2 text-xs outline-none focus:border-primary"
         />
 
@@ -259,7 +248,7 @@ export default function CommentThread({ postId, postOwnerId, onCountChange }: Co
           type="button"
           onClick={submit}
           className="rounded-full bg-primary p-2 text-white"
-          aria-label="Kirim komentar"
+          aria-label={t("Kirim komentar")}
         >
           <Send className="w-4 h-4" />
         </button>

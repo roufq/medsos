@@ -1,6 +1,32 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -Eeuo pipefail
 umask 027
+source_branch="${1:-ahmad}"
+
+check_source() {
+  git ls-tree -rz --name-only "$1" | python3 -c '
+import sys
+paths = sys.stdin.read().split("\0")
+unsafe = [p for p in paths if p in ("postter", "uploads", "storage", "frontend/dist") or p.startswith(("uploads/", "storage/", "frontend/dist/")) or any(part == ".env" or (part.startswith(".env.") and part != ".env.example") for part in p.split("/"))]
+if unsafe:
+    sys.exit("Runtime files must not be tracked by Git: " + ", ".join(unsafe))
+'
+}
+
+check_ready() {
+  local code
+  code="$(curl --silent --show-error --max-time 10 --output "$2" --write-out '%{http_code}' "$1")" || return 1
+  [[ "$code" == 200 ]] || return 1
+  python3 - "$2" <<'PY'
+import json, sys
+try:
+    data = json.load(open(sys.argv[1]))
+    sys.exit(0 if isinstance(data, dict) and data.get('status') == 'ready' else 1)
+except (ValueError, OSError):
+    sys.exit(1)
+PY
+}
+
 app=/opt/postter
 [[ "$EUID" -eq 0 && "$(uname -s)" == Linux && "$(uname -m)" == x86_64 ]] || {
   echo 'Run with sudo on the Ubuntu x86_64 server.' >&2; exit 1;
@@ -13,7 +39,15 @@ cd "$app"
 [[ "$(git branch --show-current)" == production ]] || { echo 'Switch to production first.' >&2; exit 1; }
 [[ -z "$(git status --porcelain)" ]] || { echo 'Save source changes before deploying.' >&2; git status -sb; exit 1; }
 for tool in go node npm python3 mysqldump curl; do command -v "$tool" >/dev/null || { echo "Missing $tool; run prepare-build-tools.sh first." >&2; exit 1; }; done
-git pull --ff-only origin production
+[[ "$#" -le 1 ]] && git check-ref-format "refs/heads/$source_branch" >/dev/null || { echo 'Provide one valid source branch.' >&2; exit 1; }
+git fetch origin "refs/heads/$source_branch:refs/remotes/origin/$source_branch"
+check_source HEAD
+check_source "refs/remotes/origin/$source_branch"
+git merge-base --is-ancestor HEAD "refs/remotes/origin/$source_branch" || {
+  echo 'Server has commits absent from the source branch. Save and reconcile them before deploying.' >&2; exit 1;
+}
+previous_revision="$(git rev-parse HEAD)"
+git merge --ff-only "refs/remotes/origin/$source_branch"
 revision="$(git rev-parse HEAD)"
 build="$(mktemp -d /var/tmp/postter-build.XXXXXXXX)"
 backup="$(mktemp -d /var/backups/postter-update.XXXXXXXX)"
@@ -47,6 +81,7 @@ PY
 cp -a "$app/.env" "$app/postter" "$app/resources" "$backup/"
 cp -a "$app/frontend/dist" "$backup/dist"
 printf '%s\n' "$revision" > "$backup/new-revision.txt"
+printf '%s\n' "$previous_revision" > "$backup/previous-revision.txt"
 
 stopped=false
 changed=false
@@ -73,7 +108,10 @@ echo 'Build complete. Stopping Postter briefly for backup and activation.'
 systemctl stop postter
 stopped=true
 mysqldump --single-transaction --routines --triggers --events --databases "$database" > "$backup/database.sql"
+[[ -s "$backup/database.sql" ]]
 tar -czf "$backup/user-files.tar.gz" -C "$app" uploads storage
+tar -tzf "$backup/user-files.tar.gz" > /dev/null
+(cd "$backup" && sha256sum database.sql user-files.tar.gz > SHA256SUMS)
 
 changed=true
 install -o root -g postter -m 0750 "$build/postter" "$app/postter.next"
@@ -87,11 +125,11 @@ chmod -R g+rX,o-rwx "$app/frontend/dist" "$app/resources"
 systemctl start postter
 ready=false
 for attempt in {1..30}; do
-  if curl --fail --silent --max-time 5 http://127.0.0.1:3000/api/v1/health/ready > /dev/null; then ready=true; break; fi
+  if check_ready http://127.0.0.1:3000/api/v1/health/ready "$backup/backend-ready.json"; then ready=true; break; fi
   sleep 2
 done
 [[ "$ready" == true ]]
-curl --fail --silent --show-error --max-time 10 -H 'Host: postter.us' http://127.0.0.1/api/v1/health/ready
+check_ready https://postter.us/api/v1/health/ready "$backup/public-ready.json"
 trap - ERR
 echo
 echo "Postter updated to $revision. Backup: $backup"

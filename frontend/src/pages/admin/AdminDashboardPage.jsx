@@ -1,5 +1,6 @@
+import {useLanguage} from '../../context/LanguageContext';
 import { profileUrl } from '../../utils/profileUrl';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { adminApi } from '../../api/adminApi';
@@ -10,6 +11,8 @@ import AdminUsersTab from '../../components/admin/AdminUsersTab';
 import AdminModerationTab from '../../components/admin/AdminModerationTab';
 
 const AdminDashboardPage = () => {
+const {language:uiLanguage}=useLanguage();
+
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -32,32 +35,32 @@ const AdminDashboardPage = () => {
     else if (notification.actor?.id) navigate(profileUrl(notification.actor));
   });
 
-  const fetchAdminData = async () => {
-    try {
-      setLoading(true);
+  const requestVersion = useRef(0);
+  const fetchAdminData = useCallback(() => {
+    const version = ++requestVersion.current;
+    return Promise.all([adminApi.getStats(), adminApi.getUsers(), adminApi.getReports()]).then(([statsData, usersData, reportsData]) => {
+      if (version !== requestVersion.current) return;
       setError('');
-      const [statsData, usersData, reportsData] = await Promise.all([
-        adminApi.getStats(),
-        adminApi.getUsers(),
-        adminApi.getReports()
-      ]);
       setStats(statsData);
       setUsersList(usersData);
       setReports(reportsData || []);
-    } catch (e) {
+    }).catch(e => {
       console.error('Failed to load admin data', e);
-      setError(e.response?.data?.error || e.message || 'Failed to load admin data');
-    } finally {
-      setLoading(false);
-    }
-  };
+      if (version === requestVersion.current) setError(e.response?.data?.error || e.message || 'Failed to load admin data');
+    }).finally(() => {
+      if (version === requestVersion.current) setLoading(false);
+    });
+  }, []);
 
   useEffect(() => {
+    const requests = requestVersion;
     fetchAdminData();
-  }, []);
+    return () => { requests.current++; };
+  }, [fetchAdminData]);
 
   const handleReviewReport = async (id, status, deletePost = false) => {
     await adminApi.reviewReport(id, status, deletePost);
+    setLoading(true); setError('');
     await fetchAdminData();
   };
 
@@ -67,12 +70,13 @@ const AdminDashboardPage = () => {
     } else {
       await adminApi.blockUser(targetUser.id);
     }
+    setLoading(true); setError('');
     await fetchAdminData();
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
+  const handleLogout = async () => {
+    await logout();
+    navigate('/explore', { replace: true });
   };
 
   if (loading) {
@@ -168,7 +172,7 @@ const AdminDashboardPage = () => {
                 {notificationsOpen && <div className="absolute right-0 top-12 w-80 max-h-[70vh] overflow-y-auto rounded-2xl border border-border-subtle bg-white p-2 shadow-xl">
                   <div className="px-3 py-2 text-sm font-bold">Notifications</div>
                   {notifications.length === 0 && <p className="px-3 py-4 text-xs text-text-secondary">No notifications yet.</p>}
-                  {notifications.map((notification) => <button key={notification.id} type="button" onClick={() => handleNotification(notification)} className={`flex w-full gap-3 rounded-xl p-3 text-left hover:bg-surface-container-low ${notification.read_at ? '' : 'bg-secondary-container/40'}`}><div className="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-secondary-container flex items-center justify-center font-bold text-primary">{notification.actor?.avatar_url ? <img src={notification.actor.avatar_url} alt="" className="h-full w-full object-cover" /> : notification.actor?.name?.slice(0,1) || '!'}</div><div><p className="text-xs"><strong>{notification.actor?.name || 'System'}</strong> {notification.actor ? String(notification.message).replace(/^Someone\s+/i, '') : notification.message}</p><p className="mt-1 text-[10px] text-outline">{new Date(notification.created_at).toLocaleString()}</p></div></button>)}
+                  {notifications.map((notification) => <button key={notification.id} type="button" onClick={() => handleNotification(notification)} className={`flex w-full gap-3 rounded-xl p-3 text-left hover:bg-surface-container-low ${notification.read_at ? '' : 'bg-secondary-container/40'}`}><div className="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-secondary-container flex items-center justify-center font-bold text-primary">{notification.actor?.avatar_url ? <img src={notification.actor.avatar_url} alt="" className="h-full w-full object-cover" /> : notification.actor?.name?.slice(0,1) || '!'}</div><div><p className="text-xs"><strong>{notification.actor?.name || 'System'}</strong> {notification.actor ? String(notification.message).replace(/^Someone\s+/i, '') : notification.message}</p><p className="mt-1 text-[10px] text-outline">{new Date(notification.created_at).toLocaleString(uiLanguage === 'en' ? 'en-US' : 'id-ID')}</p></div></button>)}
                 </div>}
               </div>
               <button onClick={() => navigate('/messages')} className="p-2 text-text-secondary hover:bg-surface-container-low rounded-full transition-colors">

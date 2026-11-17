@@ -1,5 +1,6 @@
 import React from 'react';
 import Brand from '../common/Brand';
+import LanguageSwitch from '../common/LanguageSwitch';
 import { useLanguage } from '../../context/LanguageContext';
 import { PlaySquare, Users, ShoppingBag, Edit3 } from 'lucide-react';
 
@@ -37,6 +38,7 @@ export default function AuthLayout({ children, isLogin = true }: AuthLayoutProps
   return (
     <div className="auth-layout text-text-primary min-h-screen w-full bg-background flex items-center justify-center font-sans overflow-x-hidden">
       <div className="auth-brand"><Brand /></div>
+      <div className="auth-language"><LanguageSwitch /></div>
       <div className="w-full max-w-[1720px] mx-auto grid grid-cols-1 lg:grid-cols-12 min-h-screen items-center px-4 sm:px-8 lg:px-12 xl:px-16 py-6 sm:py-10 gap-8 xl:gap-12">
 
         {/* MOBILE / TABLET COMPACT HERO */}
@@ -61,7 +63,7 @@ export default function AuthLayout({ children, isLogin = true }: AuthLayoutProps
               <img src="https://images.unsplash.com/photo-1542314831-c6a4d14faaf2?auto=format&fit=crop&q=80&w=400" className="w-full h-full object-cover opacity-50" alt="" />
             </div>
             <div className="absolute top-0 left-0 w-full h-full bg-black rounded-[2.5rem] shadow-2xl border-[10px] border-black overflow-hidden">
-              <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&q=80&w=400" className="w-full h-full object-cover" alt="Nature" />
+              <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&q=80&w=400" className="w-full h-full object-cover" alt={t("Nature")} />
               <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/80 flex flex-col justify-between p-4">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm" />

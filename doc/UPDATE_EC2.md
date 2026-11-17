@@ -1,16 +1,36 @@
 # Update Postter dari GitHub pada EC2 yang sudah aktif
 
-Pengembangan tetap pada `ahmad`, server memakai `production` di `/opt/postter`.
-Rilis kode yang sudah diuji ke branch `production` terlebih dahulu. Perintah
+Pengembangan tetap pada `ahmad`, server memakai branch lokal `production` di
+`/opt/postter`. Alur berikut mengambil kode dari `origin/ahmad` tanpa mengganti
+nama branch aktif server. Push perubahan yang sudah diuji dari laptop dahulu.
+Perintah
 berikut dijalankan di terminal AWS sebagai root (setelah `sudo -i`), bukan di
 PowerShell Windows. Jangan menjalankan `install.sh` pada server yang sudah aktif.
 
-## 1. Ambil source yang sudah dirilis
+Di laptop (PowerShell), dari `D:\www\medsos`, periksa branch aktif harus `ahmad`.
+File `server.exe` adalah hasil build Windows yang masih dilacak repository;
+perubahannya tidak dibutuhkan untuk rilis Linux ini.
+
+```powershell
+Set-Location D:\www\medsos
+git status -sb
+git add --all -- . ':!server.exe'
+git diff --cached --stat
+git commit -m "Update Postter interface, language, moderation and safe EC2 deployment"
+git push origin ahmad
+```
+
+Push harus berhasil sebelum melanjutkan di AWS. Tidak perlu push database,
+`.env`, upload, storage, atau hasil frontend/dist.
+
+## 1. Periksa server dan ambil script pembaruan
 
 ```bash
 cd /opt/postter
 git status -sb
-git pull --ff-only origin production
+git fetch origin ahmad
+update_script="$(mktemp /var/tmp/postter-update.XXXXXXXX.sh)"
+git show origin/ahmad:deploy/ec2/update.sh > "$update_script"
 ```
 
 Jika Git menolak karena ada perubahan atau riwayat bercabang, hentikan dan simpan
@@ -34,10 +54,15 @@ Sumber: https://go.dev/doc/toolchain dan https://nodejs.org/en/download
 ## 3. Build, backup, dan aktivasi
 
 ```bash
-bash deploy/ec2/update.sh
+bash "$update_script" ahmad
 ```
 
-Script menolak branch selain `production` atau working tree yang berubah. Build
+Script menolak branch aktif selain `production`, working tree yang berubah,
+commit server yang tidak ada di sumber, dan source yang melacak `.env`, uploads,
+storage, binary Linux atau frontend/dist. Ia menjalankan fast-forward dari
+`origin/ahmad`; tidak memakai reset atau menghapus data runtime. Jika rilis
+nantinya berasal dari `origin/production`, berikan argumen `production`.
+Build
 dijalankan dari snapshot Git di `/var/tmp/postter-build.*`, sehingga hasil build
 yang sedang dipakai tetap tersedia sampai build baru selesai. Build Go dibatasi
 satu proses untuk mengurangi penggunaan RAM.
@@ -49,17 +74,30 @@ dari `.env`; konfigurasi instalasi ini memakai MySQL lokal dengan autentikasi
 root melalui Unix socket.
 
 Binary/frontend/resources diganti dan service diperiksa melalui endpoint readiness
-backend dan Nginx. Jika aktivasi gagal, script mencoba memulihkan binary dan
+backend dan HTTPS publik. Keduanya wajib menjawab HTTP 200 dengan JSON
+`status: ready`; redirect 301 bukan keberhasilan. Jika aktivasi gagal, script mencoba memulihkan binary dan
 frontend/resources sebelumnya. Database tidak dipulihkan otomatis; perubahan
 schema saat startup perlu diperiksa sebelum melakukan pemulihan database.
 Source Git tetap pada revisi baru jika runtime terpaksa dipulihkan.
 
 Database pengguna dan konfigurasi runtime tidak diganti dengan data dari lokal.
-Revisi 14 November menambahkan tabel pengaturan/aktivitas dan kolom verifikasi/
-iklan melalui AutoMigrate saat startup; cadangan database wajib dipertahankan.
+Perubahan moderasi menambahkan `posts.deleted_at`, `posts.removal_reason`, serta
+`user_activities.description` dan `user_activities.reason` melalui AutoMigrate
+saat startup. Tidak perlu mengimpor database laptop. Startup tetap menjalankan
+kebijakan lama: akun dengan status pending_deletion lebih dari 30 hari dihapus
+permanen. Cadangan database wajib dipertahankan, termasuk untuk memulihkan
+penghapusan yang tidak diinginkan. Arsip uploads/storage diperiksa dan checksum
+database/arsip disimpan di `SHA256SUMS`; pemeriksaan ini belum membuktikan bahwa
+database dapat di-restore. Simpan salinan backup di luar instance juga.
 Folder build dan backup
 dipertahankan untuk pemeriksaan; hapus backup lama sesuai kebijakan retensi
 setelah rilis dinyatakan baik agar disk tidak penuh.
+
+## Batas sesi login
+
+Untuk batas sesi tanpa aktivitas 12 jam, pastikan `.env` server memuat
+`SESSION_IDLE_TIMEOUT_SECONDS=43200`, lalu restart service aplikasi setelah
+rilis backend. Nilai lama di `.env` tetap mengalahkan default kode yang baru.
 
 ## 4. Konfigurasi telepon/VC pertama kali
 

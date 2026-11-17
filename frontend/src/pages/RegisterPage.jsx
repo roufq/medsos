@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import Signup from '../components/modern/Signup';
 import { userApi } from '../api/userApi';
 import { authApi } from '../api/authApi';
-import { OAUTH_REASONS } from './LoginPage';
+import { OAUTH_REASONS } from '../utils/oauthReasons';
 
 const RegisterPage = () => {
   const { register, updateProfileState } = useAuth();

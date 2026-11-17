@@ -119,7 +119,7 @@ func Sitemap(c http.Context) http.Response {
 		PublicHash string
 		PostType   string
 	}
-	err := db.DB.Table("posts").Select("posts.public_hash, posts.post_type").Joins("JOIN users ON users.id = posts.user_id").Where("users.account_status = 'active' AND users.is_private = 0 AND posts.visibility = 'public' AND posts.repost_of_id IS NULL AND posts.public_hash IS NOT NULL").Order("posts.id desc").Limit(20000).Scan(&posts).Error
+	err := db.DB.Table("posts").Select("posts.public_hash, posts.post_type").Joins("JOIN users ON users.id = posts.user_id").Where("posts.deleted_at IS NULL AND users.account_status = 'active' AND users.is_private = 0 AND posts.visibility = 'public' AND posts.repost_of_id IS NULL AND posts.public_hash IS NOT NULL").Order("posts.id desc").Limit(20000).Scan(&posts).Error
 	if err != nil {
 		return c.Response().String(503, "Sitemap unavailable")
 	}

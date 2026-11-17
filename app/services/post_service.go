@@ -91,7 +91,6 @@ type PostService interface {
 	GetUserPosts(viewerID, userID int64) ([]models.Post, error)
 	GetPost(viewerID, postID int64) (*models.Post, error)
 	DeletePost(userID int64, postID int64) error
-	DeletePostAsAdmin(postID int64) error
 	GetLinkPreview(targetURL string) (*linkpreview.Preview, error)
 	ToggleLikePost(postID, userID int64) (bool, error)
 	AddCommentToPost(postID, userID int64, content string) (*models.PostComment, error)
@@ -125,10 +124,28 @@ type postDraft struct {
 // CountWords is exported so the HTTP layer and tests share one definition.
 func CountWords(text string) int { return len(strings.Fields(text)) }
 
+func normalizeLinkURL(raw string) string {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return ""
+	}
+	lower := strings.ToLower(raw)
+	if strings.HasPrefix(lower, "http://") || strings.HasPrefix(lower, "https://") {
+		return raw
+	}
+	if strings.Contains(raw, ":") || strings.HasPrefix(raw, "/") {
+		return raw
+	}
+	if strings.Contains(raw, ".") && !strings.ContainsAny(raw, " \t\r\n") {
+		return "https://" + raw
+	}
+	return raw
+}
+
 func (d *postDraft) normalize() {
 	d.title = strings.TrimSpace(d.title)
 	d.content = strings.TrimSpace(d.content)
-	d.linkURL = strings.TrimSpace(d.linkURL)
+	d.linkURL = normalizeLinkURL(d.linkURL)
 	d.location = strings.TrimSpace(d.location)
 	d.visibility = strings.ToLower(strings.TrimSpace(d.visibility))
 	if d.visibility == "" {
@@ -188,12 +205,12 @@ func (d *postDraft) validate() error {
 		return fmt.Errorf("mention %d-%d users with @username (currently %d)", minMentions, MentionsMax, len(d.mentions))
 	}
 
-	if d.postType == models.PostTypeLink {
+	if d.postType == models.PostTypeLink || d.linkURL != "" {
 		if len(d.linkURL) > 500 {
 			return errors.New("link URL is too long")
 		}
 		parsed, err := url.ParseRequestURI(d.linkURL)
-		if err != nil || (parsed.Scheme != "http" && parsed.Scheme != "https") || parsed.Hostname() == "" {
+		if err != nil || (parsed.Scheme != "http" && parsed.Scheme != "https") || !strings.Contains(parsed.Hostname(), ".") {
 			return errors.New("link URL must be a valid HTTP or HTTPS URL")
 		}
 	}
@@ -475,7 +492,7 @@ func (s *postService) CreatePost(userID int64, req *dto.CreatePostRequest) (*mod
 		post.Shop = buildShop(draft.shop)
 	}
 	// Persist the URL immediately; a bounded background job fills its metadata.
-	if draft.postType == models.PostTypeLink {
+	if draft.linkURL != "" {
 		post.Link = &models.PostLink{URL: draft.linkURL, PreviewStatus: models.LinkPreviewPending}
 	}
 
@@ -553,8 +570,8 @@ func (s *postService) UpdatePost(userID, postID int64, req *dto.UpdatePostReques
 		draft.visibility = *req.Visibility
 	}
 	linkChanged := false
-	if req.LinkURL != nil && strings.TrimSpace(*req.LinkURL) != draft.linkURL {
-		draft.linkURL = *req.LinkURL
+	if req.LinkURL != nil && normalizeLinkURL(*req.LinkURL) != draft.linkURL {
+		draft.linkURL = normalizeLinkURL(*req.LinkURL)
 		linkChanged = true
 	}
 	mediaChanged := req.MediaURLs != nil
@@ -641,13 +658,15 @@ func (s *postService) UpdatePost(userID, postID int64, req *dto.UpdatePostReques
 				newMedia = append(newMedia, media)
 			}
 		}
-		if linkChanged && post.PostType == models.PostTypeLink {
+		if linkChanged {
 			if err := tx.Where("post_id = ?", postID).Delete(&models.PostLink{}).Error; err != nil {
 				return err
 			}
-			newLink = &models.PostLink{PostID: postID, URL: draft.linkURL, PreviewStatus: models.LinkPreviewPending}
-			if err := tx.Create(newLink).Error; err != nil {
-				return err
+			if draft.linkURL != "" {
+				newLink = &models.PostLink{PostID: postID, URL: draft.linkURL, PreviewStatus: models.LinkPreviewPending}
+				if err := tx.Create(newLink).Error; err != nil {
+					return err
+				}
 			}
 		}
 		if req.Shop != nil {
@@ -818,12 +837,20 @@ func (s *postService) DeletePost(userID int64, postID int64) error {
 	return s.postRepo.Delete(postID)
 }
 
-func (s *postService) DeletePostAsAdmin(postID int64) error {
-	return s.postRepo.Delete(postID)
-}
-
 func (s *postService) GetLinkPreview(targetURL string) (*linkpreview.Preview, error) {
-	return linkpreview.FetchPreview(targetURL)
+	targetURL = normalizeLinkURL(targetURL)
+	parsed, err := url.ParseRequestURI(targetURL)
+	if err != nil || (parsed.Scheme != "http" && parsed.Scheme != "https") || !strings.Contains(parsed.Hostname(), ".") {
+		return nil, errors.New("format tautan tidak valid, gunakan alamat domain seperti https://postter.us")
+	}
+	preview, err := linkpreview.FetchPreview(targetURL)
+	if err != nil {
+		if strings.Contains(err.Error(), "SSRF protection") {
+			return nil, err
+		}
+		return linkpreview.FallbackPreview(targetURL), nil
+	}
+	return preview, nil
 }
 
 func (s *postService) ToggleLikePost(postID, userID int64) (bool, error) {

@@ -1,53 +1,68 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useLocation } from 'react-router-dom';
-import { Play, ArrowRight, Loader2, Users, Film } from 'lucide-react';
+import { ArrowRight, Loader2, Film, Play, BadgeCheck } from 'lucide-react';
 import AppLayout from '../components/modern/AppLayout';
 import PostCard from '../components/modern/PostCard';
-import VideoPlayer, { watchUrl } from '../components/modern/VideoPlayer';
+import VideoPlayer from '../components/modern/VideoPlayer';
+import { watchUrl } from '../utils/postUrl';
+import { uniquePosts } from '../utils/discovery';
 import { postApi } from '../api/postApi';
-import { networkApi } from '../api/networkApi';
 import { userApi } from '../api/userApi';
 import { profileUrl } from '../utils/profileUrl';
 import { timeAgo } from '../utils/postFormat';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 const SIZE = 20;
+
 export default function VideoPage() {
-  const { t } = useLanguage(); const { user } = useAuth(); const { token } = useParams(); const navigate = useNavigate(); const route = useLocation();
-  const [filter, setFilter] = useState('all'); const [posts, setPosts] = useState([]); const [related, setRelated] = useState([]);
-  const [watching, setWatching] = useState(null); const [loading, setLoading] = useState(true); const [more, setMore] = useState(false); const [busy, setBusy] = useState(false); const [error, setError] = useState(''); const [channels, setChannels] = useState([]);
-  useEffect(() => {
-    let active = true; setLoading(true); setError(''); setWatching(null);
-    const kind = filter === 'all' ? 'video' : filter;
-    const load = async () => {
+  const { t, language } = useLanguage(), { user } = useAuth(), { token } = useParams();
+  const navigate = useNavigate(), route = useLocation();
+  const [posts,setPosts] = useState([]), [shorts,setShorts] = useState([]), [watching,setWatching] = useState(null);
+  const [loading,setLoading] = useState(true), [busy,setBusy] = useState(false), [more,setMore] = useState(false), [error,setError] = useState(''), [topic,setTopic] = useState('all');
+  const requestKey = JSON.stringify([token,language]);
+  const [loadedRequest,setLoadedRequest] = useState(requestKey);
+  if (loadedRequest!==requestKey) {setLoadedRequest(requestKey);setLoading(true);setError('');setWatching(null);setPosts([]);setShorts([]);setMore(false);setTopic('all');}
+  useEffect(()=>{
+    let active=true;
+    const load=async()=>{
       try {
-        if (token) {
-          if (!/^[a-f0-9]{32}$/i.test(token)) throw new Error(t('Video tidak ditemukan.'));
-          const post = await postApi.getPost(token);
-          if (!post.media?.some((item) => item.media_type === 'video')) throw new Error(t('Video tidak ditemukan.'));
-          if (active) { setWatching(post); if (String(token) !== post.public_hash && post.public_hash) navigate(watchUrl(post), { replace: true }); }
+        if(token){
+          if(!/^[a-f0-9]{32}$/i.test(token))throw new Error('Video tidak ditemukan.');
+          const post=await postApi.getPost(token);
+          if(!post.media?.some(item=>item.media_type==='video'))throw new Error('Video tidak ditemukan.');
+          if(active)setWatching(post);
         }
-        const data = await postApi.getFeed(SIZE, 0, null, null, token ? 'video' : kind);
-        if (active) { setPosts(data || []); setMore((data || []).length === SIZE); }
-        if (!token && kind !== 'video') { const videos = await postApi.getFeed(SIZE, 0, null, null, 'video'); if (active) setRelated(videos || []); }
-        else if (active) setRelated(data || []);
-      } catch (err) { if (active) setError(err.response?.data?.error || err.message || t('Gagal memuat video.')); }
-      finally { if (active) setLoading(false); }
-    }; load(); return () => { active = false; };
-  }, [token, filter]);
-  useEffect(() => { let active = true; networkApi.getSuggestions().then((data) => { if (active) setChannels((data || []).slice(0, 5)); }).catch(() => {}); return () => { active = false; }; }, []);
-  const ranking = useMemo(() => [...related].filter((post) => String(post.public_hash || post.id) !== String(token)).sort((a,b) => (b.views_count || 0) - (a.views_count || 0)).slice(0, token ? 8 : 5), [related, token]);
-  const update = (post) => { setPosts((current) => current.map((item) => item.id === post.id ? post : item)); setRelated((current) => current.map((item) => item.id === post.id ? post : item)); if (watching?.id === post.id) setWatching(post); };
-  const loadMore = async () => { if (busy || !posts.length) return; setBusy(true); try { const data = await postApi.getFeed(SIZE, 0, null, posts[posts.length-1].id, filter === 'all' ? 'video' : filter); setPosts((current) => [...current,...(data || []).filter((item)=>!current.some((old)=>old.id===item.id))]); setMore((data || []).length===SIZE); } catch { setError(t('Gagal memuat video.')); } finally { setBusy(false); } };
-  return <AppLayout wide currentTab="videos"><div className="video-dashboard"><div className="video-main">
-    {!token && <nav className="video-filters" aria-label={t('Filter video')}>{[['all','Semua'],['video','Video'],['image','Gambar'],['poster','Poster'],['link','Tautan'],['location','Lokasi'],['shop','Shop']].map(([key,label])=><button key={key} className={filter===key?'active':''} aria-pressed={filter===key} onClick={()=>setFilter(key)}>{t(label)}</button>)}</nav>}
-    {loading && <div className="video-loading"><Loader2 className="animate-spin" size={30}/></div>}{error && <p role="alert" className="video-error">{error}</p>}
-    {token && watching && <div className="video-watch"><VideoPlayer post={watching} autoplay={Boolean(route.state?.autoplay)}/><div className="video-watch-info"><div className="video-watch-channel"><Link to={profileUrl(watching.user)}>{t('Lihat profil')}</Link>{watching.user_id!==user?.id && <button onClick={async()=>{try{if(watching.user?.is_followed_by_me){await userApi.unfollow(watching.user_id)}else{await userApi.follow(watching.user_id)}setWatching((current)=>({...current,user:{...current.user,is_followed_by_me:!current.user?.is_followed_by_me}}))}catch{setError(t('Gagal mengikuti akun.'))}}}>{t(watching.user?.is_followed_by_me?'Mengikuti':'Ikuti')}</button>}</div><PostCard post={watching} hideMedia defaultCommentsOpen onUpdated={update} onDeleted={()=>navigate('/videos')}/></div></div>}
-    {!token && !loading && !posts.length && !error && <div className="video-empty"><Film size={36}/><p>{t('Belum ada video.')}</p></div>}
-    {!token && posts.map((post)=><div key={post.id} className="video-feed-card"><VideoPlayer post={post} preview/><div className="video-feed-info"><PostCard post={post} hideMedia onUpdated={update} onDeleted={(id)=>setPosts((current)=>current.filter((item)=>item.id!==id))}/></div></div>)}
-    {!token && more && <button className="video-load-more" disabled={busy} onClick={loadMore}>{busy&&<Loader2 size={16} className="animate-spin"/>}{t('Muat lebih banyak')}</button>}
-  </div><aside className="video-side"><section className="video-panel"><div className="video-panel-heading"><h2>{t(token?'Video Terkait':'Video Trending')}</h2><Link to="/videos">{t('Lihat Semua')}<ArrowRight size={14}/></Link></div>{ranking.map((post,index)=><div key={post.id} className="video-related-row">{!token&&<span className="video-rank">{index+1}</span>}<div className="video-related-thumb"><VideoPlayer post={post} preview/></div><div><Link to={watchUrl(post)}><h3>{post.title}</h3></Link><p>{post.user?.name}</p><small>{post.views_count||0} views ? {timeAgo(post.created_at)}</small></div></div>)}{!ranking.length&&<p className="video-side-empty">{t('Belum ada video.')}</p>}</section>
-    {!token && <section className="video-panel"><div className="video-panel-heading"><h2>{t('Channel Populer')}</h2><Link to="/network">{t('Lihat Semua')}<ArrowRight size={14}/></Link></div>{channels.map((channel)=><div key={channel.id} className="video-channel"><Link to={profileUrl(channel)} className="video-channel-avatar">{channel.avatar_url?<img src={channel.avatar_url} alt=""/>:<Users size={20}/>}</Link><div><Link to={profileUrl(channel)}>{channel.name}</Link><small>{channel.followers_count||0} {t('Followers')}</small></div><button disabled={channel.pending} onClick={async()=>{setChannels((list)=>list.map((item)=>item.id===channel.id?{...item,pending:true}:item));try{if(channel.followed){await userApi.unfollow(channel.id)}else{await userApi.follow(channel.id)}setChannels((list)=>list.map((item)=>item.id===channel.id?{...item,followed:!item.followed,pending:false}:item))}catch{setChannels((list)=>list.map((item)=>item.id===channel.id?{...item,pending:false}:item));setError(t('Gagal mengikuti akun.'))}}}>{t(channel.followed?'Mengikuti':'Ikuti')}</button></div>)}</section>}
-    <div className="video-discover"><strong>{t('Jelajahi Dunia dengan Postinganmu')}</strong><p>{t('Bagikan momen terbaikmu di seluruh dunia.')}</p><Link to="/network">{t('Mulai Sekarang')}<ArrowRight size={14}/></Link></div>
-  </aside></div></AppLayout>;
+        const data=await postApi.getFeed(SIZE,0,null,null,'video');
+        if(active){setPosts(data || []);setMore((data || []).length===SIZE);}
+        if(!token){
+          const shortPosts=await postApi.getFeed(SIZE,0,null,null,'shorts');
+          if(active)setShorts(shortPosts || []);
+        }
+      }catch(e){if(active)setError(e.response?.data?.error || e.message || 'Gagal memuat video.');}
+      finally{if(active)setLoading(false);}
+    };
+    load();return()=>{active=false;};
+  },[token,language]);
+  const topics=[...new Set(posts.flatMap(post=>(post.hashtags || []).map(item=>item.tag)))].slice(0,10);
+  const videos=posts.filter(post=>post.media?.some(item=>item.media_type==='video') && (topic==='all' || post.hashtags?.some(item=>item.tag===topic)));
+  const featured=token?watching:videos.find(post=>post.media?.some(item=>item.media_type==='video' && !item.is_short)) || videos[0];
+  const recommended=[...videos].filter(post=>post.id!==featured?.id).sort((a,b)=>(b.views_count || 0)-(a.views_count || 0));
+  const shortVideos=uniquePosts([...shorts,...posts]).filter(post=>post.media?.some(item=>item.media_type==='video' && item.is_short));
+  const update=post=>{setPosts(current=>current.map(item=>item.id===post.id?post:item));setShorts(current=>current.map(item=>item.id===post.id?post:item));if(watching?.id===post.id)setWatching(post);};
+  const remove=id=>{setPosts(current=>current.filter(post=>post.id!==id));setShorts(current=>current.filter(post=>post.id!==id));if(token)navigate('/videos');};
+  const number=value=>new Intl.NumberFormat(language==='en'?'en-US':'id-ID',{notation:'compact',maximumFractionDigits:1}).format(value || 0);
+  const loadMore=async()=>{
+    if(busy || !posts.length)return;setBusy(true);setError('');
+    try{const data=await postApi.getFeed(SIZE,0,null,posts.at(-1).id,'video');setPosts(current=>uniquePosts([...current,...(data || [])]));setMore((data || []).length===SIZE);}
+    catch(e){setError(e.response?.data?.error || 'Gagal memuat video.');}finally{setBusy(false);}
+  };
+  const card=(post,short=false)=><article key={post.id} className={short?'video-reference-short':'video-reference-card'}><VideoPlayer post={post} preview/><Link to={watchUrl(post)}><h3>{post.title || t('Video')}</h3></Link><Link className="video-reference-author" to={profileUrl(post.user || {})}>{post.user?.avatar_url && <img src={post.user.avatar_url} alt=""/>}{post.user?.name}{post.user?.is_blue_verified && <BadgeCheck size={12}/>}</Link><small>{number(post.views_count)} {t('views')} · {timeAgo(post.created_at,language)}</small></article>;
+  return <AppLayout wide currentTab="videos"><div className="video-reference-layout"><main className="video-reference-main">
+    {!token && <nav className="video-reference-topics" aria-label={t('Filter video')}><button className={topic==='all'?'active':''} aria-pressed={topic==='all'} onClick={()=>setTopic('all')}>{t('Semua')}</button>{topics.map(tag=><button key={tag} className={topic===tag?'active':''} aria-pressed={topic===tag} onClick={()=>setTopic(tag)}>#{tag}</button>)}</nav>}
+    {loading && <p role="status" className="reference-empty"><Loader2 className="animate-spin"/>{t('Memuat…')}</p>}
+    {error && <p role="alert" className="video-error">{t(error)}</p>}
+    {!loading && featured && <section className="video-reference-feature"><VideoPlayer post={featured} autoplay={Boolean(token && route.state?.autoplay)}/><div className="video-reference-feature-copy"><PostCard post={featured} hideMedia defaultCommentsOpen={Boolean(token)} onUpdated={update} onDeleted={remove}/>{featured.user_id!==user?.id && <button className="video-reference-follow" onClick={async()=>{try{if(featured.user?.is_followed_by_me)await userApi.unfollow(featured.user_id);else await userApi.follow(featured.user_id);update({...featured,user:{...featured.user,is_followed_by_me:!featured.user?.is_followed_by_me}});}catch{setError('Gagal mengikuti akun.');}}}>{t(featured.user?.is_followed_by_me?'Mengikuti':'Ikuti')}</button>}</div></section>}
+    {!loading && !featured && !error && <div className="reference-empty"><Film size={32}/>{t('Belum ada video.')}</div>}
+    {!token && !loading && <><section className="video-reference-section"><div className="video-reference-section-title"><h2>{t('Video Populer')}</h2>{more && <button disabled={busy} onClick={loadMore}>{t('Muat lebih banyak')}<ArrowRight size={14}/></button>}</div><div className="video-reference-popular">{recommended.map(post=>card(post))}</div>{!recommended.length && <p className="text-sm text-text-secondary">{t('Belum ada video lain.')}</p>}</section><section className="video-reference-section"><div className="video-reference-section-title"><h2><Play size={18} fill="currentColor"/>{t('Shorts')}</h2></div><div className="video-reference-shorts">{shortVideos.map(post=>card(post,true))}</div>{!shortVideos.length && <p className="text-sm text-text-secondary">{t('Belum ada Shorts.')}</p>}</section></>}
+  </main><aside className="video-reference-recommendations"><h2>{t('Video yang Direkomendasikan')}</h2>{recommended.slice(0,8).map(post=><article key={post.id}><div className="video-reference-thumb"><VideoPlayer post={post} preview/></div><div><Link to={watchUrl(post)}><h3>{post.title || t('Video')}</h3></Link><Link to={profileUrl(post.user || {})}>{post.user?.name}{post.user?.is_blue_verified && <BadgeCheck size={11}/>}</Link><small>{number(post.views_count)} {t('views')} · {timeAgo(post.created_at,language)}</small></div></article>)}{!loading && !recommended.length && <p className="text-sm text-text-secondary">{t('Belum ada rekomendasi video.')}</p>}</aside></div></AppLayout>;
 }

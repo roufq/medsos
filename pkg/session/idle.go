@@ -17,7 +17,7 @@ var ErrIdleExpired = errors.New("session expired due to inactivity")
 func IdleTimeout() time.Duration {
 	seconds, err := strconv.Atoi(os.Getenv("SESSION_IDLE_TIMEOUT_SECONDS"))
 	if err != nil || seconds < 60 {
-		seconds = 1800
+		return 12 * time.Hour
 	}
 	return time.Duration(seconds) * time.Second
 }

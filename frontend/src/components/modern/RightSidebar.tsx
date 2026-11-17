@@ -30,8 +30,8 @@ export default function RightSidebar({ posts, followedUsers, onFollowSuggestion,
       <section className="poster-panel">
         <div className="poster-panel-heading"><h3><Flame size={20} />{t("Trending Topics")}</h3><Link to="/search">{t("Lihat Semua")}<ArrowRight size={14} /></Link></div>
         <div className="poster-topics">
-          {topics.map(([tag, count]) => <Link key={tag} to={`/search?q=${encodeURIComponent(tag)}`}><Hash size={17} /><strong>{tag}</strong><span>{count} posts</span><ChevronRight size={17} /></Link>)}
-          {topics.length === 0 && <p className="poster-empty">Hashtag dari postingan akan muncul di sini.</p>}
+          {topics.map(([tag, count]) => <Link key={tag} to={`/search?q=${encodeURIComponent(tag)}`}><Hash size={17} /><strong>{tag}</strong><span>{count} {t("posts")}</span><ChevronRight size={17} /></Link>)}
+          {topics.length === 0 && <p className="poster-empty">{t("Hashtag dari postingan akan muncul di sini.")}</p>}
         </div>
       </section>
       <section className="poster-panel">
@@ -44,15 +44,15 @@ export default function RightSidebar({ posts, followedUsers, onFollowSuggestion,
               <button className="poster-person-avatar" onClick={() => onOpenProfile?.(user.username || id)} aria-label={`Profil ${user.name}`}>
                 {user.avatar_url ? <img src={user.avatar_url} alt="" /> : user.name?.slice(0, 1).toUpperCase()}
               </button>
-              <button className="poster-person-info" onClick={() => onOpenProfile?.(user.username || id)}><strong>{user.name}</strong><span>@{user.username || 'user'}</span><span>{user.followers_count != null ? `${user.followers_count} followers` : user.title || user.company || ''}</span></button>
+              <button className="poster-person-info" onClick={() => onOpenProfile?.(user.username || id)}><strong>{user.name}</strong><span>@{user.username || t("user")}</span><span>{user.followers_count != null ? `${user.followers_count} followers` : user.title || user.company || ''}</span></button>
               <button className="poster-follow" disabled={followed} onClick={() => onFollowSuggestion(id)}>{followed ? t("Following") : t("Follow")}</button>
             </div>;
           })}
-          {suggestions.length === 0 && <p className="poster-empty">Belum ada rekomendasi pengguna.</p>}
+          {suggestions.length === 0 && <p className="poster-empty">{t("Belum ada rekomendasi pengguna.")}</p>}
         </div>
       </section>
-      <Link to="/network" className="poster-discover"><div><strong>Jelajahi Dunia<br />dengan Postinganmu</strong><p>Bagikan momen terbaikmu<br />di seluruh dunia</p></div><span><ChevronRight size={22} /></span></Link>
-      <footer className="poster-footer"><div><Link to="/network">About</Link><Link to="/settings">Support</Link><Link to="/search">Blog</Link><Link to="/settings">Privacy</Link><Link to="/settings">Terms</Link></div><p>© {new Date().getFullYear()} postter.us. Semua hak dilindungi.</p></footer>
+      <Link to="/network" className="poster-discover"><div><strong>{t("Jelajahi Dunia")}<br />{t("dengan Postinganmu")}</strong><p>{t("Bagikan momen terbaikmu")}<br />{t("di seluruh dunia")}</p></div><span><ChevronRight size={22} /></span></Link>
+      <footer className="poster-footer"><div><Link to="/network">{t("About")}</Link><Link to="/settings">{t("Support")}</Link><Link to="/search">{t("Blog")}</Link><Link to="/settings">{t("Privacy")}</Link><Link to="/settings">{t("Terms")}</Link></div><p>© {new Date().getFullYear()} {t("postter.us. Semua hak dilindungi.")}</p></footer>
     </aside>);
 
 }

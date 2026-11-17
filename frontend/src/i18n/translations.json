@@ -221,7 +221,7 @@
   },
   "Postingan": {
     "id": "Postingan",
-    "en": "Posts"
+    "en": "Post"
   },
   "Posts": {
     "id": "Postingan",
@@ -732,12 +732,12 @@
     "en": "Create an Account"
   },
   "Isi data di bawah ini untuk membuat akun Postterest.": {
-    "id": "Isi data di bawah ini untuk membuat akun Postterest.",
-    "en": "Fill in the details below to create your Postterest account."
+    "id": "Isi data di bawah ini untuk membuat akun Postter.",
+    "en": "Fill in the details below to create your Postter account."
   },
   "Fill in the details below to create your Postterest account.": {
-    "id": "Isi data di bawah ini untuk membuat akun Postterest.",
-    "en": "Fill in the details below to create your Postterest account."
+    "id": "Isi data di bawah ini untuk membuat akun Postter.",
+    "en": "Fill in the details below to create your Postter account."
   },
   "Informasi Akun": {
     "id": "Informasi Akun",
@@ -976,12 +976,12 @@
     "en": "Show confirmation password"
   },
   "Bergabung dengan Postterest": {
-    "id": "Bergabung dengan Postterest",
-    "en": "Join Postterest"
+    "id": "Bergabung dengan Postter",
+    "en": "Join Postter"
   },
   "Join Postterest": {
-    "id": "Bergabung dengan Postterest",
-    "en": "Join Postterest"
+    "id": "Bergabung dengan Postter",
+    "en": "Join Postter"
   },
   "Buat Akun": {
     "id": "Buat Akun",
@@ -996,28 +996,28 @@
     "en": "Welcome Back"
   },
   "di Postterest": {
-    "id": "di Postterest",
-    "en": "to Postterest"
+    "id": "di Postter",
+    "en": "to Postter"
   },
   "to Postterest": {
-    "id": "di Postterest",
-    "en": "to Postterest"
+    "id": "di Postter",
+    "en": "to Postter"
   },
   "Masuk ke Postterest": {
-    "id": "Masuk ke Postterest",
-    "en": "Sign In to Postterest"
+    "id": "Masuk ke Postter",
+    "en": "Sign In to Postter"
   },
   "Sign In to Postterest": {
-    "id": "Masuk ke Postterest",
-    "en": "Sign In to Postterest"
+    "id": "Masuk ke Postter",
+    "en": "Sign In to Postter"
   },
   "Selamat datang kembali! Silakan masuk ke akun Postterest Anda.": {
-    "id": "Selamat datang kembali! Silakan masuk ke akun Postterest Anda.",
-    "en": "Welcome back! Please sign in to your Postterest account."
+    "id": "Selamat datang kembali! Silakan masuk ke akun Postter Anda.",
+    "en": "Welcome back! Please sign in to your Postter account."
   },
   "Welcome back! Please sign in to your Postterest account.": {
-    "id": "Selamat datang kembali! Silakan masuk ke akun Postterest Anda.",
-    "en": "Welcome back! Please sign in to your Postterest account."
+    "id": "Selamat datang kembali! Silakan masuk ke akun Postter Anda.",
+    "en": "Welcome back! Please sign in to your Postter account."
   },
   "Belum punya akun?": {
     "id": "Belum punya akun?",
@@ -1429,7 +1429,7 @@
   },
   "Gagal menyimpan postingan.": {
     "id": "Gagal menyimpan postingan.",
-    "en": "Failed to save post."
+    "en": "Failed to save the post."
   },
   "Failed to save post.": {
     "id": "Gagal menyimpan postingan.",
@@ -1826,5 +1826,4701 @@
   "accounts": {
     "id": "akun",
     "en": "accounts"
+  },
+  "(optional for business/team)": {
+    "id": "(opsional untuk bisnis/tim)",
+    "en": "(optional for business/team)"
+  },
+  "(opsional untuk bisnis/tim)": {
+    "id": "(opsional untuk bisnis/tim)",
+    "en": "(optional for business/team)"
+  },
+  ". Pisahkan dengan Enter, koma, atau spasi.": {
+    "id": ". Pisahkan dengan Enter, koma, atau spasi.",
+    "en": ". Separate with Enter, commas, or spaces."
+  },
+  ". Separate with Enter, commas, or spaces.": {
+    "id": ". Pisahkan dengan Enter, koma, atau spasi.",
+    "en": ". Separate with Enter, commas, or spaces."
+  },
+  "/ month": {
+    "id": "/ bulan",
+    "en": "/ month"
+  },
+  "/ bulan": {
+    "id": "/ bulan",
+    "en": "/ month"
+  },
+  "01 / INSPIRASI": {
+    "id": "01 / INSPIRASI",
+    "en": "01 / INSPIRATION"
+  },
+  "01 / INSPIRATION": {
+    "id": "01 / INSPIRASI",
+    "en": "01 / INSPIRATION"
+  },
+  "02 / EKSPRESI": {
+    "id": "02 / EKSPRESI",
+    "en": "02 / EXPRESSION"
+  },
+  "02 / EXPRESSION": {
+    "id": "02 / EKSPRESI",
+    "en": "02 / EXPRESSION"
+  },
+  "3x posting/hari selama 1 bulan": {
+    "id": "3x posting/hari selama 1 bulan",
+    "en": "3 posts/day for 1 month"
+  },
+  "3 posts/day for 1 month": {
+    "id": "3x posting/hari selama 1 bulan",
+    "en": "3 posts/day for 1 month"
+  },
+  "3–40 huruf kecil, angka, atau garis bawah": {
+    "id": "3–40 huruf kecil, angka, atau garis bawah",
+    "en": "3–40 lowercase letters, numbers, or underscores"
+  },
+  "3–40 lowercase letters, numbers, or underscores": {
+    "id": "3–40 huruf kecil, angka, atau garis bawah",
+    "en": "3–40 lowercase letters, numbers, or underscores"
+  },
+  "6 digit": {
+    "id": "6 digit",
+    "en": "6 digits"
+  },
+  "6 digits": {
+    "id": "6 digit",
+    "en": "6 digits"
+  },
+  "About": {
+    "id": "Tentang",
+    "en": "About"
+  },
+  "Tentang": {
+    "id": "Tentang",
+    "en": "About"
+  },
+  "Accept Connection": {
+    "id": "Terima koneksi",
+    "en": "Accept Connection"
+  },
+  "Terima koneksi": {
+    "id": "Terima koneksi",
+    "en": "Accept Connection"
+  },
+  "Access to premium templates": {
+    "id": "Akses templat premium",
+    "en": "Access to premium templates"
+  },
+  "Akses templat premium": {
+    "id": "Akses templat premium",
+    "en": "Access to premium templates"
+  },
+  "Actions": {
+    "id": "Tindakan",
+    "en": "Actions"
+  },
+  "Tindakan": {
+    "id": "Tindakan",
+    "en": "Actions"
+  },
+  "Active": {
+    "id": "Aktif",
+    "en": "Active"
+  },
+  "Aktif": {
+    "id": "Aktif",
+    "en": "Active"
+  },
+  "Advanced Analytics": {
+    "id": "Analitik lanjutan",
+    "en": "Advanced Analytics"
+  },
+  "Analitik lanjutan": {
+    "id": "Analitik lanjutan",
+    "en": "Advanced Analytics"
+  },
+  "Akhiri Panggilan": {
+    "id": "Akhiri Panggilan",
+    "en": "End call"
+  },
+  "End call": {
+    "id": "Akhiri Panggilan",
+    "en": "End call"
+  },
+  "Aktifkan kembali akun saya": {
+    "id": "Aktifkan kembali akun saya",
+    "en": "Reactivate my account"
+  },
+  "Reactivate my account": {
+    "id": "Aktifkan kembali akun saya",
+    "en": "Reactivate my account"
+  },
+  "Aktifkan pembatasan upload": {
+    "id": "Aktifkan pembatasan upload",
+    "en": "Enable upload limits"
+  },
+  "Enable upload limits": {
+    "id": "Aktifkan pembatasan upload",
+    "en": "Enable upload limits"
+  },
+  "Aktifkan suara": {
+    "id": "Aktifkan suara",
+    "en": "Unmute"
+  },
+  "Unmute": {
+    "id": "Aktifkan suara",
+    "en": "Unmute"
+  },
+  "Aktivitas sesi terbaru": {
+    "id": "Aktivitas sesi terbaru",
+    "en": "Recent session activity"
+  },
+  "Recent session activity": {
+    "id": "Aktivitas sesi terbaru",
+    "en": "Recent session activity"
+  },
+  "Aktivitas terakhir": {
+    "id": "Aktivitas terakhir",
+    "en": "Last activity"
+  },
+  "Last activity": {
+    "id": "Aktivitas terakhir",
+    "en": "Last activity"
+  },
+  "Akun Free mendapat 1x posting/hari (atau 3x/hari selama 1 bulan dengan membagikan kode referral). Paket berbayar mendapat 3x–24x posting/hari + Centang Biru.": {
+    "id": "Akun Free mendapat 1x posting/hari (atau 3x/hari selama 1 bulan dengan membagikan kode referral). Paket berbayar mendapat 3x–24x posting/hari + Centang Biru.",
+    "en": "Free accounts can post once a day (or 3 times a day for 1 month by sharing a referral code). Paid plans include 3–24 posts per day and a blue badge."
+  },
+  "Free accounts can post once a day (or 3 times a day for 1 month by sharing a referral code). Paid plans include 3–24 posts per day and a blue badge.": {
+    "id": "Akun Free mendapat 1x posting/hari (atau 3x/hari selama 1 bulan dengan membagikan kode referral). Paket berbayar mendapat 3x–24x posting/hari + Centang Biru.",
+    "en": "Free accounts can post once a day (or 3 times a day for 1 month by sharing a referral code). Paid plans include 3–24 posts per day and a blue badge."
+  },
+  "Akun private": {
+    "id": "Akun private",
+    "en": "Private account"
+  },
+  "Private account": {
+    "id": "Akun private",
+    "en": "Private account"
+  },
+  "Alamat Lengkap / Nama Tempat *": {
+    "id": "Alamat Lengkap / Nama Tempat *",
+    "en": "Full address / place name *"
+  },
+  "Full address / place name *": {
+    "id": "Alamat Lengkap / Nama Tempat *",
+    "en": "Full address / place name *"
+  },
+  "Alasan": {
+    "id": "Alasan",
+    "en": "Reason"
+  },
+  "Reason": {
+    "id": "Alasan",
+    "en": "Reason"
+  },
+  "All Connections": {
+    "id": "Semua koneksi",
+    "en": "All Connections"
+  },
+  "Semua koneksi": {
+    "id": "Semua koneksi",
+    "en": "All Connections"
+  },
+  "Analytics": {
+    "id": "Analitik",
+    "en": "Analytics"
+  },
+  "Analitik": {
+    "id": "Analitik",
+    "en": "Analytics"
+  },
+  "Analytics is Coming Soon!": {
+    "id": "Analitik segera hadir!",
+    "en": "Analytics is Coming Soon!"
+  },
+  "Analitik segera hadir!": {
+    "id": "Analitik segera hadir!",
+    "en": "Analytics is Coming Soon!"
+  },
+  "Appearance": {
+    "id": "Tampilan",
+    "en": "Appearance"
+  },
+  "Tampilan": {
+    "id": "Tampilan",
+    "en": "Appearance"
+  },
+  "Author": {
+    "id": "Penulis",
+    "en": "Author"
+  },
+  "Penulis": {
+    "id": "Penulis",
+    "en": "Author"
+  },
+  "Back to Home": {
+    "id": "Kembali ke Beranda",
+    "en": "Back to Home"
+  },
+  "Kembali ke Beranda": {
+    "id": "Kembali ke Beranda",
+    "en": "Back to Home"
+  },
+  "Back to Pricing": {
+    "id": "Kembali ke paket",
+    "en": "Back to Pricing"
+  },
+  "Kembali ke paket": {
+    "id": "Kembali ke paket",
+    "en": "Back to Pricing"
+  },
+  "Bagikan Link Website": {
+    "id": "Bagikan Link Website",
+    "en": "Share a website link"
+  },
+  "Share a website link": {
+    "id": "Bagikan Link Website",
+    "en": "Share a website link"
+  },
+  "Bagikan Tautan": {
+    "id": "Bagikan Tautan",
+    "en": "Share a link"
+  },
+  "Share a link": {
+    "id": "Bagikan Tautan",
+    "en": "Share a link"
+  },
+  "Bagikan karya, temukan inspirasi, dan bertemu orang-orang dengan minat yang sama. Semua berawal dari satu postingan.": {
+    "id": "Bagikan karya, temukan inspirasi, dan bertemu orang-orang dengan minat yang sama. Semua berawal dari satu postingan.",
+    "en": "Share your work, find inspiration, and meet people with similar interests. It all starts with a post."
+  },
+  "Share your work, find inspiration, and meet people with similar interests. It all starts with a post.": {
+    "id": "Bagikan karya, temukan inspirasi, dan bertemu orang-orang dengan minat yang sama. Semua berawal dari satu postingan.",
+    "en": "Share your work, find inspiration, and meet people with similar interests. It all starts with a post."
+  },
+  "Bagikan kode referral": {
+    "id": "Bagikan kode referral",
+    "en": "Share your referral code"
+  },
+  "Share your referral code": {
+    "id": "Bagikan kode referral",
+    "en": "Share your referral code"
+  },
+  "Bagikan momen terbaikmu": {
+    "id": "Bagikan momen terbaikmu",
+    "en": "Share your best moments"
+  },
+  "Share your best moments": {
+    "id": "Bagikan momen terbaikmu",
+    "en": "Share your best moments"
+  },
+  "Bagikan postingan": {
+    "id": "Bagikan postingan",
+    "en": "Share post"
+  },
+  "Share post": {
+    "id": "Bagikan postingan",
+    "en": "Share post"
+  },
+  "Balas": {
+    "id": "Balas",
+    "en": "Reply"
+  },
+  "Reply": {
+    "id": "Balas",
+    "en": "Reply"
+  },
+  "Banyak cara terhubung.": {
+    "id": "Banyak cara terhubung.",
+    "en": "Many ways to connect."
+  },
+  "Many ways to connect.": {
+    "id": "Banyak cara terhubung.",
+    "en": "Many ways to connect."
+  },
+  "Batal": {
+    "id": "Batal",
+    "en": "Cancel"
+  },
+  "Cancel": {
+    "id": "Batal",
+    "en": "Cancel"
+  },
+  "Belum ada aktivitas tercatat.": {
+    "id": "Belum ada aktivitas tercatat.",
+    "en": "No activity recorded yet."
+  },
+  "No activity recorded yet.": {
+    "id": "Belum ada aktivitas tercatat.",
+    "en": "No activity recorded yet."
+  },
+  "Belum ada komentar.": {
+    "id": "Belum ada komentar.",
+    "en": "No comments yet."
+  },
+  "No comments yet.": {
+    "id": "Belum ada komentar.",
+    "en": "No comments yet."
+  },
+  "Belum ada notifikasi.": {
+    "id": "Belum ada notifikasi.",
+    "en": "No notifications yet."
+  },
+  "No notifications yet.": {
+    "id": "Belum ada notifikasi.",
+    "en": "No notifications yet."
+  },
+  "Belum ada pengguna.": {
+    "id": "Belum ada pengguna.",
+    "en": "No users yet."
+  },
+  "No users yet.": {
+    "id": "Belum ada pengguna.",
+    "en": "No users yet."
+  },
+  "Belum ada percakapan di tab ini.": {
+    "id": "Belum ada percakapan di tab ini.",
+    "en": "No conversations in this tab yet."
+  },
+  "No conversations in this tab yet.": {
+    "id": "Belum ada percakapan di tab ini.",
+    "en": "No conversations in this tab yet."
+  },
+  "Belum ada postingan terbaru.": {
+    "id": "Belum ada postingan terbaru.",
+    "en": "No recent posts yet."
+  },
+  "No recent posts yet.": {
+    "id": "Belum ada postingan terbaru.",
+    "en": "No recent posts yet."
+  },
+  "Belum ada postingan tersimpan. Gunakan tombol Simpan pada postingan mana pun.": {
+    "id": "Belum ada postingan tersimpan. Gunakan tombol Simpan pada postingan mana pun.",
+    "en": "No saved posts yet. Use the Save button on any post."
+  },
+  "No saved posts yet. Use the Save button on any post.": {
+    "id": "Belum ada postingan tersimpan. Gunakan tombol Simpan pada postingan mana pun.",
+    "en": "No saved posts yet. Use the Save button on any post."
+  },
+  "Belum ada postingan untuk pilihan ini.": {
+    "id": "Belum ada postingan untuk pilihan ini.",
+    "en": "No posts match this selection yet."
+  },
+  "No posts match this selection yet.": {
+    "id": "Belum ada postingan untuk pilihan ini.",
+    "en": "No posts match this selection yet."
+  },
+  "Belum ada rekomendasi pengguna.": {
+    "id": "Belum ada rekomendasi pengguna.",
+    "en": "No user suggestions yet."
+  },
+  "No user suggestions yet.": {
+    "id": "Belum ada rekomendasi pengguna.",
+    "en": "No user suggestions yet."
+  },
+  "Belum diverifikasi": {
+    "id": "Belum diverifikasi",
+    "en": "Not verified"
+  },
+  "Not verified": {
+    "id": "Belum diverifikasi",
+    "en": "Not verified"
+  },
+  "Berbagai File & Dokumen": {
+    "id": "Berbagai File & Dokumen",
+    "en": "Files & documents"
+  },
+  "Files & documents": {
+    "id": "Berbagai File & Dokumen",
+    "en": "Files & documents"
+  },
+  "Bergabung dengan Postter": {
+    "id": "Bergabung dengan Postter",
+    "en": "Join Postter"
+  },
+  "Join Postter": {
+    "id": "Bergabung dengan Postter",
+    "en": "Join Postter"
+  },
+  "Berikutnya": {
+    "id": "Berikutnya",
+    "en": "Next"
+  },
+  "Next": {
+    "id": "Berikutnya",
+    "en": "Next"
+  },
+  "Billing Details": {
+    "id": "Rincian tagihan",
+    "en": "Billing Details"
+  },
+  "Rincian tagihan": {
+    "id": "Rincian tagihan",
+    "en": "Billing Details"
+  },
+  "Bisnis": {
+    "id": "Bisnis",
+    "en": "Business"
+  },
+  "Business": {
+    "id": "Bisnis",
+    "en": "Business"
+  },
+  "Blog": {
+    "id": "Blog",
+    "en": "Blog"
+  },
+  "Buat iklan": {
+    "id": "Buat iklan",
+    "en": "Create an ad"
+  },
+  "Create an ad": {
+    "id": "Buat iklan",
+    "en": "Create an ad"
+  },
+  "Cari data admin": {
+    "id": "Cari data admin",
+    "en": "Search admin data"
+  },
+  "Search admin data": {
+    "id": "Cari data admin",
+    "en": "Search admin data"
+  },
+  "Cari judul, #hashtag, lokasi, @username…": {
+    "id": "Cari judul, #hashtag, lokasi, @username…",
+    "en": "Search titles, #hashtags, locations, @usernames…"
+  },
+  "Search titles, #hashtags, locations, @usernames…": {
+    "id": "Cari judul, #hashtag, lokasi, @username…",
+    "en": "Search titles, #hashtags, locations, @usernames…"
+  },
+  "Cari nama atau username": {
+    "id": "Cari nama atau username",
+    "en": "Search names or usernames"
+  },
+  "Search names or usernames": {
+    "id": "Cari nama atau username",
+    "en": "Search names or usernames"
+  },
+  "Cari postingan publik": {
+    "id": "Cari postingan publik",
+    "en": "Search public posts"
+  },
+  "Search public posts": {
+    "id": "Cari postingan publik",
+    "en": "Search public posts"
+  },
+  "Cari postingan, kreator, atau topik…": {
+    "id": "Cari postingan, kreator, atau topik…",
+    "en": "Search posts, creators, or topics…"
+  },
+  "Search posts, creators, or topics…": {
+    "id": "Cari postingan, kreator, atau topik…",
+    "en": "Search posts, creators, or topics…"
+  },
+  "Centang Biru": {
+    "id": "Centang Biru",
+    "en": "Blue badge"
+  },
+  "Blue badge": {
+    "id": "Centang Biru",
+    "en": "Blue badge"
+  },
+  "Centang biru pemberian admin tetap berlaku tanpa langganan. Kuota paket hanya berlaku ketika pembatasan upload diaktifkan.": {
+    "id": "Centang biru pemberian admin tetap berlaku tanpa langganan. Kuota paket hanya berlaku ketika pembatasan upload diaktifkan.",
+    "en": "Admin-granted badges remain valid without a subscription. Plan quotas only apply when upload limits are enabled."
+  },
+  "Admin-granted badges remain valid without a subscription. Plan quotas only apply when upload limits are enabled.": {
+    "id": "Centang biru pemberian admin tetap berlaku tanpa langganan. Kuota paket hanya berlaku ketika pembatasan upload diaktifkan.",
+    "en": "Admin-granted badges remain valid without a subscription. Plan quotas only apply when upload limits are enabled."
+  },
+  "Centang biru yang diberikan admin tetap berlaku tanpa langganan. Batas keamanan ukuran dan jenis file tetap mengikuti kapasitas platform.": {
+    "id": "Centang biru yang diberikan admin tetap berlaku tanpa langganan. Batas keamanan ukuran dan jenis file tetap mengikuti kapasitas platform.",
+    "en": "Admin-granted badges remain valid without a subscription. File size and type limits still apply according to platform capacity."
+  },
+  "Admin-granted badges remain valid without a subscription. File size and type limits still apply according to platform capacity.": {
+    "id": "Centang biru yang diberikan admin tetap berlaku tanpa langganan. Batas keamanan ukuran dan jenis file tetap mengikuti kapasitas platform.",
+    "en": "Admin-granted badges remain valid without a subscription. File size and type limits still apply according to platform capacity."
+  },
+  "Cerita berikutnya": {
+    "id": "Cerita berikutnya",
+    "en": "The next story"
+  },
+  "The next story": {
+    "id": "Cerita berikutnya",
+    "en": "The next story"
+  },
+  "Cerita kecil.": {
+    "id": "Cerita kecil.",
+    "en": "Small stories."
+  },
+  "Small stories.": {
+    "id": "Cerita kecil.",
+    "en": "Small stories."
+  },
+  "Cerita, karya, dan koneksi baru": {
+    "id": "Cerita, karya, dan koneksi baru",
+    "en": "Stories, creativity, and new connections"
+  },
+  "Stories, creativity, and new connections": {
+    "id": "Cerita, karya, dan koneksi baru",
+    "en": "Stories, creativity, and new connections"
+  },
+  "Chat details": {
+    "id": "Detail percakapan",
+    "en": "Chat details"
+  },
+  "Detail percakapan": {
+    "id": "Detail percakapan",
+    "en": "Chat details"
+  },
+  "Choose Billing Period": {
+    "id": "Pilih periode tagihan",
+    "en": "Choose Billing Period"
+  },
+  "Pilih periode tagihan": {
+    "id": "Pilih periode tagihan",
+    "en": "Choose Billing Period"
+  },
+  "Choose Payment Method": {
+    "id": "Pilih metode pembayaran",
+    "en": "Choose Payment Method"
+  },
+  "Pilih metode pembayaran": {
+    "id": "Pilih metode pembayaran",
+    "en": "Choose Payment Method"
+  },
+  "Choose the Perfect Plan": {
+    "id": "Pilih paket yang tepat",
+    "en": "Choose the Perfect Plan"
+  },
+  "Pilih paket yang tepat": {
+    "id": "Pilih paket yang tepat",
+    "en": "Choose the Perfect Plan"
+  },
+  "Close details": {
+    "id": "Tutup detail",
+    "en": "Close details"
+  },
+  "Tutup detail": {
+    "id": "Tutup detail",
+    "en": "Close details"
+  },
+  "Coba lagi": {
+    "id": "Coba lagi",
+    "en": "Try again"
+  },
+  "Try again": {
+    "id": "Coba lagi",
+    "en": "Try again"
+  },
+  "Coba topik lain atau kembali ke semua postingan.": {
+    "id": "Coba topik lain atau kembali ke semua postingan.",
+    "en": "Try another topic or return to all posts."
+  },
+  "Try another topic or return to all posts.": {
+    "id": "Coba topik lain atau kembali ke semua postingan.",
+    "en": "Try another topic or return to all posts."
+  },
+  "Confirmation": {
+    "id": "Konfirmasi",
+    "en": "Confirmation"
+  },
+  "Konfirmasi": {
+    "id": "Konfirmasi",
+    "en": "Confirm"
+  },
+  "Connections": {
+    "id": "Koneksi",
+    "en": "Connections"
+  },
+  "Koneksi": {
+    "id": "Koneksi",
+    "en": "Connections"
+  },
+  "Content": {
+    "id": "Konten",
+    "en": "Content"
+  },
+  "Konten": {
+    "id": "Konten",
+    "en": "Content"
+  },
+  "Content Moderation": {
+    "id": "Moderasi konten",
+    "en": "Content Moderation"
+  },
+  "Moderasi konten": {
+    "id": "Moderasi konten",
+    "en": "Content Moderation"
+  },
+  "Contoh: Jl. Sudirman No.123, Jakarta": {
+    "id": "Contoh: Jl. Sudirman No.123, Jakarta",
+    "en": "Example: 123 Sudirman Street, Jakarta"
+  },
+  "Example: 123 Sudirman Street, Jakarta": {
+    "id": "Contoh: Jl. Sudirman No.123, Jakarta",
+    "en": "Example: 123 Sudirman Street, Jakarta"
+  },
+  "Contoh: Teknologi AI untuk Masa Depan": {
+    "id": "Contoh: Teknologi AI untuk Masa Depan",
+    "en": "Example: AI technology for the future"
+  },
+  "Example: AI technology for the future": {
+    "id": "Contoh: Teknologi AI untuk Masa Depan",
+    "en": "Example: AI technology for the future"
+  },
+  "Create Post": {
+    "id": "Buat postingan",
+    "en": "Create Post"
+  },
+  "Buat postingan": {
+    "id": "Buat postingan",
+    "en": "Create Post"
+  },
+  "Daily Posting Boost": {
+    "id": "Tambahan kuota posting harian",
+    "en": "Daily Posting Boost"
+  },
+  "Tambahan kuota posting harian": {
+    "id": "Tambahan kuota posting harian",
+    "en": "Daily Posting Boost"
+  },
+  "Dari karya menjadi peluang.": {
+    "id": "Dari karya menjadi peluang.",
+    "en": "Turn creativity into opportunity."
+  },
+  "Turn creativity into opportunity.": {
+    "id": "Dari karya menjadi peluang.",
+    "en": "Turn creativity into opportunity."
+  },
+  "Data pribadi": {
+    "id": "Data pribadi",
+    "en": "Personal information"
+  },
+  "Personal information": {
+    "id": "Data pribadi",
+    "en": "Personal information"
+  },
+  "Delete chat": {
+    "id": "Hapus percakapan",
+    "en": "Delete chat"
+  },
+  "Hapus percakapan": {
+    "id": "Hapus percakapan",
+    "en": "Delete chat"
+  },
+  "Detail": {
+    "id": "Detail",
+    "en": "Details"
+  },
+  "Details": {
+    "id": "Detail",
+    "en": "Details"
+  },
+  "Detail Produk": {
+    "id": "Detail Produk",
+    "en": "Product details"
+  },
+  "Product details": {
+    "id": "Detail Produk",
+    "en": "Product details"
+  },
+  "Deteksi koordinat & alamat otomatis": {
+    "id": "Deteksi koordinat & alamat otomatis",
+    "en": "Detect coordinates and address automatically"
+  },
+  "Detect coordinates and address automatically": {
+    "id": "Deteksi koordinat & alamat otomatis",
+    "en": "Detect coordinates and address automatically"
+  },
+  "Dismiss": {
+    "id": "Tutup",
+    "en": "Dismiss"
+  },
+  "EXPLORE THE EVERYDAY": {
+    "id": "JELAJAHI KESEHARIAN",
+    "en": "EXPLORE THE EVERYDAY"
+  },
+  "JELAJAHI KESEHARIAN": {
+    "id": "JELAJAHI KESEHARIAN",
+    "en": "EXPLORE THE EVERYDAY"
+  },
+  "Edit": {
+    "id": "Ubah",
+    "en": "Edit"
+  },
+  "Ubah": {
+    "id": "Ubah",
+    "en": "Edit"
+  },
+  "Email": {
+    "id": "Email",
+    "en": "Email"
+  },
+  "Email Address": {
+    "id": "Alamat email",
+    "en": "Email Address"
+  },
+  "Alamat email": {
+    "id": "Alamat email",
+    "en": "Email Address"
+  },
+  "Email, username, atau nomor telepon": {
+    "id": "Email, username, atau nomor telepon",
+    "en": "Email, username, or phone number"
+  },
+  "Email, username, or phone number": {
+    "id": "Email, username, atau nomor telepon",
+    "en": "Email, username, or phone number"
+  },
+  "Embed": {
+    "id": "Sematkan",
+    "en": "Embed"
+  },
+  "Sematkan": {
+    "id": "Sematkan",
+    "en": "Embed"
+  },
+  "Explore": {
+    "id": "Explore",
+    "en": "Explore"
+  },
+  "Explore — temukan postingan dari komunitas Postter": {
+    "id": "Explore — temukan postingan dari komunitas Postter",
+    "en": "Explore — discover posts from the Postter community"
+  },
+  "Explore — discover posts from the Postter community": {
+    "id": "Explore — temukan postingan dari komunitas Postter",
+    "en": "Explore — discover posts from the Postter community"
+  },
+  "Foto & Video": {
+    "id": "Foto & Video",
+    "en": "Photos & videos"
+  },
+  "Photos & videos": {
+    "id": "Foto & Video",
+    "en": "Photos & videos"
+  },
+  "Foto, cerita, dan produk bertemu di Postter": {
+    "id": "Foto, cerita, dan produk bertemu di Postter",
+    "en": "Photos, stories, and products come together on Postter"
+  },
+  "Photos, stories, and products come together on Postter": {
+    "id": "Foto, cerita, dan produk bertemu di Postter",
+    "en": "Photos, stories, and products come together on Postter"
+  },
+  "Ganti tema": {
+    "id": "Ganti tema",
+    "en": "Switch theme"
+  },
+  "Switch theme": {
+    "id": "Ganti tema",
+    "en": "Switch theme"
+  },
+  "Get help first": {
+    "id": "Dapatkan bantuan terlebih dahulu",
+    "en": "Get help first"
+  },
+  "Dapatkan bantuan terlebih dahulu": {
+    "id": "Dapatkan bantuan terlebih dahulu",
+    "en": "Get help first"
+  },
+  "Get the blue checkmark": {
+    "id": "Dapatkan centang biru",
+    "en": "Get the blue checkmark"
+  },
+  "Dapatkan centang biru": {
+    "id": "Dapatkan centang biru",
+    "en": "Get the blue checkmark"
+  },
+  "Go Premium Today": {
+    "id": "Beralih ke Premium sekarang",
+    "en": "Go Premium Today"
+  },
+  "Beralih ke Premium sekarang": {
+    "id": "Beralih ke Premium sekarang",
+    "en": "Go Premium Today"
+  },
+  "Grid": {
+    "id": "Grid",
+    "en": "Grid"
+  },
+  "Gunakan GPS Saat Ini": {
+    "id": "Gunakan GPS Saat Ini",
+    "en": "Use current GPS location"
+  },
+  "Use current GPS location": {
+    "id": "Gunakan GPS Saat Ini",
+    "en": "Use current GPS location"
+  },
+  "Halaman postingan": {
+    "id": "Halaman postingan",
+    "en": "Post page"
+  },
+  "Post page": {
+    "id": "Halaman postingan",
+    "en": "Post page"
+  },
+  "Hanya pengikut yang Anda setujui yang dapat melihat postingan.": {
+    "id": "Hanya pengikut yang Anda setujui yang dapat melihat postingan.",
+    "en": "Only approved followers can view your posts."
+  },
+  "Only approved followers can view your posts.": {
+    "id": "Hanya pengikut yang Anda setujui yang dapat melihat postingan.",
+    "en": "Only approved followers can view your posts."
+  },
+  "Hapus": {
+    "id": "Hapus",
+    "en": "Delete"
+  },
+  "Delete": {
+    "id": "Hapus",
+    "en": "Delete"
+  },
+  "Hapus karya": {
+    "id": "Hapus karya",
+    "en": "Delete work"
+  },
+  "Delete work": {
+    "id": "Hapus karya",
+    "en": "Delete work"
+  },
+  "Hapus konten": {
+    "id": "Hapus konten",
+    "en": "Delete content"
+  },
+  "Delete content": {
+    "id": "Hapus konten",
+    "en": "Delete content"
+  },
+  "Hapus pencarian": {
+    "id": "Hapus pencarian",
+    "en": "Clear search"
+  },
+  "Clear search": {
+    "id": "Hapus pencarian",
+    "en": "Clear search"
+  },
+  "Hashtag": {
+    "id": "Hashtag",
+    "en": "Hashtag"
+  },
+  "Hashtag dari postingan akan muncul di sini.": {
+    "id": "Hashtag dari postingan akan muncul di sini.",
+    "en": "Hashtags from posts will appear here."
+  },
+  "Hashtags from posts will appear here.": {
+    "id": "Hashtag dari postingan akan muncul di sini.",
+    "en": "Hashtags from posts will appear here."
+  },
+  "Hasil untuk": {
+    "id": "Hasil untuk",
+    "en": "Results for"
+  },
+  "Results for": {
+    "id": "Hasil untuk",
+    "en": "Results for"
+  },
+  "Help & Support": {
+    "id": "Bantuan & dukungan",
+    "en": "Help & Support"
+  },
+  "Bantuan & dukungan": {
+    "id": "Bantuan & dukungan",
+    "en": "Help & Support"
+  },
+  "Hubungi tim support di": {
+    "id": "Hubungi tim support di",
+    "en": "Contact our support team at"
+  },
+  "Contact our support team at": {
+    "id": "Hubungi tim support di",
+    "en": "Contact our support team at"
+  },
+  "I agree to the": {
+    "id": "Saya menyetujui",
+    "en": "I agree to the"
+  },
+  "Saya menyetujui": {
+    "id": "Saya menyetujui",
+    "en": "I agree to the"
+  },
+  "Ide Anda.": {
+    "id": "Ide Anda.",
+    "en": "Your ideas."
+  },
+  "Your ideas.": {
+    "id": "Ide Anda.",
+    "en": "Your ideas."
+  },
+  "Ignore Request": {
+    "id": "Abaikan permintaan",
+    "en": "Ignore Request"
+  },
+  "Abaikan permintaan": {
+    "id": "Abaikan permintaan",
+    "en": "Ignore Request"
+  },
+  "Iklan": {
+    "id": "Iklan",
+    "en": "Ad"
+  },
+  "Ad": {
+    "id": "Iklan",
+    "en": "Ad"
+  },
+  "Iklan · Konten bersponsor": {
+    "id": "Iklan · Konten bersponsor",
+    "en": "Ad · Sponsored content"
+  },
+  "Ad · Sponsored content": {
+    "id": "Iklan · Konten bersponsor",
+    "en": "Ad · Sponsored content"
+  },
+  "Ikuti akun lain atau buat postingan pertama Anda.": {
+    "id": "Ikuti akun lain atau buat postingan pertama Anda.",
+    "en": "Follow other accounts or create your first post."
+  },
+  "Follow other accounts or create your first post.": {
+    "id": "Ikuti akun lain atau buat postingan pertama Anda.",
+    "en": "Follow other accounts or create your first post."
+  },
+  "Ikuti kabar terbaru dari percakapan dan interaksi Anda.": {
+    "id": "Ikuti kabar terbaru dari percakapan dan interaksi Anda.",
+    "en": "Keep up with your conversations and interactions."
+  },
+  "Keep up with your conversations and interactions.": {
+    "id": "Ikuti kabar terbaru dari percakapan dan interaksi Anda.",
+    "en": "Keep up with your conversations and interactions."
+  },
+  "JPG, PNG, MP4, MOV, WebM": {
+    "id": "JPG, PNG, MP4, MOV, WebM",
+    "en": "JPG, PNG, MP4, MOV, WebM"
+  },
+  "Jaga komunitas tetap aman, dukung kreator, dan atur pertumbuhan Postter.": {
+    "id": "Jaga komunitas tetap aman, dukung kreator, dan atur pertumbuhan Postter.",
+    "en": "Keep the community safe, support creators, and manage Postter's growth."
+  },
+  "Keep the community safe, support creators, and manage Postter's growth.": {
+    "id": "Jaga komunitas tetap aman, dukung kreator, dan atur pertumbuhan Postter.",
+    "en": "Keep the community safe, support creators, and manage Postter's growth."
+  },
+  "Jelajahi Dunia": {
+    "id": "Jelajahi Dunia",
+    "en": "Explore the world"
+  },
+  "Explore the world": {
+    "id": "Jelajahi Dunia",
+    "en": "Explore the world"
+  },
+  "Jelajahi postingan publik": {
+    "id": "Jelajahi postingan publik",
+    "en": "Explore public posts"
+  },
+  "Explore public posts": {
+    "id": "Jelajahi postingan publik",
+    "en": "Explore public posts"
+  },
+  "Jenis akun": {
+    "id": "Jenis akun",
+    "en": "Account type"
+  },
+  "Account type": {
+    "id": "Jenis akun",
+    "en": "Account type"
+  },
+  "Jenis postingan": {
+    "id": "Jenis postingan",
+    "en": "Post type"
+  },
+  "Post type": {
+    "id": "Jenis postingan",
+    "en": "Post type"
+  },
+  "Judul Lokasi": {
+    "id": "Judul Lokasi",
+    "en": "Location title"
+  },
+  "Location title": {
+    "id": "Judul Lokasi",
+    "en": "Location title"
+  },
+  "Judul Tautan (opsional)": {
+    "id": "Judul Tautan (opsional)",
+    "en": "Link title (optional)"
+  },
+  "Link title (optional)": {
+    "id": "Judul Tautan (opsional)",
+    "en": "Link title (optional)"
+  },
+  "Judul, deskripsi, #hashtag, lokasi, @username": {
+    "id": "Judul, deskripsi, #hashtag, lokasi, @username",
+    "en": "Title, description, #hashtag, location, @username"
+  },
+  "Title, description, #hashtag, location, @username": {
+    "id": "Judul, deskripsi, #hashtag, lokasi, @username",
+    "en": "Title, description, #hashtag, location, @username"
+  },
+  "KELOLA KOMUNITAS": {
+    "id": "KELOLA KOMUNITAS",
+    "en": "MANAGE THE COMMUNITY"
+  },
+  "MANAGE THE COMMUNITY": {
+    "id": "KELOLA KOMUNITAS",
+    "en": "MANAGE THE COMMUNITY"
+  },
+  "Kamera Mati": {
+    "id": "Kamera Mati",
+    "en": "Camera off"
+  },
+  "Camera off": {
+    "id": "Kamera Mati",
+    "en": "Camera off"
+  },
+  "Kami akan mengirim kode verifikasi ke akunmu.": {
+    "id": "Kami akan mengirim kode verifikasi ke akunmu.",
+    "en": "We will send a verification code to your account."
+  },
+  "We will send a verification code to your account.": {
+    "id": "Kami akan mengirim kode verifikasi ke akunmu.",
+    "en": "We will send a verification code to your account."
+  },
+  "Kamu sudah berhasil keluar dari postter.us.": {
+    "id": "Kamu sudah berhasil keluar dari postter.us.",
+    "en": "You have signed out of postter.us."
+  },
+  "You have signed out of postter.us.": {
+    "id": "Kamu sudah berhasil keluar dari postter.us.",
+    "en": "You have signed out of postter.us."
+  },
+  "Karya unggulan (": {
+    "id": "Karya unggulan (",
+    "en": "Featured work ("
+  },
+  "Featured work (": {
+    "id": "Karya unggulan (",
+    "en": "Featured work ("
+  },
+  "Kategori lainnya": {
+    "id": "Kategori lainnya",
+    "en": "More categories"
+  },
+  "More categories": {
+    "id": "Kategori lainnya",
+    "en": "More categories"
+  },
+  "Kategori postingan": {
+    "id": "Kategori postingan",
+    "en": "Post categories"
+  },
+  "Post categories": {
+    "id": "Kategori postingan",
+    "en": "Post categories"
+  },
+  "Kategori shop utama": {
+    "id": "Kategori shop utama",
+    "en": "Main shop category"
+  },
+  "Main shop category": {
+    "id": "Kategori shop utama",
+    "en": "Main shop category"
+  },
+  "Kategori:": {
+    "id": "Kategori:",
+    "en": "Category:"
+  },
+  "Category:": {
+    "id": "Kategori:",
+    "en": "Category:"
+  },
+  "Kembali": {
+    "id": "Kembali",
+    "en": "Back"
+  },
+  "Back": {
+    "id": "Kembali",
+    "en": "Back"
+  },
+  "Kembali ke login": {
+    "id": "Kembali ke login",
+    "en": "Back to sign in"
+  },
+  "Back to sign in": {
+    "id": "Kembali ke login",
+    "en": "Back to sign in"
+  },
+  "Kemungkinan besar.": {
+    "id": "Kemungkinan besar.",
+    "en": "Big possibilities."
+  },
+  "Big possibilities.": {
+    "id": "Kemungkinan besar.",
+    "en": "Big possibilities."
+  },
+  "Ketentuan postingan (": {
+    "id": "Ketentuan postingan (",
+    "en": "Post requirements ("
+  },
+  "Post requirements (": {
+    "id": "Ketentuan postingan (",
+    "en": "Post requirements ("
+  },
+  "Ketik \"DELETE\"": {
+    "id": "Ketik \"DELETE\"",
+    "en": "Type \"DELETE\""
+  },
+  "Type \"DELETE\"": {
+    "id": "Ketik \"DELETE\"",
+    "en": "Type \"DELETE\""
+  },
+  "Ketik Alamat Lokasi": {
+    "id": "Ketik Alamat Lokasi",
+    "en": "Enter a location address"
+  },
+  "Enter a location address": {
+    "id": "Ketik Alamat Lokasi",
+    "en": "Enter a location address"
+  },
+  "Kirim File, Foto/Video, Lokasi, atau Link": {
+    "id": "Kirim File, Foto/Video, Lokasi, atau Link",
+    "en": "Send files, photos/videos, locations, or links"
+  },
+  "Send files, photos/videos, locations, or links": {
+    "id": "Kirim File, Foto/Video, Lokasi, atau Link",
+    "en": "Send files, photos/videos, locations, or links"
+  },
+  "Kirim Kartu Produk": {
+    "id": "Kirim Kartu Produk",
+    "en": "Send product card"
+  },
+  "Send product card": {
+    "id": "Kirim Kartu Produk",
+    "en": "Send product card"
+  },
+  "Kirim Lokasi": {
+    "id": "Kirim Lokasi",
+    "en": "Send location"
+  },
+  "Send location": {
+    "id": "Kirim Lokasi",
+    "en": "Send location"
+  },
+  "Kirim Lokasi Saya (GPS)": {
+    "id": "Kirim Lokasi Saya (GPS)",
+    "en": "Send my location (GPS)"
+  },
+  "Send my location (GPS)": {
+    "id": "Kirim Lokasi Saya (GPS)",
+    "en": "Send my location (GPS)"
+  },
+  "Kirim Tautan": {
+    "id": "Kirim Tautan",
+    "en": "Send link"
+  },
+  "Send link": {
+    "id": "Kirim Tautan",
+    "en": "Send link"
+  },
+  "Kirim kartu tautan interaktif": {
+    "id": "Kirim kartu tautan interaktif",
+    "en": "Send an interactive link card"
+  },
+  "Send an interactive link card": {
+    "id": "Kirim kartu tautan interaktif",
+    "en": "Send an interactive link card"
+  },
+  "Kirim komentar": {
+    "id": "Kirim komentar",
+    "en": "Send comment"
+  },
+  "Send comment": {
+    "id": "Kirim komentar",
+    "en": "Send comment"
+  },
+  "Kirim lewat pesan": {
+    "id": "Kirim lewat pesan",
+    "en": "Send in a message"
+  },
+  "Send in a message": {
+    "id": "Kirim lewat pesan",
+    "en": "Send in a message"
+  },
+  "Kirim pesan, lokasi, produk shop, atau berbagai file ke": {
+    "id": "Kirim pesan, lokasi, produk shop, atau berbagai file ke",
+    "en": "Send messages, locations, shop products, or files to"
+  },
+  "Send messages, locations, shop products, or files to": {
+    "id": "Kirim pesan, lokasi, produk shop, atau berbagai file ke",
+    "en": "Send messages, locations, shop products, or files to"
+  },
+  "Kode Referral": {
+    "id": "Kode Referral",
+    "en": "Referral code"
+  },
+  "Referral code": {
+    "id": "Kode Referral",
+    "en": "Referral code"
+  },
+  "Kode Referral teman (opsional)": {
+    "id": "Kode Referral teman (opsional)",
+    "en": "Friend's referral code (optional)"
+  },
+  "Friend's referral code (optional)": {
+    "id": "Kode Referral teman (opsional)",
+    "en": "Friend's referral code (optional)"
+  },
+  "Kode negara": {
+    "id": "Kode negara",
+    "en": "Country code"
+  },
+  "Country code": {
+    "id": "Kode negara",
+    "en": "Country code"
+  },
+  "Kode negara telepon": {
+    "id": "Kode negara telepon",
+    "en": "Phone country code"
+  },
+  "Phone country code": {
+    "id": "Kode negara telepon",
+    "en": "Phone country code"
+  },
+  "Kode verifikasi": {
+    "id": "Kode verifikasi",
+    "en": "Verification code"
+  },
+  "Verification code": {
+    "id": "Kode verifikasi",
+    "en": "Verification code"
+  },
+  "Koneksi baru.": {
+    "id": "Koneksi baru.",
+    "en": "New connections."
+  },
+  "New connections.": {
+    "id": "Koneksi baru.",
+    "en": "New connections."
+  },
+  "Konfirmasi password": {
+    "id": "Konfirmasi password",
+    "en": "Confirm password"
+  },
+  "Confirm password": {
+    "id": "Konfirmasi password",
+    "en": "Confirm password"
+  },
+  "Kontak": {
+    "id": "Kontak",
+    "en": "Contact"
+  },
+  "Contact": {
+    "id": "Kontak",
+    "en": "Contact"
+  },
+  "Kosongkan untuk memakai nama asli.": {
+    "id": "Kosongkan untuk memakai nama asli.",
+    "en": "Leave blank to use the original name."
+  },
+  "Leave blank to use the original name.": {
+    "id": "Kosongkan untuk memakai nama asli.",
+    "en": "Leave blank to use the original name."
+  },
+  "Kota": {
+    "id": "Kota",
+    "en": "City"
+  },
+  "City": {
+    "id": "Kota",
+    "en": "City"
+  },
+  "LEBIH DARI SEKADAR SCROLL": {
+    "id": "LEBIH DARI SEKADAR SCROLL",
+    "en": "MORE THAN SCROLLING"
+  },
+  "MORE THAN SCROLLING": {
+    "id": "LEBIH DARI SEKADAR SCROLL",
+    "en": "MORE THAN SCROLLING"
+  },
+  "Lampirkan file atau lokasi": {
+    "id": "Lampirkan file atau lokasi",
+    "en": "Attach a file or location"
+  },
+  "Attach a file or location": {
+    "id": "Lampirkan file atau lokasi",
+    "en": "Attach a file or location"
+  },
+  "Lihat Produk": {
+    "id": "Lihat Produk",
+    "en": "View product"
+  },
+  "View product": {
+    "id": "Lihat Produk",
+    "en": "View product"
+  },
+  "Lihat apa yang baru": {
+    "id": "Lihat apa yang baru",
+    "en": "See what's new"
+  },
+  "See what's new": {
+    "id": "Lihat apa yang baru",
+    "en": "See what's new"
+  },
+  "Lihat postingan": {
+    "id": "Lihat postingan",
+    "en": "View post"
+  },
+  "View post": {
+    "id": "Lihat postingan",
+    "en": "View post"
+  },
+  "Lihat produk di Shop": {
+    "id": "Lihat produk di Shop",
+    "en": "View product in Shop"
+  },
+  "View product in Shop": {
+    "id": "Lihat produk di Shop",
+    "en": "View product in Shop"
+  },
+  "Lihat semua": {
+    "id": "Lihat semua",
+    "en": "View all"
+  },
+  "List": {
+    "id": "Daftar",
+    "en": "List"
+  },
+  "Loading notifications...": {
+    "id": "Memuat notifikasi...",
+    "en": "Loading notifications..."
+  },
+  "Memuat notifikasi...": {
+    "id": "Memuat notifikasi...",
+    "en": "Loading notifications..."
+  },
+  "Log Out": {
+    "id": "Keluar",
+    "en": "Log Out"
+  },
+  "Lokasi Saya": {
+    "id": "Lokasi Saya",
+    "en": "My location"
+  },
+  "Lokasi dan hashtag dari postingan akan muncul di sini.": {
+    "id": "Lokasi dan hashtag dari postingan akan muncul di sini.",
+    "en": "Locations and hashtags from posts will appear here."
+  },
+  "Locations and hashtags from posts will appear here.": {
+    "id": "Lokasi dan hashtag dari postingan akan muncul di sini.",
+    "en": "Locations and hashtags from posts will appear here."
+  },
+  "Lupa password": {
+    "id": "Lupa password",
+    "en": "Forgot password"
+  },
+  "Forgot password": {
+    "id": "Lupa password",
+    "en": "Forgot password"
+  },
+  "MULAI DARI SINI": {
+    "id": "MULAI DARI SINI",
+    "en": "START HERE"
+  },
+  "START HERE": {
+    "id": "MULAI DARI SINI",
+    "en": "START HERE"
+  },
+  "Masuk kembali": {
+    "id": "Masuk kembali",
+    "en": "Sign in again"
+  },
+  "Sign in again": {
+    "id": "Masuk kembali",
+    "en": "Sign in again"
+  },
+  "Media": {
+    "id": "Media",
+    "en": "Media"
+  },
+  "Media terunggah": {
+    "id": "Media terunggah",
+    "en": "Uploaded media"
+  },
+  "Uploaded media": {
+    "id": "Media terunggah",
+    "en": "Uploaded media"
+  },
+  "Membalas": {
+    "id": "Membalas",
+    "en": "Replying"
+  },
+  "Replying": {
+    "id": "Membalas",
+    "en": "Replying"
+  },
+  "Members": {
+    "id": "Anggota",
+    "en": "Members"
+  },
+  "Anggota": {
+    "id": "Anggota",
+    "en": "Members"
+  },
+  "Memproses…": {
+    "id": "Memproses…",
+    "en": "Processing…"
+  },
+  "Processing…": {
+    "id": "Memproses…",
+    "en": "Processing…"
+  },
+  "Memuat Postter": {
+    "id": "Memuat Postter",
+    "en": "Loading Postter"
+  },
+  "Loading Postter": {
+    "id": "Memuat Postter",
+    "en": "Loading Postter"
+  },
+  "Memuat…": {
+    "id": "Memuat…",
+    "en": "Loading…"
+  },
+  "Loading…": {
+    "id": "Memuat…",
+    "en": "Loading…"
+  },
+  "Mengunggah": {
+    "id": "Mengunggah",
+    "en": "Uploading"
+  },
+  "Uploading": {
+    "id": "Mengunggah",
+    "en": "Uploading"
+  },
+  "Menjelajahi postingan…": {
+    "id": "Menjelajahi postingan…",
+    "en": "Exploring posts…"
+  },
+  "Exploring posts…": {
+    "id": "Menjelajahi postingan…",
+    "en": "Exploring posts…"
+  },
+  "Mention": {
+    "id": "Mention",
+    "en": "Mention"
+  },
+  "Menu profil": {
+    "id": "Menu profil",
+    "en": "Profile menu"
+  },
+  "Profile menu": {
+    "id": "Menu profil",
+    "en": "Profile menu"
+  },
+  "Merek:": {
+    "id": "Merek:",
+    "en": "Brand:"
+  },
+  "Brand:": {
+    "id": "Merek:",
+    "en": "Brand:"
+  },
+  "Message": {
+    "id": "Pesan",
+    "en": "Message"
+  },
+  "Messages muted": {
+    "id": "Pesan dibisukan",
+    "en": "Messages muted"
+  },
+  "Pesan dibisukan": {
+    "id": "Pesan dibisukan",
+    "en": "Messages muted"
+  },
+  "Minat & Shop": {
+    "id": "Minat & Shop",
+    "en": "Interests & Shop"
+  },
+  "Interests & Shop": {
+    "id": "Minat & Shop",
+    "en": "Interests & Shop"
+  },
+  "Moderasi": {
+    "id": "Moderasi",
+    "en": "Moderation"
+  },
+  "Moderation": {
+    "id": "Moderasi",
+    "en": "Moderation"
+  },
+  "Moderation Queue": {
+    "id": "Antrean moderasi",
+    "en": "Moderation Queue"
+  },
+  "Antrean moderasi": {
+    "id": "Antrean moderasi",
+    "en": "Moderation Queue"
+  },
+  "Month": {
+    "id": "Bulan",
+    "en": "Month"
+  },
+  "Bulan": {
+    "id": "Bulan",
+    "en": "Month"
+  },
+  "Month(s)": {
+    "id": "Bulan",
+    "en": "Month(s)"
+  },
+  "Muat konten berikutnya": {
+    "id": "Muat konten berikutnya",
+    "en": "Load more content"
+  },
+  "Load more content": {
+    "id": "Muat konten berikutnya",
+    "en": "Load more content"
+  },
+  "Muat ulang data": {
+    "id": "Muat ulang data",
+    "en": "Reload data"
+  },
+  "Reload data": {
+    "id": "Muat ulang data",
+    "en": "Reload data"
+  },
+  "Mulai Chat Baru": {
+    "id": "Mulai Chat Baru",
+    "en": "Start a new chat"
+  },
+  "Start a new chat": {
+    "id": "Mulai Chat Baru",
+    "en": "Start a new chat"
+  },
+  "Mulai cerita Anda": {
+    "id": "Mulai cerita Anda",
+    "en": "Start your story"
+  },
+  "Start your story": {
+    "id": "Mulai cerita Anda",
+    "en": "Start your story"
+  },
+  "Mute messages": {
+    "id": "Bisukan pesan",
+    "en": "Mute messages"
+  },
+  "Bisukan pesan": {
+    "id": "Bisukan pesan",
+    "en": "Mute messages"
+  },
+  "My Network": {
+    "id": "Jaringan saya",
+    "en": "My Network"
+  },
+  "Jaringan saya": {
+    "id": "Jaringan saya",
+    "en": "My Network"
+  },
+  "Nama panggilan (hanya terlihat oleh Anda)": {
+    "id": "Nama panggilan (hanya terlihat oleh Anda)",
+    "en": "Nickname (only visible to you)"
+  },
+  "Nickname (only visible to you)": {
+    "id": "Nama panggilan (hanya terlihat oleh Anda)",
+    "en": "Nickname (only visible to you)"
+  },
+  "Nature": {
+    "id": "Alam",
+    "en": "Nature"
+  },
+  "Alam": {
+    "id": "Alam",
+    "en": "Nature"
+  },
+  "Navigasi mobile": {
+    "id": "Navigasi mobile",
+    "en": "Mobile navigation"
+  },
+  "Mobile navigation": {
+    "id": "Navigasi mobile",
+    "en": "Mobile navigation"
+  },
+  "Navigasi pengenalan": {
+    "id": "Navigasi pengenalan",
+    "en": "Introduction navigation"
+  },
+  "Introduction navigation": {
+    "id": "Navigasi pengenalan",
+    "en": "Introduction navigation"
+  },
+  "Navigasi utama": {
+    "id": "Navigasi utama",
+    "en": "Main navigation"
+  },
+  "Main navigation": {
+    "id": "Navigasi utama",
+    "en": "Main navigation"
+  },
+  "Network": {
+    "id": "Jaringan",
+    "en": "Network"
+  },
+  "Jaringan": {
+    "id": "Jaringan",
+    "en": "Network"
+  },
+  "Nicknames": {
+    "id": "Nama panggilan",
+    "en": "Nicknames"
+  },
+  "Nama panggilan": {
+    "id": "Nama panggilan",
+    "en": "Nicknames"
+  },
+  "No connections match your search query.": {
+    "id": "Tidak ada koneksi yang cocok dengan pencarian Anda.",
+    "en": "No connections match your search query."
+  },
+  "Tidak ada koneksi yang cocok dengan pencarian Anda.": {
+    "id": "Tidak ada koneksi yang cocok dengan pencarian Anda.",
+    "en": "No connections match your search query."
+  },
+  "No matching data found.": {
+    "id": "Tidak ada data yang cocok.",
+    "en": "No matching data found."
+  },
+  "Tidak ada data yang cocok.": {
+    "id": "Tidak ada data yang cocok.",
+    "en": "No matching data found."
+  },
+  "No reports in the database.": {
+    "id": "Belum ada laporan dalam database.",
+    "en": "No reports in the database."
+  },
+  "Belum ada laporan dalam database.": {
+    "id": "Belum ada laporan dalam database.",
+    "en": "No reports in the database."
+  },
+  "Nomor HP": {
+    "id": "Nomor HP",
+    "en": "Mobile number"
+  },
+  "Mobile number": {
+    "id": "Nomor HP",
+    "en": "Mobile number"
+  },
+  "Nomor telepon": {
+    "id": "Nomor telepon",
+    "en": "Phone number"
+  },
+  "Phone number": {
+    "id": "Nomor telepon",
+    "en": "Phone number"
+  },
+  "Notifications": {
+    "id": "Notifikasi",
+    "en": "Notifications"
+  },
+  "Notifikasi": {
+    "id": "Notifikasi",
+    "en": "Notifications"
+  },
+  "PDF, DOCX, XLSX, ZIP, Audio, dll.": {
+    "id": "PDF, DOCX, XLSX, ZIP, Audio, dll.",
+    "en": "PDF, DOCX, XLSX, ZIP, audio, etc."
+  },
+  "PDF, DOCX, XLSX, ZIP, audio, etc.": {
+    "id": "PDF, DOCX, XLSX, ZIP, Audio, dll.",
+    "en": "PDF, DOCX, XLSX, ZIP, audio, etc."
+  },
+  "Panggil Lagi": {
+    "id": "Panggil Lagi",
+    "en": "Call again"
+  },
+  "Call again": {
+    "id": "Panggil Lagi",
+    "en": "Call again"
+  },
+  "Panggilan Suara Masuk...": {
+    "id": "Panggilan Suara Masuk...",
+    "en": "Incoming voice call..."
+  },
+  "Incoming voice call...": {
+    "id": "Panggilan Suara Masuk...",
+    "en": "Incoming voice call..."
+  },
+  "Panggung Anda.": {
+    "id": "Panggung Anda.",
+    "en": "Your stage."
+  },
+  "Your stage.": {
+    "id": "Panggung Anda.",
+    "en": "Your stage."
+  },
+  "Password": {
+    "id": "Kata sandi",
+    "en": "Password"
+  },
+  "Kata sandi": {
+    "id": "Kata sandi",
+    "en": "Password"
+  },
+  "Password baru (8–72)": {
+    "id": "Password baru (8–72)",
+    "en": "New password (8–72)"
+  },
+  "New password (8–72)": {
+    "id": "Password baru (8–72)",
+    "en": "New password (8–72)"
+  },
+  "Password baru (min. 8 karakter)": {
+    "id": "Password baru (min. 8 karakter)",
+    "en": "New password (min. 8 characters)"
+  },
+  "New password (min. 8 characters)": {
+    "id": "Password baru (min. 8 karakter)",
+    "en": "New password (min. 8 characters)"
+  },
+  "Password saat ini": {
+    "id": "Password saat ini",
+    "en": "Current password"
+  },
+  "Current password": {
+    "id": "Password saat ini",
+    "en": "Current password"
+  },
+  "Payment": {
+    "id": "Pembayaran",
+    "en": "Payment"
+  },
+  "Pembayaran": {
+    "id": "Pembayaran",
+    "en": "Payment"
+  },
+  "Pembatasan upload & paket": {
+    "id": "Pembatasan upload & paket",
+    "en": "Upload limits & plans"
+  },
+  "Upload limits & plans": {
+    "id": "Pembatasan upload & paket",
+    "en": "Upload limits & plans"
+  },
+  "Pembayaran:": {
+    "id": "Pembayaran:",
+    "en": "Payment:"
+  },
+  "Payment:": {
+    "id": "Pembayaran:",
+    "en": "Payment:"
+  },
+  "Pending Invitations (": {
+    "id": "Undangan tertunda (",
+    "en": "Pending Invitations ("
+  },
+  "Undangan tertunda (": {
+    "id": "Undangan tertunda (",
+    "en": "Pending Invitations ("
+  },
+  "Pending Requests": {
+    "id": "Permintaan tertunda",
+    "en": "Pending Requests"
+  },
+  "Permintaan tertunda": {
+    "id": "Permintaan tertunda",
+    "en": "Pending Requests"
+  },
+  "Pengaturan administrator": {
+    "id": "Pengaturan administrator",
+    "en": "Administrator settings"
+  },
+  "Administrator settings": {
+    "id": "Pengaturan administrator",
+    "en": "Administrator settings"
+  },
+  "Pengguna": {
+    "id": "Pengguna",
+    "en": "User"
+  },
+  "User": {
+    "id": "Pengguna",
+    "en": "User"
+  },
+  "Pengiriman:": {
+    "id": "Pengiriman:",
+    "en": "Delivery:"
+  },
+  "Delivery:": {
+    "id": "Pengiriman:",
+    "en": "Delivery:"
+  },
+  "Pesan (opsional)": {
+    "id": "Pesan (opsional)",
+    "en": "Message (optional)"
+  },
+  "Message (optional)": {
+    "id": "Pesan (opsional)",
+    "en": "Message (optional)"
+  },
+  "Pesan baru": {
+    "id": "Pesan baru",
+    "en": "New message"
+  },
+  "New message": {
+    "id": "Pesan baru",
+    "en": "New message"
+  },
+  "Pesan dan panggilan tidak tersedia karena pengguna diblokir.": {
+    "id": "Pesan dan panggilan tidak tersedia karena pengguna diblokir.",
+    "en": "Messages and calls are unavailable because this user is blocked."
+  },
+  "Messages and calls are unavailable because this user is blocked.": {
+    "id": "Pesan dan panggilan tidak tersedia karena pengguna diblokir.",
+    "en": "Messages and calls are unavailable because this user is blocked."
+  },
+  "Phone Number (Optional)": {
+    "id": "Nomor telepon (opsional)",
+    "en": "Phone Number (Optional)"
+  },
+  "Nomor telepon (opsional)": {
+    "id": "Nomor telepon (opsional)",
+    "en": "Phone Number (Optional)"
+  },
+  "Pilih durasi bulan": {
+    "id": "Pilih durasi bulan",
+    "en": "Select duration in months"
+  },
+  "Select duration in months": {
+    "id": "Pilih durasi bulan",
+    "en": "Select duration in months"
+  },
+  "Pilih emoji": {
+    "id": "Pilih emoji",
+    "en": "Choose an emoji"
+  },
+  "Choose an emoji": {
+    "id": "Pilih emoji",
+    "en": "Choose an emoji"
+  },
+  "Pilih percakapan untuk mulai mengirim pesan": {
+    "id": "Pilih percakapan untuk mulai mengirim pesan",
+    "en": "Select a conversation to start messaging"
+  },
+  "Select a conversation to start messaging": {
+    "id": "Pilih percakapan untuk mulai mengirim pesan",
+    "en": "Select a conversation to start messaging"
+  },
+  "Plan": {
+    "id": "Paket",
+    "en": "Plan"
+  },
+  "Paket": {
+    "id": "Paket",
+    "en": "Plan"
+  },
+  "Plan Details": {
+    "id": "Rincian paket",
+    "en": "Plan Details"
+  },
+  "Rincian paket": {
+    "id": "Rincian paket",
+    "en": "Plan Details"
+  },
+  "Plan •": {
+    "id": "Paket •",
+    "en": "Plan •"
+  },
+  "Paket •": {
+    "id": "Paket •",
+    "en": "Plan •"
+  },
+  "Post": {
+    "id": "Postingan",
+    "en": "Post"
+  },
+  "Post more, grow faster, and get the verified badge with Postter Premium.": {
+    "id": "Posting lebih banyak, tumbuh lebih cepat, dan dapatkan lencana verifikasi dengan Postter Premium.",
+    "en": "Post more, grow faster, and get the verified badge with Postter Premium."
+  },
+  "Posting lebih banyak, tumbuh lebih cepat, dan dapatkan lencana verifikasi dengan Postter Premium.": {
+    "id": "Posting lebih banyak, tumbuh lebih cepat, dan dapatkan lencana verifikasi dengan Postter Premium.",
+    "en": "Post more, grow faster, and get the verified badge with Postter Premium."
+  },
+  "Post up to 24x daily": {
+    "id": "Posting hingga 24 kali sehari",
+    "en": "Post up to 24x daily"
+  },
+  "Posting hingga 24 kali sehari": {
+    "id": "Posting hingga 24 kali sehari",
+    "en": "Post up to 24x daily"
+  },
+  "Post: Poster, Video, Shop, Link, Hashtags, Location": {
+    "id": "Posting: Poster, Video, Shop, Tautan, Hashtag, Lokasi",
+    "en": "Post: Poster, Video, Shop, Link, Hashtags, Location"
+  },
+  "Posting: Poster, Video, Shop, Tautan, Hashtag, Lokasi": {
+    "id": "Posting: Poster, Video, Shop, Tautan, Hashtag, Lokasi",
+    "en": "Post: Poster, Video, Shop, Link, Hashtags, Location"
+  },
+  "Posting gratis. Jadilah bagian dari perjalanan Postter.": {
+    "id": "Posting gratis. Jadilah bagian dari perjalanan Postter.",
+    "en": "Post for free. Be part of Postter's journey."
+  },
+  "Post for free. Be part of Postter's journey.": {
+    "id": "Posting gratis. Jadilah bagian dari perjalanan Postter.",
+    "en": "Post for free. Be part of Postter's journey."
+  },
+  "Postingan asli sudah tidak tersedia.": {
+    "id": "Postingan asli sudah tidak tersedia.",
+    "en": "The original post is no longer available."
+  },
+  "The original post is no longer available.": {
+    "id": "Postingan asli sudah tidak tersedia.",
+    "en": "The original post is no longer available."
+  },
+  "Postingan tersimpan": {
+    "id": "Postingan tersimpan",
+    "en": "Saved posts"
+  },
+  "Saved posts": {
+    "id": "Postingan tersimpan",
+    "en": "Saved posts"
+  },
+  "Postter. Dibuat untuk saling terhubung.": {
+    "id": "Postter. Dibuat untuk saling terhubung.",
+    "en": "Postter. Made to connect."
+  },
+  "Postter. Made to connect.": {
+    "id": "Postter. Dibuat untuk saling terhubung.",
+    "en": "Postter. Made to connect."
+  },
+  "Potong gambar pertama menjadi persegi": {
+    "id": "Potong gambar pertama menjadi persegi",
+    "en": "Crop the first image to a square"
+  },
+  "Crop the first image to a square": {
+    "id": "Potong gambar pertama menjadi persegi",
+    "en": "Crop the first image to a square"
+  },
+  "Pratinjau embed": {
+    "id": "Pratinjau embed",
+    "en": "Embed preview"
+  },
+  "Embed preview": {
+    "id": "Pratinjau embed",
+    "en": "Embed preview"
+  },
+  "Pratinjau link": {
+    "id": "Pratinjau link",
+    "en": "Link preview"
+  },
+  "Link preview": {
+    "id": "Pratinjau link",
+    "en": "Link preview"
+  },
+  "Pratinjau media": {
+    "id": "Pratinjau media",
+    "en": "Media preview"
+  },
+  "Media preview": {
+    "id": "Pratinjau media",
+    "en": "Media preview"
+  },
+  "Premium Subscription": {
+    "id": "Langganan Premium",
+    "en": "Premium Subscription"
+  },
+  "Langganan Premium": {
+    "id": "Langganan Premium",
+    "en": "Premium Subscription"
+  },
+  "Pribadi": {
+    "id": "Pribadi",
+    "en": "Personal"
+  },
+  "Personal": {
+    "id": "Pribadi",
+    "en": "Personal"
+  },
+  "Pricing": {
+    "id": "Paket",
+    "en": "Pricing"
+  },
+  "Priority Support": {
+    "id": "Dukungan prioritas",
+    "en": "Priority Support"
+  },
+  "Dukungan prioritas": {
+    "id": "Dukungan prioritas",
+    "en": "Priority Support"
+  },
+  "Privacy": {
+    "id": "Privasi",
+    "en": "Privacy"
+  },
+  "Privasi": {
+    "id": "Privasi",
+    "en": "Privacy"
+  },
+  "Privacy Policy": {
+    "id": "Kebijakan privasi",
+    "en": "Privacy Policy"
+  },
+  "Kebijakan privasi": {
+    "id": "Kebijakan privasi",
+    "en": "Privacy Policy"
+  },
+  "Privasi & tampilan": {
+    "id": "Privasi & tampilan",
+    "en": "Privacy & appearance"
+  },
+  "Privacy & appearance": {
+    "id": "Privasi & tampilan",
+    "en": "Privacy & appearance"
+  },
+  "Pro": {
+    "id": "Pro",
+    "en": "Pro"
+  },
+  "RUANG UNTUK IDE ANDA": {
+    "id": "RUANG UNTUK IDE ANDA",
+    "en": "A SPACE FOR YOUR IDEAS"
+  },
+  "A SPACE FOR YOUR IDEAS": {
+    "id": "RUANG UNTUK IDE ANDA",
+    "en": "A SPACE FOR YOUR IDEAS"
+  },
+  "Referral Free Account (Bonus 3x/Day)": {
+    "id": "Akun gratis referral (bonus 3 kali/hari)",
+    "en": "Referral Free Account (Bonus 3x/Day)"
+  },
+  "Akun gratis referral (bonus 3 kali/hari)": {
+    "id": "Akun gratis referral (bonus 3 kali/hari)",
+    "en": "Referral Free Account (Bonus 3x/Day)"
+  },
+  "Reported by": {
+    "id": "Dilaporkan oleh",
+    "en": "Reported by"
+  },
+  "Dilaporkan oleh": {
+    "id": "Dilaporkan oleh",
+    "en": "Reported by"
+  },
+  "Reports and status values are loaded from the database.": {
+    "id": "Laporan dan status diambil dari database.",
+    "en": "Reports and status values are loaded from the database."
+  },
+  "Laporan dan status diambil dari database.": {
+    "id": "Laporan dan status diambil dari database.",
+    "en": "Reports and status values are loaded from the database."
+  },
+  "Repost": {
+    "id": "Repost",
+    "en": "Repost"
+  },
+  "Repost Langsung": {
+    "id": "Repost Langsung",
+    "en": "Repost directly"
+  },
+  "Repost directly": {
+    "id": "Repost Langsung",
+    "en": "Repost directly"
+  },
+  "Reviewed": {
+    "id": "Ditinjau",
+    "en": "Reviewed"
+  },
+  "Ditinjau": {
+    "id": "Ditinjau",
+    "en": "Reviewed"
+  },
+  "Riwayat chat dihapus hanya untuk Anda. Riwayat lawan chat tetap tersedia. Pesan baru akan muncul kembali.": {
+    "id": "Riwayat chat dihapus hanya untuk Anda. Riwayat lawan chat tetap tersedia. Pesan baru akan muncul kembali.",
+    "en": "Chat history is deleted only for you. The other participant keeps their history. New messages will appear again."
+  },
+  "Chat history is deleted only for you. The other participant keeps their history. New messages will appear again.": {
+    "id": "Riwayat chat dihapus hanya untuk Anda. Riwayat lawan chat tetap tersedia. Pesan baru akan muncul kembali.",
+    "en": "Chat history is deleted only for you. The other participant keeps their history. New messages will appear again."
+  },
+  "Riwayat tindakan": {
+    "id": "Riwayat tindakan",
+    "en": "Action history"
+  },
+  "Action history": {
+    "id": "Riwayat tindakan",
+    "en": "Action history"
+  },
+  "Ruang administrator": {
+    "id": "Ruang administrator",
+    "en": "Administrator workspace"
+  },
+  "Administrator workspace": {
+    "id": "Ruang administrator",
+    "en": "Administrator workspace"
+  },
+  "SHORT": {
+    "id": "SHORT",
+    "en": "SHORT"
+  },
+  "SMS": {
+    "id": "SMS",
+    "en": "SMS"
+  },
+  "Salin Link Referral (@": {
+    "id": "Salin Link Referral (@",
+    "en": "Copy referral link (@"
+  },
+  "Copy referral link (@": {
+    "id": "Salin Link Referral (@",
+    "en": "Copy referral link (@"
+  },
+  "Salin kode ini ke halaman HTML website Anda.": {
+    "id": "Salin kode ini ke halaman HTML website Anda.",
+    "en": "Copy this code to your website's HTML page."
+  },
+  "Copy this code to your website's HTML page.": {
+    "id": "Salin kode ini ke halaman HTML website Anda.",
+    "en": "Copy this code to your website's HTML page."
+  },
+  "Salin tautan": {
+    "id": "Salin tautan",
+    "en": "Copy link"
+  },
+  "Sampai jumpa": {
+    "id": "Sampai jumpa",
+    "en": "See you soon"
+  },
+  "See you soon": {
+    "id": "Sampai jumpa",
+    "en": "See you soon"
+  },
+  "Satu tempat.": {
+    "id": "Satu tempat.",
+    "en": "One place."
+  },
+  "One place.": {
+    "id": "Satu tempat.",
+    "en": "One place."
+  },
+  "Search application": {
+    "id": "Cari di aplikasi",
+    "en": "Search application"
+  },
+  "Cari di aplikasi": {
+    "id": "Cari di aplikasi",
+    "en": "Search application"
+  },
+  "Search connections...": {
+    "id": "Cari koneksi...",
+    "en": "Search connections..."
+  },
+  "Cari koneksi...": {
+    "id": "Cari koneksi...",
+    "en": "Search connections..."
+  },
+  "Searching database...": {
+    "id": "Mencari data...",
+    "en": "Searching database..."
+  },
+  "Mencari data...": {
+    "id": "Mencari data...",
+    "en": "Searching database..."
+  },
+  "Sebelumnya": {
+    "id": "Sebelumnya",
+    "en": "Previous"
+  },
+  "Previous": {
+    "id": "Sebelumnya",
+    "en": "Previous"
+  },
+  "Secure & Encrypted Payment": {
+    "id": "Pembayaran aman & terenkripsi",
+    "en": "Secure & Encrypted Payment"
+  },
+  "Pembayaran aman & terenkripsi": {
+    "id": "Pembayaran aman & terenkripsi",
+    "en": "Secure & Encrypted Payment"
+  },
+  "Selalu ada sudut pandang baru.": {
+    "id": "Selalu ada sudut pandang baru.",
+    "en": "There is always a new perspective."
+  },
+  "There is always a new perspective.": {
+    "id": "Selalu ada sudut pandang baru.",
+    "en": "There is always a new perspective."
+  },
+  "Select your preferred payment method to complete the subscription.": {
+    "id": "Pilih metode pembayaran untuk menyelesaikan langganan.",
+    "en": "Select your preferred payment method to complete the subscription."
+  },
+  "Pilih metode pembayaran untuk menyelesaikan langganan.": {
+    "id": "Pilih metode pembayaran untuk menyelesaikan langganan.",
+    "en": "Select your preferred payment method to complete the subscription."
+  },
+  "Sesi berlaku sampai": {
+    "id": "Sesi berlaku sampai",
+    "en": "Session expires on"
+  },
+  "Session expires on": {
+    "id": "Sesi berlaku sampai",
+    "en": "Session expires on"
+  },
+  "Shop": {
+    "id": "Shop",
+    "en": "Shop"
+  },
+  "Status": {
+    "id": "Status",
+    "en": "Status"
+  },
+  "Stok:": {
+    "id": "Stok:",
+    "en": "Stock:"
+  },
+  "Stock:": {
+    "id": "Stok:",
+    "en": "Stock:"
+  },
+  "Subscribe": {
+    "id": "Berlangganan",
+    "en": "Subscribe"
+  },
+  "Berlangganan": {
+    "id": "Berlangganan",
+    "en": "Subscribe"
+  },
+  "Sudah dilihat": {
+    "id": "Sudah dilihat",
+    "en": "Viewed"
+  },
+  "Viewed": {
+    "id": "Sudah dilihat",
+    "en": "Viewed"
+  },
+  "Sudah punya akun? Masuk": {
+    "id": "Sudah punya akun? Masuk",
+    "en": "Already have an account? Sign in"
+  },
+  "Already have an account? Sign in": {
+    "id": "Sudah punya akun? Masuk",
+    "en": "Already have an account? Sign in"
+  },
+  "Support": {
+    "id": "Bantuan",
+    "en": "Support"
+  },
+  "Bantuan": {
+    "id": "Bantuan",
+    "en": "Support"
+  },
+  "Tambah hashtag": {
+    "id": "Tambah hashtag",
+    "en": "Add hashtag"
+  },
+  "Add hashtag": {
+    "id": "Tambah hashtag",
+    "en": "Add hashtag"
+  },
+  "Tambahkan komentar (opsional)": {
+    "id": "Tambahkan komentar (opsional)",
+    "en": "Add a comment (optional)"
+  },
+  "Add a comment (optional)": {
+    "id": "Tambahkan komentar (opsional)",
+    "en": "Add a comment (optional)"
+  },
+  "Tampilan daftar": {
+    "id": "Tampilan daftar",
+    "en": "List view"
+  },
+  "Tampilan profil": {
+    "id": "Tampilan profil",
+    "en": "Profile appearance"
+  },
+  "Profile appearance": {
+    "id": "Tampilan profil",
+    "en": "Profile appearance"
+  },
+  "Tandai dibaca": {
+    "id": "Tandai dibaca",
+    "en": "Mark as read"
+  },
+  "Mark as read": {
+    "id": "Tandai dibaca",
+    "en": "Mark as read"
+  },
+  "Tanggal lahir": {
+    "id": "Tanggal lahir",
+    "en": "Date of birth"
+  },
+  "Date of birth": {
+    "id": "Tanggal lahir",
+    "en": "Date of birth"
+  },
+  "Telepon Suara": {
+    "id": "Telepon Suara",
+    "en": "Voice call"
+  },
+  "Voice call": {
+    "id": "Telepon Suara",
+    "en": "Voice call"
+  },
+  "Tempat lahir": {
+    "id": "Tempat lahir",
+    "en": "Place of birth"
+  },
+  "Place of birth": {
+    "id": "Tempat lahir",
+    "en": "Place of birth"
+  },
+  "Temukan dan bagikan produk pilihan.": {
+    "id": "Temukan dan bagikan produk pilihan.",
+    "en": "Discover and share selected products."
+  },
+  "Discover and share selected products.": {
+    "id": "Temukan dan bagikan produk pilihan.",
+    "en": "Discover and share selected products."
+  },
+  "Terima": {
+    "id": "Terima",
+    "en": "Accept"
+  },
+  "Accept": {
+    "id": "Terima",
+    "en": "Accept"
+  },
+  "Terms": {
+    "id": "Ketentuan",
+    "en": "Terms"
+  },
+  "Ketentuan": {
+    "id": "Ketentuan",
+    "en": "Terms"
+  },
+  "Terms of Service": {
+    "id": "Ketentuan layanan",
+    "en": "Terms of Service"
+  },
+  "Ketentuan layanan": {
+    "id": "Ketentuan layanan",
+    "en": "Terms of Service"
+  },
+  "Terpopuler": {
+    "id": "Terpopuler",
+    "en": "Most popular"
+  },
+  "Most popular": {
+    "id": "Terpopuler",
+    "en": "Most popular"
+  },
+  "Terverifikasi": {
+    "id": "Terverifikasi",
+    "en": "Verified"
+  },
+  "Verified": {
+    "id": "Terverifikasi",
+    "en": "Verified"
+  },
+  "Terverifikasi Centang Biru": {
+    "id": "Terverifikasi Centang Biru",
+    "en": "Blue badge verified"
+  },
+  "Blue badge verified": {
+    "id": "Terverifikasi Centang Biru",
+    "en": "Blue badge verified"
+  },
+  "Tidak ada akun.": {
+    "id": "Tidak ada akun.",
+    "en": "No accounts found."
+  },
+  "No accounts found.": {
+    "id": "Tidak ada akun.",
+    "en": "No accounts found."
+  },
+  "Tidak ada hasil untuk “": {
+    "id": "Tidak ada hasil untuk “",
+    "en": "No results for “"
+  },
+  "No results for “": {
+    "id": "Tidak ada hasil untuk “",
+    "en": "No results for “"
+  },
+  "Tidak disebutkan": {
+    "id": "Tidak disebutkan",
+    "en": "Not specified"
+  },
+  "Tim": {
+    "id": "Tim",
+    "en": "Team"
+  },
+  "Team": {
+    "id": "Tim",
+    "en": "Team"
+  },
+  "Tolak": {
+    "id": "Tolak",
+    "en": "Reject"
+  },
+  "Reject": {
+    "id": "Tolak",
+    "en": "Reject"
+  },
+  "Trending": {
+    "id": "Trending",
+    "en": "Trending"
+  },
+  "Tulis nama tempat / alamat manual": {
+    "id": "Tulis nama tempat / alamat manual",
+    "en": "Enter a place name / address manually"
+  },
+  "Enter a place name / address manually": {
+    "id": "Tulis nama tempat / alamat manual",
+    "en": "Enter a place name / address manually"
+  },
+  "Tutup menu": {
+    "id": "Tutup menu",
+    "en": "Close menu"
+  },
+  "Close menu": {
+    "id": "Tutup menu",
+    "en": "Close menu"
+  },
+  "Type a message...": {
+    "id": "Ketik pesan...",
+    "en": "Type a message..."
+  },
+  "Ketik pesan...": {
+    "id": "Ketik pesan...",
+    "en": "Type a message..."
+  },
+  "URL Website *": {
+    "id": "URL Website *",
+    "en": "Website URL *"
+  },
+  "Website URL *": {
+    "id": "URL Website *",
+    "en": "Website URL *"
+  },
+  "Ubah foto profil": {
+    "id": "Ubah foto profil",
+    "en": "Change profile photo"
+  },
+  "Change profile photo": {
+    "id": "Ubah foto profil",
+    "en": "Change profile photo"
+  },
+  "Ulangi password baru": {
+    "id": "Ulangi password baru",
+    "en": "Repeat new password"
+  },
+  "Repeat new password": {
+    "id": "Ulangi password baru",
+    "en": "Repeat new password"
+  },
+  "Understand your audience": {
+    "id": "Kenali audiens Anda",
+    "en": "Understand your audience"
+  },
+  "Kenali audiens Anda": {
+    "id": "Kenali audiens Anda",
+    "en": "Understand your audience"
+  },
+  "Unduh video": {
+    "id": "Unduh video",
+    "en": "Download video"
+  },
+  "Download video": {
+    "id": "Unduh video",
+    "en": "Download video"
+  },
+  "Unlock more features & grow": {
+    "id": "Buka lebih banyak fitur & berkembang",
+    "en": "Unlock more features & grow"
+  },
+  "Buka lebih banyak fitur & berkembang": {
+    "id": "Buka lebih banyak fitur & berkembang",
+    "en": "Unlock more features & grow"
+  },
+  "Unlock more features and grow your presence with Postter Premium.": {
+    "id": "Buka lebih banyak fitur dan kembangkan jangkauan Anda dengan Postter Premium.",
+    "en": "Unlock more features and grow your presence with Postter Premium."
+  },
+  "Buka lebih banyak fitur dan kembangkan jangkauan Anda dengan Postter Premium.": {
+    "id": "Buka lebih banyak fitur dan kembangkan jangkauan Anda dengan Postter Premium.",
+    "en": "Unlock more features and grow your presence with Postter Premium."
+  },
+  "Upgrade Your Experience": {
+    "id": "Tingkatkan pengalaman Anda",
+    "en": "Upgrade Your Experience"
+  },
+  "Tingkatkan pengalaman Anda": {
+    "id": "Tingkatkan pengalaman Anda",
+    "en": "Upgrade Your Experience"
+  },
+  "Upgrade to Pro": {
+    "id": "Beralih ke Pro",
+    "en": "Upgrade to Pro"
+  },
+  "Beralih ke Pro": {
+    "id": "Beralih ke Pro",
+    "en": "Upgrade to Pro"
+  },
+  "Urutkan postingan": {
+    "id": "Urutkan postingan",
+    "en": "Sort posts"
+  },
+  "Sort posts": {
+    "id": "Urutkan postingan",
+    "en": "Sort posts"
+  },
+  "Username": {
+    "id": "Nama pengguna",
+    "en": "Username"
+  },
+  "Nama pengguna": {
+    "id": "Nama pengguna",
+    "en": "Username"
+  },
+  "Verified Badge": {
+    "id": "Lencana verifikasi",
+    "en": "Verified Badge"
+  },
+  "Lencana verifikasi": {
+    "id": "Lencana verifikasi",
+    "en": "Verified Badge"
+  },
+  "Video": {
+    "id": "Video",
+    "en": "Video"
+  },
+  "Video Call (VC)": {
+    "id": "Panggilan video (VC)",
+    "en": "Video Call (VC)"
+  },
+  "Panggilan video (VC)": {
+    "id": "Panggilan video (VC)",
+    "en": "Video Call (VC)"
+  },
+  "Video Call Masuk...": {
+    "id": "Video Call Masuk...",
+    "en": "Incoming video call..."
+  },
+  "Incoming video call...": {
+    "id": "Video Call Masuk...",
+    "en": "Incoming video call..."
+  },
+  "Video sedang diproses…": {
+    "id": "Video sedang diproses…",
+    "en": "Video is being processed…"
+  },
+  "Video is being processed…": {
+    "id": "Video sedang diproses…",
+    "en": "Video is being processed…"
+  },
+  "Views": {
+    "id": "Tayangan",
+    "en": "Views"
+  },
+  "Tayangan": {
+    "id": "Tayangan",
+    "en": "Views"
+  },
+  "Waktu": {
+    "id": "Waktu",
+    "en": "Time"
+  },
+  "Time": {
+    "id": "Waktu",
+    "en": "Time"
+  },
+  "We are currently building this feature to give you the best data analytics experience. Stay tuned!": {
+    "id": "Kami sedang mengembangkan fitur ini untuk memberikan pengalaman analitik terbaik. Nantikan!",
+    "en": "We are currently building this feature to give you the best data analytics experience. Stay tuned!"
+  },
+  "Kami sedang mengembangkan fitur ini untuk memberikan pengalaman analitik terbaik. Nantikan!": {
+    "id": "Kami sedang mengembangkan fitur ini untuk memberikan pengalaman analitik terbaik. Nantikan!",
+    "en": "We are currently building this feature to give you the best data analytics experience. Stay tuned!"
+  },
+  "WhatsApp": {
+    "id": "WhatsApp",
+    "en": "WhatsApp"
+  },
+  "Your payment information is safe with us.": {
+    "id": "Informasi pembayaran Anda aman bersama kami.",
+    "en": "Your payment information is safe with us."
+  },
+  "Informasi pembayaran Anda aman bersama kami.": {
+    "id": "Informasi pembayaran Anda aman bersama kami.",
+    "en": "Your payment information is safe with us."
+  },
+  "and": {
+    "id": "dan",
+    "en": "and"
+  },
+  "dan": {
+    "id": "dan",
+    "en": "and"
+  },
+  "atau kelola akun di halaman": {
+    "id": "atau kelola akun di halaman",
+    "en": "or manage your account on the"
+  },
+  "or manage your account on the": {
+    "id": "atau kelola akun di halaman",
+    "en": "or manage your account on the"
+  },
+  "batal": {
+    "id": "batal",
+    "en": "cancel"
+  },
+  "cancel": {
+    "id": "batal",
+    "en": "cancel"
+  },
+  "belum terpenuhi)": {
+    "id": "belum terpenuhi)",
+    "en": "not met)"
+  },
+  "not met)": {
+    "id": "belum terpenuhi)",
+    "en": "not met)"
+  },
+  "bisa jadi cerita Anda.": {
+    "id": "bisa jadi cerita Anda.",
+    "en": "could be yours."
+  },
+  "could be yours.": {
+    "id": "bisa jadi cerita Anda.",
+    "en": "could be yours."
+  },
+  "bulan": {
+    "id": "bulan",
+    "en": "months"
+  },
+  "months": {
+    "id": "bulan",
+    "en": "months"
+  },
+  "dengan Postinganmu": {
+    "id": "dengan Postinganmu",
+    "en": "with your posts"
+  },
+  "with your posts": {
+    "id": "dengan Postinganmu",
+    "en": "with your posts"
+  },
+  "di seluruh dunia": {
+    "id": "di seluruh dunia",
+    "en": "around the world"
+  },
+  "around the world": {
+    "id": "di seluruh dunia",
+    "en": "around the world"
+  },
+  "dibagikan": {
+    "id": "dibagikan",
+    "en": "shared"
+  },
+  "shared": {
+    "id": "dibagikan",
+    "en": "shared"
+  },
+  "file...": {
+    "id": "berkas...",
+    "en": "file..."
+  },
+  "berkas...": {
+    "id": "berkas...",
+    "en": "file..."
+  },
+  "for Your Needs": {
+    "id": "untuk kebutuhan Anda",
+    "en": "for Your Needs"
+  },
+  "untuk kebutuhan Anda": {
+    "id": "untuk kebutuhan Anda",
+    "en": "for Your Needs"
+  },
+  "hashtag ? minimal": {
+    "id": "hashtag ? minimal",
+    "en": "hashtags · minimum"
+  },
+  "hashtags · minimum": {
+    "id": "hashtag ? minimal",
+    "en": "hashtags · minimum"
+  },
+  "ke teman untuk mendapat kuota": {
+    "id": "ke teman untuk mendapat kuota",
+    "en": "with friends to get a quota of"
+  },
+  "with friends to get a quota of": {
+    "id": "ke teman untuk mendapat kuota",
+    "en": "with friends to get a quota of"
+  },
+  "komentar": {
+    "id": "komentar",
+    "en": "comments"
+  },
+  "comments": {
+    "id": "komentar",
+    "en": "comments"
+  },
+  "merepost": {
+    "id": "merepost",
+    "en": "reposted"
+  },
+  "reposted": {
+    "id": "merepost",
+    "en": "reposted"
+  },
+  "mo": {
+    "id": "bln",
+    "en": "mo"
+  },
+  "bln": {
+    "id": "bln",
+    "en": "mo"
+  },
+  "oleh": {
+    "id": "oleh",
+    "en": "by"
+  },
+  "by": {
+    "id": "oleh",
+    "en": "by"
+  },
+  "posts": {
+    "id": "postingan",
+    "en": "posts"
+  },
+  "postingan": {
+    "id": "postingan",
+    "en": "posts"
+  },
+  "postter.us — Beranda": {
+    "id": "postter.us — Beranda",
+    "en": "postter.us — Home"
+  },
+  "postter.us — Home": {
+    "id": "postter.us — Beranda",
+    "en": "postter.us — Home"
+  },
+  "postter.us. Semua hak dilindungi.": {
+    "id": "postter.us. Semua hak dilindungi.",
+    "en": "postter.us. All rights reserved."
+  },
+  "postter.us. All rights reserved.": {
+    "id": "postter.us. Semua hak dilindungi.",
+    "en": "postter.us. All rights reserved."
+  },
+  "repost": {
+    "id": "repost",
+    "en": "repost"
+  },
+  "unread": {
+    "id": "belum dibaca",
+    "en": "unread"
+  },
+  "belum dibaca": {
+    "id": "belum dibaca",
+    "en": "unread"
+  },
+  "views ?": {
+    "id": "tayangan ·",
+    "en": "views ?"
+  },
+  "tayangan ·": {
+    "id": "tayangan ·",
+    "en": "views ?"
+  },
+  "wajib": {
+    "id": "wajib",
+    "en": "required"
+  },
+  "required": {
+    "id": "wajib",
+    "en": "required"
+  },
+  "· User": {
+    "id": "· Pengguna",
+    "en": "· User"
+  },
+  "· Pengguna": {
+    "id": "· Pengguna",
+    "en": "· User"
+  },
+  "• Berhenti Berlangganan:": {
+    "id": "• Berhenti Berlangganan:",
+    "en": "• Cancel subscription:"
+  },
+  "• Cancel subscription:": {
+    "id": "• Berhenti Berlangganan:",
+    "en": "• Cancel subscription:"
+  },
+  "• Klik untuk unduh": {
+    "id": "• Klik untuk unduh",
+    "en": "• Click to download"
+  },
+  "• Click to download": {
+    "id": "• Klik untuk unduh",
+    "en": "• Click to download"
+  },
+  "• Kontak Bantuan:": {
+    "id": "• Kontak Bantuan:",
+    "en": "• Support contact:"
+  },
+  "• Support contact:": {
+    "id": "• Kontak Bantuan:",
+    "en": "• Support contact:"
+  },
+  "• Kuota Posting & Centang Biru:": {
+    "id": "• Kuota Posting & Centang Biru:",
+    "en": "• Post quota & blue badge:"
+  },
+  "• Post quota & blue badge:": {
+    "id": "• Kuota Posting & Centang Biru:",
+    "en": "• Post quota & blue badge:"
+  },
+  "★ Most Popular": {
+    "id": "★ Paling populer",
+    "en": "★ Most Popular"
+  },
+  "★ Paling populer": {
+    "id": "★ Paling populer",
+    "en": "★ Most Popular"
+  },
+  "✓ Terverifikasi": {
+    "id": "✓ Terverifikasi",
+    "en": "✓ Verified"
+  },
+  "✓ Verified": {
+    "id": "✓ Terverifikasi",
+    "en": "✓ Verified"
+  },
+  "🔒 Jika berhenti berlangganan, Centang Biru otomatis hilang dan kuota kembali ke 1x posting/hari.": {
+    "id": "🔒 Jika berhenti berlangganan, Centang Biru otomatis hilang dan kuota kembali ke 1x posting/hari.",
+    "en": "🔒 If you cancel, the blue badge is removed and your quota returns to 1 post per day."
+  },
+  "🔒 If you cancel, the blue badge is removed and your quota returns to 1 post per day.": {
+    "id": "🔒 Jika berhenti berlangganan, Centang Biru otomatis hilang dan kuota kembali ke 1x posting/hari.",
+    "en": "🔒 If you cancel, the blue badge is removed and your quota returns to 1 post per day."
+  },
+  "Welcome back! Please sign in to your Postter account.": {
+    "id": "Selamat datang kembali! Silakan masuk ke akun Postter Anda.",
+    "en": "Welcome back! Please sign in to your Postter account."
+  },
+  "Selamat datang kembali! Silakan masuk ke akun Postter Anda.": {
+    "id": "Selamat datang kembali! Silakan masuk ke akun Postter Anda.",
+    "en": "Welcome back! Please sign in to your Postter account."
+  },
+  "Sign In to Postter": {
+    "id": "Masuk ke Postter",
+    "en": "Sign In to Postter"
+  },
+  "Masuk ke Postter": {
+    "id": "Masuk ke Postter",
+    "en": "Sign In to Postter"
+  },
+  "to Postter": {
+    "id": "ke Postter",
+    "en": "to Postter"
+  },
+  "ke Postter": {
+    "id": "ke Postter",
+    "en": "to Postter"
+  },
+  "Search messages...": {
+    "id": "Cari pesan...",
+    "en": "Search messages..."
+  },
+  "Cari pesan...": {
+    "id": "Cari pesan...",
+    "en": "Search messages..."
+  },
+  "Sembunyikan balasan": {
+    "id": "Sembunyikan balasan",
+    "en": "Hide replies"
+  },
+  "Hide replies": {
+    "id": "Sembunyikan balasan",
+    "en": "Hide replies"
+  },
+  "Lihat": {
+    "id": "Lihat",
+    "en": "View"
+  },
+  "View": {
+    "id": "Lihat",
+    "en": "View"
+  },
+  "balasan": {
+    "id": "balasan",
+    "en": "replies"
+  },
+  "replies": {
+    "id": "balasan",
+    "en": "replies"
+  },
+  "Hapus tautan": {
+    "id": "Hapus tautan",
+    "en": "Remove link"
+  },
+  "Remove link": {
+    "id": "Hapus tautan",
+    "en": "Remove link"
+  },
+  "Isi data di bawah ini untuk membuat akun Postter.": {
+    "id": "Isi data di bawah ini untuk membuat akun Postter.",
+    "en": "Fill in the details below to create your Postter account."
+  },
+  "Fill in the details below to create your Postter account.": {
+    "id": "Isi data di bawah ini untuk membuat akun Postter.",
+    "en": "Fill in the details below to create your Postter account."
+  },
+  "Minimal 8 karakter, kombinasi huruf & angka": {
+    "id": "Minimal 8 karakter, kombinasi huruf & angka",
+    "en": "At least 8 characters, including letters and numbers"
+  },
+  "At least 8 characters, including letters and numbers": {
+    "id": "Minimal 8 karakter, kombinasi huruf & angka",
+    "en": "At least 8 characters, including letters and numbers"
+  },
+  "Masukkan kode referral teman yang mengajak kamu": {
+    "id": "Masukkan kode referral teman yang mengajak kamu",
+    "en": "Enter the referral code of the friend who invited you"
+  },
+  "Enter the referral code of the friend who invited you": {
+    "id": "Masukkan kode referral teman yang mengajak kamu",
+    "en": "Enter the referral code of the friend who invited you"
+  },
+  "Gunakan nomor HP aktif (contoh: 0812 3456 7890)": {
+    "id": "Gunakan nomor HP aktif (contoh: 0812 3456 7890)",
+    "en": "Use an active mobile number (example: 0812 3456 7890)"
+  },
+  "Use an active mobile number (example: 0812 3456 7890)": {
+    "id": "Gunakan nomor HP aktif (contoh: 0812 3456 7890)",
+    "en": "Use an active mobile number (example: 0812 3456 7890)"
+  },
+  "Pilih negara": {
+    "id": "Pilih negara",
+    "en": "Select a country"
+  },
+  "Select a country": {
+    "id": "Pilih negara",
+    "en": "Select a country"
+  },
+  "Kode pos": {
+    "id": "Kode pos",
+    "en": "Postal code"
+  },
+  "Postal code": {
+    "id": "Kode pos",
+    "en": "Postal code"
+  },
+  "Masukkan kode pos": {
+    "id": "Masukkan kode pos",
+    "en": "Enter postal code"
+  },
+  "Enter postal code": {
+    "id": "Masukkan kode pos",
+    "en": "Enter postal code"
+  },
+  "Contoh: 12345": {
+    "id": "Contoh: 12345",
+    "en": "Example: 12345"
+  },
+  "Example: 12345": {
+    "id": "Contoh: 12345",
+    "en": "Example: 12345"
+  },
+  "Syarat dan Ketentuan": {
+    "id": "Syarat dan Ketentuan",
+    "en": "Terms and Conditions"
+  },
+  "Terms and Conditions": {
+    "id": "Syarat dan Ketentuan",
+    "en": "Terms and Conditions"
+  },
+  "serta": {
+    "id": "serta",
+    "en": "and"
+  },
+  "Kebijakan Privasi": {
+    "id": "Kebijakan Privasi",
+    "en": "Privacy Policy"
+  },
+  "Postter.": {
+    "id": "Postter.",
+    "en": "Postter."
+  },
+  "Desain": {
+    "id": "Desain",
+    "en": "Design"
+  },
+  "Design": {
+    "id": "Desain",
+    "en": "Design"
+  },
+  "Seni": {
+    "id": "Seni",
+    "en": "Art"
+  },
+  "Art": {
+    "id": "Seni",
+    "en": "Art"
+  },
+  "Fotografi": {
+    "id": "Fotografi",
+    "en": "Photography"
+  },
+  "Photography": {
+    "id": "Fotografi",
+    "en": "Photography"
+  },
+  "Teknologi": {
+    "id": "Teknologi",
+    "en": "Technology"
+  },
+  "Technology": {
+    "id": "Teknologi",
+    "en": "Technology"
+  },
+  "Kuliner": {
+    "id": "Kuliner",
+    "en": "Food"
+  },
+  "Food": {
+    "id": "Kuliner",
+    "en": "Food"
+  },
+  "Musik": {
+    "id": "Musik",
+    "en": "Music"
+  },
+  "Music": {
+    "id": "Musik",
+    "en": "Music"
+  },
+  "Olahraga": {
+    "id": "Olahraga",
+    "en": "Sports"
+  },
+  "Sports": {
+    "id": "Olahraga",
+    "en": "Sports"
+  },
+  "Pendidikan": {
+    "id": "Pendidikan",
+    "en": "Education"
+  },
+  "Education": {
+    "id": "Pendidikan",
+    "en": "Education"
+  },
+  "Otomotif": {
+    "id": "Otomotif",
+    "en": "Automotive"
+  },
+  "Automotive": {
+    "id": "Otomotif",
+    "en": "Automotive"
+  },
+  "Buat": {
+    "id": "Buat",
+    "en": "Create"
+  },
+  "Notification": {
+    "id": "Notifikasi",
+    "en": "Notification"
+  },
+  "Admin Dashboard": {
+    "id": "Dasbor admin",
+    "en": "Admin Dashboard"
+  },
+  "Dasbor admin": {
+    "id": "Dasbor admin",
+    "en": "Admin Dashboard"
+  },
+  "Konten & iklan": {
+    "id": "Konten & iklan",
+    "en": "Content & ads"
+  },
+  "Content & ads": {
+    "id": "Konten & iklan",
+    "en": "Content & ads"
+  },
+  "Laporan": {
+    "id": "Laporan",
+    "en": "Reports"
+  },
+  "Reports": {
+    "id": "Laporan",
+    "en": "Reports"
+  },
+  "Aktivitas": {
+    "id": "Aktivitas",
+    "en": "Activity"
+  },
+  "Activity": {
+    "id": "Aktivitas",
+    "en": "Activity"
+  },
+  "Bagikan perspektif": {
+    "id": "Bagikan perspektif",
+    "en": "Share your perspective"
+  },
+  "Share your perspective": {
+    "id": "Bagikan perspektif",
+    "en": "Share your perspective"
+  },
+  "Foto, video, tulisan, atau tautan. Pilih cara Anda bercerita.": {
+    "id": "Foto, video, tulisan, atau tautan. Pilih cara Anda bercerita.",
+    "en": "Photos, videos, writing, or links. Choose how you tell your story."
+  },
+  "Photos, videos, writing, or links. Choose how you tell your story.": {
+    "id": "Foto, video, tulisan, atau tautan. Pilih cara Anda bercerita.",
+    "en": "Photos, videos, writing, or links. Choose how you tell your story."
+  },
+  "Temukan komunitas": {
+    "id": "Temukan komunitas",
+    "en": "Find your community"
+  },
+  "Find your community": {
+    "id": "Temukan komunitas",
+    "en": "Find your community"
+  },
+  "Ikuti orang yang menginspirasi dan bangun percakapan yang berarti.": {
+    "id": "Ikuti orang yang menginspirasi dan bangun percakapan yang berarti.",
+    "en": "Follow inspiring people and build meaningful conversations."
+  },
+  "Follow inspiring people and build meaningful conversations.": {
+    "id": "Ikuti orang yang menginspirasi dan bangun percakapan yang berarti.",
+    "en": "Follow inspiring people and build meaningful conversations."
+  },
+  "Dukung karya lokal": {
+    "id": "Dukung karya lokal",
+    "en": "Support local creators"
+  },
+  "Support local creators": {
+    "id": "Dukung karya lokal",
+    "en": "Support local creators"
+  },
+  "Jelajahi produk dan terhubung langsung dengan penjual.": {
+    "id": "Jelajahi produk dan terhubung langsung dengan penjual.",
+    "en": "Explore products and connect directly with sellers."
+  },
+  "Explore products and connect directly with sellers.": {
+    "id": "Jelajahi produk dan terhubung langsung dengan penjual.",
+    "en": "Explore products and connect directly with sellers."
+  },
+  "Pencarian": {
+    "id": "Pencarian",
+    "en": "Search"
+  },
+  "Cerita dan karya terbaru dari orang-orang di sekitar Anda.": {
+    "id": "Cerita dan karya terbaru dari orang-orang di sekitar Anda.",
+    "en": "The latest stories and creations from people around you."
+  },
+  "The latest stories and creations from people around you.": {
+    "id": "Cerita dan karya terbaru dari orang-orang di sekitar Anda.",
+    "en": "The latest stories and creations from people around you."
+  },
+  "Temukan inspirasi, perspektif baru, dan komunitas pilihan Anda.": {
+    "id": "Temukan inspirasi, perspektif baru, dan komunitas pilihan Anda.",
+    "en": "Discover inspiration, fresh perspectives, and your community."
+  },
+  "Discover inspiration, fresh perspectives, and your community.": {
+    "id": "Temukan inspirasi, perspektif baru, dan komunitas pilihan Anda.",
+    "en": "Discover inspiration, fresh perspectives, and your community."
+  },
+  "Nikmati cerita, temukan perspektif baru, dan mulai percakapan.": {
+    "id": "Nikmati cerita, temukan perspektif baru, dan mulai percakapan.",
+    "en": "Enjoy stories, discover new perspectives, and start a conversation."
+  },
+  "Enjoy stories, discover new perspectives, and start a conversation.": {
+    "id": "Nikmati cerita, temukan perspektif baru, dan mulai percakapan.",
+    "en": "Enjoy stories, discover new perspectives, and start a conversation."
+  },
+  "Temukan cerita, produk, dan orang yang ingin Anda kenal.": {
+    "id": "Temukan cerita, produk, dan orang yang ingin Anda kenal.",
+    "en": "Find stories, products, and people you want to know."
+  },
+  "Find stories, products, and people you want to know.": {
+    "id": "Temukan cerita, produk, dan orang yang ingin Anda kenal.",
+    "en": "Find stories, products, and people you want to know."
+  },
+  "Cerita, karya, dan koneksi dalam satu ruang pribadi.": {
+    "id": "Cerita, karya, dan koneksi dalam satu ruang pribadi.",
+    "en": "Stories, creativity, and connections in your own space."
+  },
+  "Stories, creativity, and connections in your own space.": {
+    "id": "Cerita, karya, dan koneksi dalam satu ruang pribadi.",
+    "en": "Stories, creativity, and connections in your own space."
+  },
+  "Temukan produk pilihan dan dukung karya para penjual.": {
+    "id": "Temukan produk pilihan dan dukung karya para penjual.",
+    "en": "Discover selected products and support sellers."
+  },
+  "Discover selected products and support sellers.": {
+    "id": "Temukan produk pilihan dan dukung karya para penjual.",
+    "en": "Discover selected products and support sellers."
+  },
+  "Tonton cerita dan ide dari sudut pandang yang berbeda.": {
+    "id": "Tonton cerita dan ide dari sudut pandang yang berbeda.",
+    "en": "Watch stories and ideas from a different perspective."
+  },
+  "Watch stories and ideas from a different perspective.": {
+    "id": "Tonton cerita dan ide dari sudut pandang yang berbeda.",
+    "en": "Watch stories and ideas from a different perspective."
+  },
+  "Mulai percakapan dan tetap terhubung.": {
+    "id": "Mulai percakapan dan tetap terhubung.",
+    "en": "Start conversations and stay connected."
+  },
+  "Start conversations and stay connected.": {
+    "id": "Mulai percakapan dan tetap terhubung.",
+    "en": "Start conversations and stay connected."
+  },
+  "Kabar terbaru dari interaksi dan komunitas Anda.": {
+    "id": "Kabar terbaru dari interaksi dan komunitas Anda.",
+    "en": "The latest updates from your interactions and community."
+  },
+  "The latest updates from your interactions and community.": {
+    "id": "Kabar terbaru dari interaksi dan komunitas Anda.",
+    "en": "The latest updates from your interactions and community."
+  },
+  "Bangun koneksi dan temukan orang dengan minat yang sama.": {
+    "id": "Bangun koneksi dan temukan orang dengan minat yang sama.",
+    "en": "Build connections and find people with similar interests."
+  },
+  "Build connections and find people with similar interests.": {
+    "id": "Bangun koneksi dan temukan orang dengan minat yang sama.",
+    "en": "Build connections and find people with similar interests."
+  },
+  "Simpan inspirasi untuk dibaca dan dinikmati kembali.": {
+    "id": "Simpan inspirasi untuk dibaca dan dinikmati kembali.",
+    "en": "Save inspiration to read and enjoy again."
+  },
+  "Save inspiration to read and enjoy again.": {
+    "id": "Simpan inspirasi untuk dibaca dan dinikmati kembali.",
+    "en": "Save inspiration to read and enjoy again."
+  },
+  "Kelola akun dan sesuaikan pengalaman Postter Anda.": {
+    "id": "Kelola akun dan sesuaikan pengalaman Postter Anda.",
+    "en": "Manage your account and customize your Postter experience."
+  },
+  "Manage your account and customize your Postter experience.": {
+    "id": "Kelola akun dan sesuaikan pengalaman Postter Anda.",
+    "en": "Manage your account and customize your Postter experience."
+  },
+  "Pilih dukungan yang sesuai untuk perjalanan kreatif Anda.": {
+    "id": "Pilih dukungan yang sesuai untuk perjalanan kreatif Anda.",
+    "en": "Choose support for your creative journey."
+  },
+  "Choose support for your creative journey.": {
+    "id": "Pilih dukungan yang sesuai untuk perjalanan kreatif Anda.",
+    "en": "Choose support for your creative journey."
+  },
+  "Kelola komunitas, dukung kreator, dan jaga ruang bersama.": {
+    "id": "Kelola komunitas, dukung kreator, dan jaga ruang bersama.",
+    "en": "Manage the community, support creators, and care for our shared space."
+  },
+  "Manage the community, support creators, and care for our shared space.": {
+    "id": "Kelola komunitas, dukung kreator, dan jaga ruang bersama.",
+    "en": "Manage the community, support creators, and care for our shared space."
+  },
+  "Kenali perkembangan dan interaksi komunitas Anda.": {
+    "id": "Kenali perkembangan dan interaksi komunitas Anda.",
+    "en": "Understand your community's growth and interactions."
+  },
+  "Understand your community's growth and interactions.": {
+    "id": "Kenali perkembangan dan interaksi komunitas Anda.",
+    "en": "Understand your community's growth and interactions."
+  },
+  "Berbagi cerita, karya, dan koneksi baru.": {
+    "id": "Berbagi cerita, karya, dan koneksi baru.",
+    "en": "Share stories, creativity, and new connections."
+  },
+  "Share stories, creativity, and new connections.": {
+    "id": "Berbagi cerita, karya, dan koneksi baru.",
+    "en": "Share stories, creativity, and new connections."
+  },
+  "Server belum mengirim daftar postingan yang valid. Pastikan backend sudah diperbarui dan dijalankan ulang.": {
+    "id": "Server belum mengirim daftar postingan yang valid. Pastikan backend sudah diperbarui dan dijalankan ulang.",
+    "en": "The server did not return a valid post list. Make sure the backend is updated and restarted."
+  },
+  "The server did not return a valid post list. Make sure the backend is updated and restarted.": {
+    "id": "Server belum mengirim daftar postingan yang valid. Pastikan backend sudah diperbarui dan dijalankan ulang.",
+    "en": "The server did not return a valid post list. Make sure the backend is updated and restarted."
+  },
+  "Gagal memuat postingan. Silakan coba lagi.": {
+    "id": "Gagal memuat postingan. Silakan coba lagi.",
+    "en": "Failed to load posts. Please try again."
+  },
+  "Failed to load posts. Please try again.": {
+    "id": "Gagal memuat postingan. Silakan coba lagi.",
+    "en": "Failed to load posts. Please try again."
+  },
+  "Gagal memuat postingan berikutnya.": {
+    "id": "Gagal memuat postingan berikutnya.",
+    "en": "Failed to load more posts."
+  },
+  "Failed to load more posts.": {
+    "id": "Gagal memuat postingan berikutnya.",
+    "en": "Failed to load more posts."
+  },
+  "Explore belum dapat dimuat.": {
+    "id": "Explore belum dapat dimuat.",
+    "en": "Explore could not be loaded."
+  },
+  "Explore could not be loaded.": {
+    "id": "Explore belum dapat dimuat.",
+    "en": "Explore could not be loaded."
+  },
+  "Postingan dikeluarkan dari koleksi.": {
+    "id": "Postingan dikeluarkan dari koleksi.",
+    "en": "Post removed from saved posts."
+  },
+  "Post removed from saved posts.": {
+    "id": "Postingan dikeluarkan dari koleksi.",
+    "en": "Post removed from saved posts."
+  },
+  "Failed to save the post.": {
+    "id": "Gagal menyimpan postingan.",
+    "en": "Failed to save the post."
+  },
+  "Gagal menyukai postingan.": {
+    "id": "Gagal menyukai postingan.",
+    "en": "Failed to like the post."
+  },
+  "Failed to like the post.": {
+    "id": "Gagal menyukai postingan.",
+    "en": "Failed to like the post."
+  },
+  "Tautan disalin.": {
+    "id": "Tautan disalin.",
+    "en": "Link copied."
+  },
+  "Link copied.": {
+    "id": "Tautan disalin.",
+    "en": "Link copied."
+  },
+  "Tautan belum dapat disalin.": {
+    "id": "Tautan belum dapat disalin.",
+    "en": "The link could not be copied."
+  },
+  "The link could not be copied.": {
+    "id": "Tautan belum dapat disalin.",
+    "en": "The link could not be copied."
+  },
+  "Batal simpan": {
+    "id": "Batal simpan",
+    "en": "Unsave"
+  },
+  "Unsave": {
+    "id": "Batal simpan",
+    "en": "Unsave"
+  },
+  "Simpan ke koleksi": {
+    "id": "Simpan ke koleksi",
+    "en": "Save to collection"
+  },
+  "Save to collection": {
+    "id": "Simpan ke koleksi",
+    "en": "Save to collection"
+  },
+  "Sukai": {
+    "id": "Sukai",
+    "en": "Like"
+  },
+  "Pilihan postingan": {
+    "id": "Pilihan postingan",
+    "en": "Post options"
+  },
+  "Buka postingan": {
+    "id": "Buka postingan",
+    "en": "Open post"
+  },
+  "Open post": {
+    "id": "Buka postingan",
+    "en": "Open post"
+  },
+  "Lihat lebih banyak": {
+    "id": "Lihat lebih banyak",
+    "en": "See more"
+  },
+  "See more": {
+    "id": "Lihat lebih banyak",
+    "en": "See more"
+  },
+  "Advanced analytics": {
+    "id": "Analitik lanjutan",
+    "en": "Advanced Analytics"
+  },
+  "Priority support": {
+    "id": "Dukungan prioritas",
+    "en": "Priority Support"
+  },
+  "Deleted user": {
+    "id": "Pengguna dihapus",
+    "en": "Deleted user"
+  },
+  "Pengguna dihapus": {
+    "id": "Pengguna dihapus",
+    "en": "Deleted user"
+  },
+  "Resolve": {
+    "id": "Tandai selesai",
+    "en": "Resolve"
+  },
+  "Tandai selesai": {
+    "id": "Tandai selesai",
+    "en": "Resolve"
+  },
+  "Saving...": {
+    "id": "Menyimpan...",
+    "en": "Saving..."
+  },
+  "Menyimpan...": {
+    "id": "Menyimpan...",
+    "en": "Saving..."
+  },
+  "Save Portfolio": {
+    "id": "Simpan portofolio",
+    "en": "Save Portfolio"
+  },
+  "Simpan portofolio": {
+    "id": "Simpan portofolio",
+    "en": "Save Portfolio"
+  },
+  "Hapus chat": {
+    "id": "Hapus chat",
+    "en": "Delete chat"
+  },
+  "Lihat komentar sebelumnya": {
+    "id": "Lihat komentar sebelumnya",
+    "en": "View earlier comments"
+  },
+  "View earlier comments": {
+    "id": "Lihat komentar sebelumnya",
+    "en": "View earlier comments"
+  },
+  "Tulis balasan… (@username untuk mention)": {
+    "id": "Tulis balasan… (@username untuk mention)",
+    "en": "Write a reply… (@username to mention)"
+  },
+  "Write a reply… (@username to mention)": {
+    "id": "Tulis balasan… (@username untuk mention)",
+    "en": "Write a reply… (@username to mention)"
+  },
+  "Tulis komentar… (@username untuk mention)": {
+    "id": "Tulis komentar… (@username untuk mention)",
+    "en": "Write a comment… (@username to mention)"
+  },
+  "Write a comment… (@username to mention)": {
+    "id": "Tulis komentar… (@username untuk mention)",
+    "en": "Write a comment… (@username to mention)"
+  },
+  "Video, maks. 30 menit": {
+    "id": "Video, maks. 30 menit",
+    "en": "Video, up to 30 minutes"
+  },
+  "Video, up to 30 minutes": {
+    "id": "Video, maks. 30 menit",
+    "en": "Video, up to 30 minutes"
+  },
+  "JPG, PNG, GIF, WebP": {
+    "id": "JPG, PNG, GIF, WebP",
+    "en": "JPG, PNG, GIF, WebP"
+  },
+  "Maks. 1 video": {
+    "id": "Maks. 1 video",
+    "en": "Up to 1 video"
+  },
+  "Up to 1 video": {
+    "id": "Maks. 1 video",
+    "en": "Up to 1 video"
+  },
+  "Maks. 10 MB / gambar": {
+    "id": "Maks. 10 MB / gambar",
+    "en": "Up to 10 MB / image"
+  },
+  "Up to 10 MB / image": {
+    "id": "Maks. 10 MB / gambar",
+    "en": "Up to 10 MB / image"
+  },
+  "Hashtag dalam deskripsi ikut dihitung.": {
+    "id": "Hashtag dalam deskripsi ikut dihitung.",
+    "en": "Hashtags in the description are also counted."
+  },
+  "Hashtags in the description are also counted.": {
+    "id": "Hashtag dalam deskripsi ikut dihitung.",
+    "en": "Hashtags in the description are also counted."
+  },
+  "user": {
+    "id": "pengguna",
+    "en": "user"
+  },
+  "pengguna": {
+    "id": "pengguna",
+    "en": "user"
+  },
+  "Product": {
+    "id": "Produk",
+    "en": "Product"
+  },
+  "System": {
+    "id": "Sistem",
+    "en": "System"
+  },
+  "Sistem": {
+    "id": "Sistem",
+    "en": "System"
+  },
+  "Dark": {
+    "id": "Gelap",
+    "en": "Dark"
+  },
+  "Gelap": {
+    "id": "Gelap",
+    "en": "Dark"
+  },
+  "Light": {
+    "id": "Terang",
+    "en": "Light"
+  },
+  "Terang": {
+    "id": "Terang",
+    "en": "Light"
+  },
+  "Audio": {
+    "id": "Audio",
+    "en": "Audio"
+  },
+  "Dokumen": {
+    "id": "Dokumen",
+    "en": "Document"
+  },
+  "Document": {
+    "id": "Dokumen",
+    "en": "Document"
+  },
+  "File Lampiran": {
+    "id": "File Lampiran",
+    "en": "Attachment"
+  },
+  "Attachment": {
+    "id": "File Lampiran",
+    "en": "Attachment"
+  },
+  "Video Call": {
+    "id": "Panggilan video",
+    "en": "Video Call"
+  },
+  "Panggilan video": {
+    "id": "Panggilan video",
+    "en": "Video Call"
+  },
+  "Panggilan Suara": {
+    "id": "Panggilan Suara",
+    "en": "Voice call"
+  },
+  "Panggilan ditolak": {
+    "id": "Panggilan ditolak",
+    "en": "Call declined"
+  },
+  "Call declined": {
+    "id": "Panggilan ditolak",
+    "en": "Call declined"
+  },
+  "Pengguna sedang sibuk": {
+    "id": "Pengguna sedang sibuk",
+    "en": "User is busy"
+  },
+  "User is busy": {
+    "id": "Pengguna sedang sibuk",
+    "en": "User is busy"
+  },
+  "Panggilan tak terjawab": {
+    "id": "Panggilan tak terjawab",
+    "en": "Missed call"
+  },
+  "Missed call": {
+    "id": "Panggilan tak terjawab",
+    "en": "Missed call"
+  },
+  "Mulai percakapan baru": {
+    "id": "Mulai percakapan baru",
+    "en": "Start a new conversation"
+  },
+  "Start a new conversation": {
+    "id": "Mulai percakapan baru",
+    "en": "Start a new conversation"
+  },
+  "Produk Shop": {
+    "id": "Produk Shop",
+    "en": "Shop product"
+  },
+  "Shop product": {
+    "id": "Produk Shop",
+    "en": "Shop product"
+  },
+  "Mengambil titik Lokasi Saya...": {
+    "id": "Mengambil titik Lokasi Saya...",
+    "en": "Finding my location..."
+  },
+  "Finding my location...": {
+    "id": "Mengambil titik Lokasi Saya...",
+    "en": "Finding my location..."
+  },
+  "Mengunggah & mengirim file...": {
+    "id": "Mengunggah & mengirim file...",
+    "en": "Uploading & sending file..."
+  },
+  "Uploading & sending file...": {
+    "id": "Mengunggah & mengirim file...",
+    "en": "Uploading & sending file..."
+  },
+  "Berdering • Online (Menunggu jawaban)": {
+    "id": "Berdering • Online (Menunggu jawaban)",
+    "en": "Ringing • Online (Waiting for an answer)"
+  },
+  "Ringing • Online (Waiting for an answer)": {
+    "id": "Berdering • Online (Menunggu jawaban)",
+    "en": "Ringing • Online (Waiting for an answer)"
+  },
+  "Memanggil... (Menghubungi perangkat)": {
+    "id": "Memanggil... (Menghubungi perangkat)",
+    "en": "Calling... (Contacting device)"
+  },
+  "Calling... (Contacting device)": {
+    "id": "Memanggil... (Menghubungi perangkat)",
+    "en": "Calling... (Contacting device)"
+  },
+  "Menghubungkan suara/video...": {
+    "id": "Menghubungkan suara/video...",
+    "en": "Connecting audio/video..."
+  },
+  "Connecting audio/video...": {
+    "id": "Menghubungkan suara/video...",
+    "en": "Connecting audio/video..."
+  },
+  "Berdering • Online...": {
+    "id": "Berdering • Online...",
+    "en": "Ringing • Online..."
+  },
+  "Ringing • Online...": {
+    "id": "Berdering • Online...",
+    "en": "Ringing • Online..."
+  },
+  "Memanggil...": {
+    "id": "Memanggil...",
+    "en": "Calling..."
+  },
+  "Calling...": {
+    "id": "Memanggil...",
+    "en": "Calling..."
+  },
+  "Menyiapkan video...": {
+    "id": "Menyiapkan video...",
+    "en": "Preparing video..."
+  },
+  "Preparing video...": {
+    "id": "Menyiapkan video...",
+    "en": "Preparing video..."
+  },
+  "Menghubungkan...": {
+    "id": "Menghubungkan...",
+    "en": "Connecting..."
+  },
+  "Connecting...": {
+    "id": "Menghubungkan...",
+    "en": "Connecting..."
+  },
+  "Nyalakan Mikrofon": {
+    "id": "Nyalakan Mikrofon",
+    "en": "Turn microphone on"
+  },
+  "Turn microphone on": {
+    "id": "Nyalakan Mikrofon",
+    "en": "Turn microphone on"
+  },
+  "Bisukan Mikrofon": {
+    "id": "Bisukan Mikrofon",
+    "en": "Mute microphone"
+  },
+  "Mute microphone": {
+    "id": "Bisukan Mikrofon",
+    "en": "Mute microphone"
+  },
+  "Nyalakan Kamera": {
+    "id": "Nyalakan Kamera",
+    "en": "Turn camera on"
+  },
+  "Turn camera on": {
+    "id": "Nyalakan Kamera",
+    "en": "Turn camera on"
+  },
+  "Matikan Kamera": {
+    "id": "Matikan Kamera",
+    "en": "Turn camera off"
+  },
+  "Turn camera off": {
+    "id": "Matikan Kamera",
+    "en": "Turn camera off"
+  },
+  "Nyalakan Suara Speaker": {
+    "id": "Nyalakan Suara Speaker",
+    "en": "Turn speaker on"
+  },
+  "Turn speaker on": {
+    "id": "Nyalakan Suara Speaker",
+    "en": "Turn speaker on"
+  },
+  "Bisukan Speaker": {
+    "id": "Bisukan Speaker",
+    "en": "Mute speaker"
+  },
+  "Mute speaker": {
+    "id": "Bisukan Speaker",
+    "en": "Mute speaker"
+  },
+  "Posting Kutipan": {
+    "id": "Posting Kutipan",
+    "en": "Quote post"
+  },
+  "Quote post": {
+    "id": "Posting Kutipan",
+    "en": "Quote post"
+  },
+  "Repost sekarang": {
+    "id": "Repost sekarang",
+    "en": "Repost now"
+  },
+  "Repost now": {
+    "id": "Repost sekarang",
+    "en": "Repost now"
+  },
+  "Kirim Produk ke Chat": {
+    "id": "Kirim Produk ke Chat",
+    "en": "Send product to chat"
+  },
+  "Send product to chat": {
+    "id": "Kirim Produk ke Chat",
+    "en": "Send product to chat"
+  },
+  "Chat Penjual / Beli": {
+    "id": "Chat Penjual / Beli",
+    "en": "Chat with seller / Buy"
+  },
+  "Chat with seller / Buy": {
+    "id": "Chat Penjual / Beli",
+    "en": "Chat with seller / Buy"
+  },
+  "Anda": {
+    "id": "Anda",
+    "en": "You"
+  },
+  "You": {
+    "id": "Anda",
+    "en": "You"
+  },
+  "Batalkan repost": {
+    "id": "Batalkan repost",
+    "en": "Undo repost"
+  },
+  "Undo repost": {
+    "id": "Batalkan repost",
+    "en": "Undo repost"
+  },
+  "Lebih sedikit": {
+    "id": "Lebih sedikit",
+    "en": "Show less"
+  },
+  "Show less": {
+    "id": "Lebih sedikit",
+    "en": "Show less"
+  },
+  "Lihat selengkapnya": {
+    "id": "Lihat selengkapnya",
+    "en": "See more"
+  },
+  "Anda memblokir akun ini": {
+    "id": "Anda memblokir akun ini",
+    "en": "You blocked this account"
+  },
+  "You blocked this account": {
+    "id": "Anda memblokir akun ini",
+    "en": "You blocked this account"
+  },
+  "Akun ini private": {
+    "id": "Akun ini private",
+    "en": "This account is private"
+  },
+  "This account is private": {
+    "id": "Akun ini private",
+    "en": "This account is private"
+  },
+  "Buka blokir untuk melihat postingannya.": {
+    "id": "Buka blokir untuk melihat postingannya.",
+    "en": "Unblock this account to view its posts."
+  },
+  "Unblock this account to view its posts.": {
+    "id": "Buka blokir untuk melihat postingannya.",
+    "en": "Unblock this account to view its posts."
+  },
+  "Ikuti akun ini untuk melihat postingannya.": {
+    "id": "Ikuti akun ini untuk melihat postingannya.",
+    "en": "Follow this account to view its posts."
+  },
+  "Follow this account to view its posts.": {
+    "id": "Ikuti akun ini untuk melihat postingannya.",
+    "en": "Follow this account to view its posts."
+  },
+  "Memuat postingan tersimpan...": {
+    "id": "Memuat postingan tersimpan...",
+    "en": "Loading saved posts..."
+  },
+  "Loading saved posts...": {
+    "id": "Memuat postingan tersimpan...",
+    "en": "Loading saved posts..."
+  },
+  "Belum ada postingan untuk kategori ini.": {
+    "id": "Belum ada postingan untuk kategori ini.",
+    "en": "No posts in this category yet."
+  },
+  "No posts in this category yet.": {
+    "id": "Belum ada postingan untuk kategori ini.",
+    "en": "No posts in this category yet."
+  },
+  "Cari nama, username, atau email…": {
+    "id": "Cari nama, username, atau email…",
+    "en": "Search names, usernames, or emails…"
+  },
+  "Search names, usernames, or emails…": {
+    "id": "Cari nama, username, atau email…",
+    "en": "Search names, usernames, or emails…"
+  },
+  "Cari judul atau deskripsi…": {
+    "id": "Cari judul atau deskripsi…",
+    "en": "Search titles or descriptions…"
+  },
+  "Search titles or descriptions…": {
+    "id": "Cari judul atau deskripsi…",
+    "en": "Search titles or descriptions…"
+  },
+  "active": {
+    "id": "aktif",
+    "en": "active"
+  },
+  "aktif": {
+    "id": "aktif",
+    "en": "active"
+  },
+  "Cabut verifikasi admin": {
+    "id": "Cabut verifikasi admin",
+    "en": "Remove admin verification"
+  },
+  "Remove admin verification": {
+    "id": "Cabut verifikasi admin",
+    "en": "Remove admin verification"
+  },
+  "Berikan centang biru": {
+    "id": "Berikan centang biru",
+    "en": "Grant a blue badge"
+  },
+  "Grant a blue badge": {
+    "id": "Berikan centang biru",
+    "en": "Grant a blue badge"
+  },
+  "Tanpa judul": {
+    "id": "Tanpa judul",
+    "en": "Untitled"
+  },
+  "Untitled": {
+    "id": "Tanpa judul",
+    "en": "Untitled"
+  },
+  "· Iklan": {
+    "id": "· Iklan",
+    "en": "· Ad"
+  },
+  "· Ad": {
+    "id": "· Iklan",
+    "en": "· Ad"
+  },
+  "Hentikan iklan": {
+    "id": "Hentikan iklan",
+    "en": "Stop ad"
+  },
+  "Stop ad": {
+    "id": "Hentikan iklan",
+    "en": "Stop ad"
+  },
+  "Jadikan iklan": {
+    "id": "Jadikan iklan",
+    "en": "Mark as ad"
+  },
+  "Mark as ad": {
+    "id": "Jadikan iklan",
+    "en": "Mark as ad"
+  },
+  "Kuota posting sesuai paket sedang aktif.": {
+    "id": "Kuota posting sesuai paket sedang aktif.",
+    "en": "Posting quotas are enabled according to each plan."
+  },
+  "Posting quotas are enabled according to each plan.": {
+    "id": "Kuota posting sesuai paket sedang aktif.",
+    "en": "Posting quotas are enabled according to each plan."
+  },
+  "Posting bebas kuota paket. Halaman pricing disembunyikan di desktop dan mobile.": {
+    "id": "Posting bebas kuota paket. Halaman pricing disembunyikan di desktop dan mobile.",
+    "en": "Posting is free of plan quotas. Pricing pages are hidden on desktop and mobile."
+  },
+  "Posting is free of plan quotas. Pricing pages are hidden on desktop and mobile.": {
+    "id": "Posting bebas kuota paket. Halaman pricing disembunyikan di desktop dan mobile.",
+    "en": "Posting is free of plan quotas. Pricing pages are hidden on desktop and mobile."
+  },
+  "Postter": {
+    "id": "Postter",
+    "en": "Postter"
+  },
+  "Most Popular": {
+    "id": "Paling populer",
+    "en": "Most Popular"
+  },
+  "Paling populer": {
+    "id": "Paling populer",
+    "en": "Most Popular"
+  },
+  "s": {
+    "id": "s",
+    "en": "s"
+  },
+  "Processing...": {
+    "id": "Memproses...",
+    "en": "Processing..."
+  },
+  "Memproses...": {
+    "id": "Memproses...",
+    "en": "Processing..."
+  },
+  "Berhenti Berlangganan (Ke Free)": {
+    "id": "Berhenti Berlangganan (Ke Free)",
+    "en": "Cancel subscription (switch to Free)"
+  },
+  "Cancel subscription (switch to Free)": {
+    "id": "Berhenti Berlangganan (Ke Free)",
+    "en": "Cancel subscription (switch to Free)"
+  },
+  "Tidak ada": {
+    "id": "Tidak ada",
+    "en": "None"
+  },
+  "None": {
+    "id": "Tidak ada",
+    "en": "None"
+  },
+  "Menyimpan…": {
+    "id": "Menyimpan…",
+    "en": "Saving…"
+  },
+  "Saving…": {
+    "id": "Menyimpan…",
+    "en": "Saving…"
+  },
+  "Simpan password": {
+    "id": "Simpan password",
+    "en": "Save password"
+  },
+  "Save password": {
+    "id": "Simpan password",
+    "en": "Save password"
+  },
+  "Nyalakan suara": {
+    "id": "Nyalakan suara",
+    "en": "Unmute"
+  },
+  "Matikan suara": {
+    "id": "Matikan suara",
+    "en": "Mute"
+  },
+  "Mute": {
+    "id": "Matikan suara",
+    "en": "Mute"
+  },
+  "\"Lebih dari sekadar media sosial,": {
+    "id": "\"Lebih dari sekadar media sosial,",
+    "en": "\"More than social media,"
+  },
+  "\"More than social media,": {
+    "id": "\"Lebih dari sekadar media sosial,",
+    "en": "\"More than social media,"
+  },
+  "ini adalah tempat untuk menemukan": {
+    "id": "ini adalah tempat untuk menemukan",
+    "en": "this is a place to discover"
+  },
+  "this is a place to discover": {
+    "id": "ini adalah tempat untuk menemukan",
+    "en": "this is a place to discover"
+  },
+  "dunia baru.\"": {
+    "id": "dunia baru.\"",
+    "en": "a new world.\""
+  },
+  "a new world.\"": {
+    "id": "dunia baru.\"",
+    "en": "a new world.\""
+  },
+  "Kesehatan": {
+    "id": "Kesehatan",
+    "en": "Health"
+  },
+  "Health": {
+    "id": "Kesehatan",
+    "en": "Health"
+  },
+  "Film": {
+    "id": "Film",
+    "en": "Film"
+  },
+  "Game": {
+    "id": "Game",
+    "en": "Games"
+  },
+  "Games": {
+    "id": "Game",
+    "en": "Games"
+  },
+  "Properti": {
+    "id": "Properti",
+    "en": "Property"
+  },
+  "Property": {
+    "id": "Properti",
+    "en": "Property"
+  },
+  "Keuangan": {
+    "id": "Keuangan",
+    "en": "Finance"
+  },
+  "Finance": {
+    "id": "Keuangan",
+    "en": "Finance"
+  },
+  "Parenting": {
+    "id": "Parenting",
+    "en": "Parenting"
+  },
+  "Elektronik": {
+    "id": "Elektronik",
+    "en": "Electronics"
+  },
+  "Electronics": {
+    "id": "Elektronik",
+    "en": "Electronics"
+  },
+  "Kecantikan": {
+    "id": "Kecantikan",
+    "en": "Beauty"
+  },
+  "Beauty": {
+    "id": "Kecantikan",
+    "en": "Beauty"
+  },
+  "Rumah & Dapur": {
+    "id": "Rumah & Dapur",
+    "en": "Home & kitchen"
+  },
+  "Home & kitchen": {
+    "id": "Rumah & Dapur",
+    "en": "Home & kitchen"
+  },
+  "Hobi & Koleksi": {
+    "id": "Hobi & Koleksi",
+    "en": "Hobbies & collectibles"
+  },
+  "Hobbies & collectibles": {
+    "id": "Hobi & Koleksi",
+    "en": "Hobbies & collectibles"
+  },
+  "Makanan & Minuman": {
+    "id": "Makanan & Minuman",
+    "en": "Food & drinks"
+  },
+  "Food & drinks": {
+    "id": "Makanan & Minuman",
+    "en": "Food & drinks"
+  },
+  "Jasa": {
+    "id": "Jasa",
+    "en": "Services"
+  },
+  "Services": {
+    "id": "Jasa",
+    "en": "Services"
+  },
+  "Reels": {
+    "id": "Reels",
+    "en": "Reels"
+  },
+  "Tagged": {
+    "id": "Ditandai",
+    "en": "Tagged"
+  },
+  "Ditandai": {
+    "id": "Ditandai",
+    "en": "Tagged"
+  },
+  "Buka": {
+    "id": "Buka",
+    "en": "Open"
+  },
+  "Open": {
+    "id": "Buka",
+    "en": "Open"
+  },
+  "Mengubah email atau nomor akan membutuhkan verifikasi ulang.": {
+    "id": "Mengubah email atau nomor akan membutuhkan verifikasi ulang.",
+    "en": "Changing your email or phone number requires verification again."
+  },
+  "Dipakai untuk rekomendasi konten dan produk.": {
+    "id": "Dipakai untuk rekomendasi konten dan produk.",
+    "en": "Used for content and product recommendations."
+  },
+  "Kode berlaku 10 menit.": {
+    "id": "Kode berlaku 10 menit.",
+    "en": "The code is valid for 10 minutes."
+  },
+  "Akun dinonaktifkan segera dan dihapus permanen setelah 30 hari. Masuk kembali dalam 30 hari untuk mengaktifkannya lagi.": {
+    "id": "Akun dinonaktifkan segera dan dihapus permanen setelah 30 hari. Masuk kembali dalam 30 hari untuk mengaktifkannya lagi.",
+    "en": "Your account is deactivated immediately and permanently deleted after 30 days. Sign in within 30 days to reactivate it."
+  },
+  "Sesi berakhir karena tidak aktif selama 12 jam. Silakan masuk kembali.": {
+    "id": "Sesi berakhir karena tidak aktif selama 12 jam. Silakan masuk kembali.",
+    "en": "Your session expired after 12 hours of inactivity. Please sign in again."
+  },
+  "Akun Anda tidak aktif (diblokir atau sedang dalam proses penghapusan).": {
+    "id": "Akun Anda tidak aktif (diblokir atau sedang dalam proses penghapusan).",
+    "en": "Your account is inactive (blocked or pending deletion)."
+  },
+  "Sesi Anda telah berakhir. Silakan masuk kembali.": {
+    "id": "Sesi Anda telah berakhir. Silakan masuk kembali.",
+    "en": "Your session has ended. Please sign in again."
+  },
+  "Layanan login sosial belum dikonfigurasi di server.": {
+    "id": "Layanan login sosial belum dikonfigurasi di server.",
+    "en": "Social sign-in has not been configured on the server."
+  },
+  "Proses login sosial dibatalkan.": {
+    "id": "Proses login sosial dibatalkan.",
+    "en": "Social sign-in was cancelled."
+  },
+  "Sesi login sosial telah kedaluwarsa. Silakan coba lagi.": {
+    "id": "Sesi login sosial telah kedaluwarsa. Silakan coba lagi.",
+    "en": "Your social sign-in session expired. Please try again."
+  },
+  "Gagal masuk melalui akun sosial. Silakan coba lagi.": {
+    "id": "Gagal masuk melalui akun sosial. Silakan coba lagi.",
+    "en": "Social sign-in failed. Please try again."
+  },
+  "Email/username atau password salah.": {
+    "id": "Email/username atau password salah.",
+    "en": "Incorrect email/username or password."
+  },
+  "Profil tidak ditemukan.": {
+    "id": "Profil tidak ditemukan.",
+    "en": "Profile not found."
+  },
+  "Postingan tidak ditemukan.": {
+    "id": "Postingan tidak ditemukan.",
+    "en": "Post not found."
+  },
+  "Gagal memuat postingan": {
+    "id": "Gagal memuat postingan",
+    "en": "Failed to load posts"
+  },
+  "Gagal menyimpan profil": {
+    "id": "Gagal menyimpan profil",
+    "en": "Failed to save profile"
+  },
+  "Profil berhasil disimpan.": {
+    "id": "Profil berhasil disimpan.",
+    "en": "Profile saved successfully."
+  },
+  "Pengaturan berhasil disimpan.": {
+    "id": "Pengaturan berhasil disimpan.",
+    "en": "Settings saved successfully."
+  },
+  "Welcome Back to Postter": {
+    "id": "Selamat Datang Kembali di Postter",
+    "en": "Welcome Back to Postter"
+  },
+  "Buat Akun Postter": {
+    "id": "Buat Akun Postter",
+    "en": "Create a Postter Account"
+  },
+  "Tonton Video": {
+    "id": "Tonton Video",
+    "en": "Watch videos"
+  },
+  "Temukan video terbaik, foto, dan tren dari seluruh dunia.": {
+    "id": "Temukan video terbaik, foto, dan tren dari seluruh dunia.",
+    "en": "Discover the best videos, photos, and trends from around the world."
+  },
+  "Ikuti kreator favorit dan temui orang-orang baru.": {
+    "id": "Ikuti kreator favorit dan temui orang-orang baru.",
+    "en": "Follow your favorite creators and meet new people."
+  },
+  "Bagikan momen, ide, dan cerita kamu dengan dunia.": {
+    "id": "Bagikan momen, ide, dan cerita kamu dengan dunia.",
+    "en": "Share your moments, ideas, and stories with the world."
+  },
+  "Pengaturan berhasil diperbarui.": {
+    "id": "Pengaturan berhasil diperbarui.",
+    "en": "Settings updated successfully."
+  },
+  "Kontak berhasil diverifikasi.": {
+    "id": "Kontak berhasil diverifikasi.",
+    "en": "Contact verified successfully."
+  },
+  "Password baru minimal 8 karakter.": {
+    "id": "Password baru minimal 8 karakter.",
+    "en": "The new password must contain at least 8 characters."
+  },
+  "Konfirmasi password tidak sama.": {
+    "id": "Konfirmasi password tidak sama.",
+    "en": "Password confirmation does not match."
+  },
+  "Password disimpan. Sesi di perangkat lain telah dikeluarkan.": {
+    "id": "Password disimpan. Sesi di perangkat lain telah dikeluarkan.",
+    "en": "Password saved. Sessions on other devices have been signed out."
+  },
+  "Ambil langsung": {
+    "id": "Ambil langsung",
+    "en": "Pickup"
+  },
+  "COD": {
+    "id": "COD",
+    "en": "Cash on delivery"
+  },
+  "Jasa ekspedisi": {
+    "id": "Jasa ekspedisi",
+    "en": "Shipping service"
+  },
+  "Pengaturan gagal disimpan.": {
+    "id": "Pengaturan gagal disimpan.",
+    "en": "Failed to save settings."
+  },
+  "ID pengguna": {
+    "id": "ID pengguna",
+    "en": "User ID"
+  },
+  "Semua pengguna": {
+    "id": "Semua pengguna",
+    "en": "All users"
+  },
+  "Dari tanggal (UTC)": {
+    "id": "Dari tanggal (UTC)",
+    "en": "Start date (UTC)"
+  },
+  "Sampai tanggal (UTC)": {
+    "id": "Sampai tanggal (UTC)",
+    "en": "End date (UTC)"
+  },
+  "Semua tindakan": {
+    "id": "Semua tindakan",
+    "en": "All actions"
+  },
+  "Melihat": {
+    "id": "Melihat",
+    "en": "View"
+  },
+  "Membuat atau mengirim": {
+    "id": "Membuat atau mengirim",
+    "en": "Create or send"
+  },
+  "Memperbarui": {
+    "id": "Memperbarui",
+    "en": "Update"
+  },
+  "Menghapus": {
+    "id": "Menghapus",
+    "en": "Delete"
+  },
+  "Terapkan filter": {
+    "id": "Terapkan filter",
+    "en": "Apply filters"
+  },
+  "Reset filter": {
+    "id": "Reset filter",
+    "en": "Reset filters"
+  },
+  "Riwayat dimulai sejak pencatatan diaktifkan. Isi pesan pribadi tidak dicatat. Filter tindakan hanya berlaku pada riwayat tindakan.": {
+    "id": "Riwayat dimulai sejak pencatatan diaktifkan. Isi pesan pribadi tidak dicatat. Filter tindakan hanya berlaku pada riwayat tindakan.",
+    "en": "History starts when logging is enabled. Private message contents are not recorded. The action filter only applies to action history."
+  },
+  "Muat riwayat berikutnya": {
+    "id": "Muat riwayat berikutnya",
+    "en": "Load more history"
+  },
+  "Muat sesi berikutnya": {
+    "id": "Muat sesi berikutnya",
+    "en": "Load more sessions"
+  },
+  "Tidak ada sesi untuk filter ini.": {
+    "id": "Tidak ada sesi untuk filter ini.",
+    "en": "No sessions match these filters."
+  },
+  "Data aktivitas tidak valid.": {
+    "id": "Data aktivitas tidak valid.",
+    "en": "Invalid activity data."
+  },
+  "Status konten": {
+    "id": "Status konten",
+    "en": "Content status"
+  },
+  "Konten aktif": {
+    "id": "Konten aktif",
+    "en": "Active content"
+  },
+  "Konten dihapus": {
+    "id": "Konten dihapus",
+    "en": "Removed content"
+  },
+  "Semua konten": {
+    "id": "Semua konten",
+    "en": "All content"
+  },
+  "Lihat konten": {
+    "id": "Lihat konten",
+    "en": "Review content"
+  },
+  "Pulihkan konten": {
+    "id": "Pulihkan konten",
+    "en": "Restore content"
+  },
+  "Pemilik akan menerima pemberitahuan. Konten yang dihapus dapat dipulihkan oleh admin.": {
+    "id": "Pemilik akan menerima pemberitahuan. Konten yang dihapus dapat dipulihkan oleh admin.",
+    "en": "The owner will be notified. Administrators can restore removed content."
+  },
+  "Alasan moderasi (5–300 karakter)": {
+    "id": "Alasan moderasi (5–300 karakter)",
+    "en": "Moderation reason (5–300 characters)"
+  },
+  "Konten berhasil dipulihkan.": {
+    "id": "Konten berhasil dipulihkan.",
+    "en": "Content restored successfully."
+  },
+  "Konten dihapus dan pemilik telah diberi tahu.": {
+    "id": "Konten dihapus dan pemilik telah diberi tahu.",
+    "en": "Content removed and the owner notified."
+  },
+  "Invalid limit": {
+    "id": "Batas jumlah tidak valid",
+    "en": "Invalid limit"
+  },
+  "Invalid user": {
+    "id": "Pengguna tidak valid",
+    "en": "Invalid user"
+  },
+  "Invalid start date": {
+    "id": "Tanggal awal tidak valid",
+    "en": "Invalid start date"
+  },
+  "Invalid end date": {
+    "id": "Tanggal akhir tidak valid",
+    "en": "Invalid end date"
+  },
+  "Invalid action": {
+    "id": "Tindakan tidak valid",
+    "en": "Invalid action"
+  },
+  "Invalid session filters": {
+    "id": "Filter sesi tidak valid",
+    "en": "Invalid session filters"
+  },
+  "Membuat postingan": {
+    "id": "Membuat postingan",
+    "en": "Created a post"
+  },
+  "Melihat beranda": {
+    "id": "Melihat beranda",
+    "en": "Viewed the feed"
+  },
+  "Menjelajahi konten": {
+    "id": "Menjelajahi konten",
+    "en": "Explored content"
+  },
+  "Mencari konten": {
+    "id": "Mencari konten",
+    "en": "Searched for content"
+  },
+  "Membuka postingan": {
+    "id": "Membuka postingan",
+    "en": "Opened a post"
+  },
+  "Melihat profil": {
+    "id": "Melihat profil",
+    "en": "Viewed a profile"
+  },
+  "Melihat data": {
+    "id": "Melihat data",
+    "en": "Viewed data"
+  },
+  "Mengubah suka pada postingan": {
+    "id": "Mengubah suka pada postingan",
+    "en": "Changed a post like"
+  },
+  "Mengubah koleksi postingan": {
+    "id": "Mengubah koleksi postingan",
+    "en": "Changed a saved post"
+  },
+  "Mengelola komentar": {
+    "id": "Mengelola komentar",
+    "en": "Managed a comment"
+  },
+  "Membagikan ulang postingan": {
+    "id": "Membagikan ulang postingan",
+    "en": "Reposted content"
+  },
+  "Mengunggah media": {
+    "id": "Mengunggah media",
+    "en": "Uploaded media"
+  },
+  "Melakukan tindakan pada percakapan": {
+    "id": "Melakukan tindakan pada percakapan",
+    "en": "Performed a conversation action"
+  },
+  "Memperbarui postingan": {
+    "id": "Memperbarui postingan",
+    "en": "Updated a post"
+  },
+  "Menghapus postingan sendiri": {
+    "id": "Menghapus postingan sendiri",
+    "en": "Deleted own post"
+  },
+  "Keluar dari akun": {
+    "id": "Keluar dari akun",
+    "en": "Signed out"
+  },
+  "Mengubah hubungan mengikuti": {
+    "id": "Mengubah hubungan mengikuti",
+    "en": "Changed a follow relationship"
+  },
+  "Mengubah status blokir": {
+    "id": "Mengubah status blokir",
+    "en": "Changed a block status"
+  },
+  "Melakukan tindakan administrator": {
+    "id": "Melakukan tindakan administrator",
+    "en": "Performed an admin action"
+  },
+  "Memperbarui profil atau pengaturan akun": {
+    "id": "Memperbarui profil atau pengaturan akun",
+    "en": "Updated profile or account settings"
+  },
+  "Melakukan tindakan pada aplikasi": {
+    "id": "Melakukan tindakan pada aplikasi",
+    "en": "Performed an application action"
+  },
+  "Menghapus konten melalui moderasi": {
+    "id": "Menghapus konten melalui moderasi",
+    "en": "Removed content through moderation"
+  },
+  "Memulihkan konten melalui moderasi": {
+    "id": "Memulihkan konten melalui moderasi",
+    "en": "Restored content through moderation"
+  },
+  "Moderasi gagal. Pastikan alasan berisi 5–300 karakter dan status konten belum berubah.": {
+    "id": "Moderasi gagal. Pastikan alasan berisi 5–300 karakter dan status konten belum berubah.",
+    "en": "Moderation failed. Ensure the reason has 5–300 characters and the content status has not changed."
+  },
+  "Memulai sesi login": {
+    "id": "Memulai sesi login",
+    "en": "Started a login session"
+  },
+  "Alasan moderasi harus terdiri dari 5–300 karakter": {
+    "id": "Alasan moderasi harus terdiri dari 5–300 karakter",
+    "en": "The moderation reason must contain 5–300 characters"
+  },
+  "Status konten sudah berubah. Muat ulang daftar konten": {
+    "id": "Status konten sudah berubah. Muat ulang daftar konten",
+    "en": "The content status has changed. Reload the content list"
+  },
+  "Moderasi belum dapat disimpan. Silakan coba lagi.": {
+    "id": "Moderasi belum dapat disimpan. Silakan coba lagi.",
+    "en": "Moderation could not be saved. Please try again."
+  },
+  "Backend aktivitas belum diperbarui. Bangun ulang dan jalankan ulang backend.": {
+    "id": "Backend aktivitas belum diperbarui. Bangun ulang dan jalankan ulang backend.",
+    "en": "The activity backend is outdated. Rebuild and restart the backend."
+  },
+  "Respons aktivitas server tidak valid. Silakan coba lagi.": {
+    "id": "Respons aktivitas server tidak valid. Silakan coba lagi.",
+    "en": "The server returned an invalid activity response. Please try again."
+  },
+  "Gagal memuat jaringan.": {
+    "id": "Gagal memuat jaringan.",
+    "en": "Failed to load your network."
+  },
+  "Gagal menerima permintaan koneksi.": {
+    "id": "Gagal menerima permintaan koneksi.",
+    "en": "Failed to accept the connection request."
+  },
+  "Gagal menolak permintaan koneksi.": {
+    "id": "Gagal menolak permintaan koneksi.",
+    "en": "Failed to decline the connection request."
+  },
+  "Gagal memuat postingan tersimpan.": {
+    "id": "Gagal memuat postingan tersimpan.",
+    "en": "Failed to load saved posts."
+  },
+  "Bagikan ke": {
+    "id": "Bagikan ke",
+    "en": "Share to"
+  },
+  "Popup diblokir atau ditutup. Gunakan tautan di bawah atau salin tautannya.": {
+    "id": "Popup diblokir atau ditutup. Gunakan tautan di bawah atau salin tautannya.",
+    "en": "The popup was blocked or closed. Use the link below or copy the post link."
+  },
+  "Tautan disalin. Buka aplikasi dan tempel secara manual; gambar atau video tidak diunggah otomatis.": {
+    "id": "Tautan disalin. Buka aplikasi dan tempel secara manual; gambar atau video tidak diunggah otomatis.",
+    "en": "Link copied. Open the app and paste it manually; images and videos are not uploaded automatically."
+  },
+  "Halaman berbagi dibuka. Selesaikan pengiriman di media sosial tersebut.": {
+    "id": "Halaman berbagi dibuka. Selesaikan pengiriman di media sosial tersebut.",
+    "en": "Sharing page opened. Finish sending on that social network."
+  },
+  "Instagram dan TikTok menggunakan salin tautan, lalu tempel manual di aplikasi.": {
+    "id": "Instagram dan TikTok menggunakan salin tautan, lalu tempel manual di aplikasi.",
+    "en": "For Instagram and TikTok, copy the link and paste it manually in the app."
+  },
+  "Tautan postingan": {
+    "id": "Tautan postingan",
+    "en": "Post link"
+  },
+  "Tautan berbagi tidak valid.": {
+    "id": "Tautan berbagi tidak valid.",
+    "en": "Invalid share link."
+  },
+  "Tujuan berbagi tidak tersedia.": {
+    "id": "Tujuan berbagi tidak tersedia.",
+    "en": "Sharing destination is unavailable."
+  },
+  "Server berbagi perlu diperbarui. Muat ulang setelah backend diperbarui.": {
+    "id": "Server berbagi perlu diperbarui. Muat ulang setelah backend diperbarui.",
+    "en": "The sharing service needs an update. Reload after the backend is updated."
+  },
+  "Link disalin ke clipboard.": {
+    "id": "Link disalin ke clipboard.",
+    "en": "Link copied to clipboard."
+  },
+  "Hasil pencarian untuk": {
+    "id": "Hasil pencarian untuk",
+    "en": "Search results for"
+  },
+  "Urutkan": {
+    "id": "Urutkan",
+    "en": "Sort"
+  },
+  "Urutkan hasil pencarian": {
+    "id": "Urutkan hasil pencarian",
+    "en": "Sort search results"
+  },
+  "Relevan": {
+    "id": "Relevan",
+    "en": "Relevant"
+  },
+  "Hasil yang dimuat": {
+    "id": "Hasil yang dimuat",
+    "en": "Loaded results"
+  },
+  "Masukkan minimal 2 karakter untuk mencari.": {
+    "id": "Masukkan minimal 2 karakter untuk mencari.",
+    "en": "Enter at least 2 characters to search."
+  },
+  "Tidak ada hasil untuk pilihan ini.": {
+    "id": "Tidak ada hasil untuk pilihan ini.",
+    "en": "There are no results for these filters."
+  },
+  "Filter Pencarian": {
+    "id": "Filter Pencarian",
+    "en": "Search filters"
+  },
+  "Urutkan Berdasarkan": {
+    "id": "Urutkan Berdasarkan",
+    "en": "Sort by"
+  },
+  "Semua Lokasi": {
+    "id": "Semua Lokasi",
+    "en": "All locations"
+  },
+  "7 hari terakhir": {
+    "id": "7 hari terakhir",
+    "en": "Last 7 days"
+  },
+  "Sebulan terakhir": {
+    "id": "Sebulan terakhir",
+    "en": "Last month"
+  },
+  "views": {
+    "id": "ditonton",
+    "en": "views"
+  },
+  "Video Populer": {
+    "id": "Video Populer",
+    "en": "Popular videos"
+  },
+  "Belum ada video lain.": {
+    "id": "Belum ada video lain.",
+    "en": "There are no other videos yet."
+  },
+  "Shorts": {
+    "id": "Shorts",
+    "en": "Shorts"
+  },
+  "Belum ada Shorts.": {
+    "id": "Belum ada Shorts.",
+    "en": "There are no Shorts yet."
+  },
+  "Video yang Direkomendasikan": {
+    "id": "Video yang Direkomendasikan",
+    "en": "Recommended videos"
+  },
+  "Belum ada rekomendasi video.": {
+    "id": "Belum ada rekomendasi video.",
+    "en": "There are no video recommendations yet."
+  },
+  "Temukan produk pilihan": {
+    "id": "Temukan produk pilihan",
+    "en": "Discover product picks"
+  },
+  "Kategori produk": {
+    "id": "Kategori produk",
+    "en": "Product categories"
+  },
+  "Pilihan produk": {
+    "id": "Pilihan produk",
+    "en": "Product picks"
+  },
+  "Acak Lagi": {
+    "id": "Acak Lagi",
+    "en": "Shuffle again"
+  },
+  "Gagal membuka percakapan.": {
+    "id": "Gagal membuka percakapan.",
+    "en": "Failed to open the conversation."
+  },
+  "Semua Waktu": {
+    "id": "Semua Waktu",
+    "en": "All time"
+  },
+  "Hari Ini": {
+    "id": "Hari Ini",
+    "en": "Today"
   }
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { socialApi } from '../api/socialApi';
 import { messageApi } from '../api/messageApi';
 import { useNavigate } from 'react-router-dom';
@@ -12,27 +12,28 @@ export function useNotifications(onOpen) {
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [notificationsLoading, setNotificationsLoading] = useState(false);
+  const [notificationsLoading, setNotificationsLoading] = useState(true);
+  const requestVersion = useRef(0);
 
-  const loadNotifications = async () => {
-    setNotificationsLoading(true);
-    try {
-      const data = await socialApi.notifications();
-      setNotifications(Array.isArray(data) ? data : []);
-    } catch (error) {
+  const loadNotifications = useCallback(() => {
+    const version = ++requestVersion.current;
+    return socialApi.notifications().then(data => {
+      if (version === requestVersion.current) setNotifications(Array.isArray(data) ? data : []);
+    }).catch(error => {
       console.error('Failed to load notifications', error);
-    } finally {
-      setNotificationsLoading(false);
-    }
-  };
+    }).finally(() => {
+      if (version === requestVersion.current) setNotificationsLoading(false);
+    });
+  }, []);
 
   useEffect(() => {
+    const requests = requestVersion;
     loadNotifications();
     const interval = window.setInterval(() => {
       if (document.visibilityState !== 'hidden') loadNotifications();
     }, 5000);
-    return () => window.clearInterval(interval);
-  }, []);
+    return () => { window.clearInterval(interval); requests.current++; };
+  }, [loadNotifications]);
 
   const unreadCount = notifications.filter((item) => !item.read_at).length;
 
@@ -75,7 +76,7 @@ export function useNotifications(onOpen) {
     setNotificationsOpen,
     notificationsLoading,
     unreadCount,
-    loadNotifications,
+    loadNotifications: () => { setNotificationsLoading(true); return loadNotifications(); },
     openNotification,
     markAllAsRead,
   };

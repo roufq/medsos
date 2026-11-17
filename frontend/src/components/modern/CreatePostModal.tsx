@@ -27,6 +27,23 @@ const PAYMENTS = ['', 'Transfer bank', 'E-wallet', 'Tunai saat bertemu', 'Kartu 
 
 const errorText = (error: any, fallback: string) => error?.response?.data?.error || error?.message || fallback;
 const formatDuration = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+const normalizeUrlInput = (raw: string): string => {
+  const trimmed = raw.trim();
+  if (!trimmed) return '';
+  if (/^https?:\/\//i.test(trimmed) || trimmed.includes(':') || trimmed.startsWith('/')) return trimmed;
+  if (trimmed.includes('.') && !/\s/.test(trimmed)) return `https://${trimmed}`;
+  return trimmed;
+};
+const isValidHttpUrl = (raw: string): boolean => {
+  const normalized = normalizeUrlInput(raw);
+  if (!normalized) return false;
+  try {
+    const u = new URL(normalized);
+    return (u.protocol === 'http:' || u.protocol === 'https:') && u.hostname.includes('.');
+  } catch {
+    return false;
+  }
+};
 
 // Reverse geocoding: Google Maps when VITE_GOOGLE_MAPS_API_KEY is configured,
 // otherwise OpenStreetMap Nominatim (no key required).
@@ -152,7 +169,8 @@ export default function CreatePostModal({ isOpen, onClose, onSaved, editPost, in
   const mentions = useMemo(() => mergeTokens(parseTokens(mentionInput, '@'), tokensInText(content, '@')), [mentionInput, content]);
   const maxTags = isShop ? R.shopHashtagsMax : R.hashtagsMax;
   const minMentions = isShop ? 0 : R.mentionsMin;
-  const postType = isShop ? 'shop' : videos.length ? 'video' : images.length ? 'image' : linkUrl.trim() ? 'link' : 'text';
+  const normalizedLinkUrl = normalizeUrlInput(linkUrl);
+  const postType = isShop ? 'shop' : videos.length ? 'video' : images.length ? 'image' : normalizedLinkUrl ? 'link' : 'text';
 
   const problems: string[] = [];
   const titleLength = [...title.trim()].length;
@@ -161,7 +179,8 @@ export default function CreatePostModal({ isOpen, onClose, onSaved, editPost, in
   if (words > R.descriptionMaxWords) problems.push(language === 'en' ? `Description allows at most ${R.descriptionMaxWords} words.` : `Deskripsi maksimal ${R.descriptionMaxWords} kata.`);
   if (hashtags.length < R.hashtagsMin || hashtags.length > maxTags) problems.push(`Hashtag wajib ${R.hashtagsMin}–${maxTags} (sekarang ${hashtags.length}).`);
   if (mentions.length < minMentions || mentions.length > R.mentionsMax) problems.push(`Mention maksimal ${R.mentionsMax} akun dengan @username (sekarang ${mentions.length}).`);
-  if (!isShop && media.length > 0 && linkUrl.trim()) problems.push('Pilih salah satu: media atau link URL.');
+  if (activeType === 'link' && !normalizedLinkUrl && media.length === 0) problems.push('Alamat tautan (URL) wajib diisi.');
+  if (linkUrl.trim() && !isValidHttpUrl(linkUrl)) problems.push('Format tautan tidak valid (contoh: https://postter.us).');
   if (!isShop && videos.length > 0 && images.length > 0) problems.push('Postingan video tidak bisa digabung dengan gambar.');
   if (isShop) {
     if (images.length < 1) problems.push('Produk wajib memiliki 1–6 gambar.');
@@ -175,8 +194,9 @@ export default function CreatePostModal({ isOpen, onClose, onSaved, editPost, in
   const autoLinkRef = useRef({ title: '', description: '' });
   const linkRequestRef = useRef(0);
   useEffect(() => {
-    if (!isOpen || !/^https?:\/\//i.test(linkUrl.trim())) return;
-    const timer = window.setTimeout(() => { void previewLink(); }, 650);
+    const normalized = normalizeUrlInput(linkUrl);
+    if (!isOpen || !isValidHttpUrl(normalized)) return;
+    const timer = window.setTimeout(() => { void previewLink(normalized, false); }, 650);
     return () => { window.clearTimeout(timer); linkRequestRef.current++; };
   }, [linkUrl, isOpen]);
 
@@ -209,22 +229,31 @@ export default function CreatePostModal({ isOpen, onClose, onSaved, editPost, in
 
   const removeMedia = (url: string) => {mediaTouched.current = true;setMedia((current) => current.filter((m) => m.url !== url));};
 
-  const previewLink = async () => {
+  const previewLink = async (overrideUrl?: string, manual = true) => {
+    const targetUrl = normalizeUrlInput(overrideUrl ?? linkUrl);
+    if (!targetUrl || !isValidHttpUrl(targetUrl)) {
+      if (manual) setError('Format tautan tidak valid (contoh: https://postter.us).');
+      return;
+    }
+    if (manual && targetUrl !== linkUrl) setLinkUrl(targetUrl);
     const version = sectionVersion.current;
     const request = ++linkRequestRef.current;
     setLinkPreview(null);
+    if (manual) setError('');
     try {
-      const preview = await postApi.getLinkPreview(linkUrl.trim());
+      const preview = await postApi.getLinkPreview(targetUrl);
       if (version === sectionVersion.current && request === linkRequestRef.current) {
         const previous = autoLinkRef.current;
         const next = { title: (preview.title || '').slice(0, R.titleMax), description: preview.description || '' };
         setLinkPreview(preview);
-        setTitle((current) => !current.trim() || current === previous.title ? next.title : current);
-        setContent((current) => !current.trim() || current === previous.description ? next.description : current);
+        if (next.title) setTitle((current) => !current.trim() || current === previous.title ? next.title : current);
+        if (next.description) setContent((current) => !current.trim() || current === previous.description ? next.description : current);
         autoLinkRef.current = next;
       }
     } catch (err) {
-      if (version === sectionVersion.current && request === linkRequestRef.current) setError(errorText(err, 'Pratinjau link gagal'));
+      if (manual && version === sectionVersion.current && request === linkRequestRef.current) {
+        setError(errorText(err, 'Pratinjau link gagal'));
+      }
     }
   };
 
@@ -249,14 +278,14 @@ export default function CreatePostModal({ isOpen, onClose, onSaved, editPost, in
       if (isEdit) {
         saved = await postApi.updatePost(editPost.public_hash || editPost.id, {
           title: title.trim(), content: content.trim(), hashtags, mentions, location: location.trim(), visibility,
-          ...(editPost.post_type === 'link' ? { link_url: linkUrl.trim() } : {}),
+          link_url: normalizedLinkUrl,
           ...(mediaTouched.current ? { media_urls: media.map((m) => m.url) } : {}),
           ...(shopPayload ? { shop: shopPayload } : {})
         });
       } else {
         saved = await postApi.createPost({
           title: title.trim(), content: content.trim(), post_type: postType, hashtags, mentions, location: location.trim(), visibility,
-          link_url: postType === 'link' ? linkUrl.trim() : '',
+          link_url: normalizedLinkUrl,
           ...(isShop ? { image_urls: images.map((m) => m.url), video_url: videos[0]?.url || '', shop: shopPayload } : { media_urls: media.map((m) => m.url) })
         });
         delete sections.current[activeType];
@@ -331,35 +360,35 @@ export default function CreatePostModal({ isOpen, onClose, onSaved, editPost, in
         <button type="button" onClick={onClose} disabled={submitting || uploading > 0} className="new-post-close" aria-label={t("Tutup")}><X size={20} /></button>
         <div className="new-post-form">
           <h3 id="new-post-title" className="new-post-title">{isEdit ? t("Edit Postingan") : t("Buat Postingan Baru")}</h3>
-          {!isEdit && <div className="new-post-types" aria-label="Jenis postingan">
+          {!isEdit && <div className="new-post-types" aria-label={t("Jenis postingan")}>
             {[{ id: 'image', label: t("Gambar"), icon: ImageIcon }, { id: 'video', label: 'Video', icon: Video }, { id: 'poster', label: t("Poster"), icon: FileText }, { id: 'link', label: t("Link"), icon: LinkIcon }, { id: 'location', label: t("Lokasi"), icon: MapPin }, { id: 'shop', label: 'Shop', icon: ShoppingBag }].map(({ id, label, icon: Icon }) => <button key={id} type="button" disabled={uploading > 0 || submitting || locating} aria-pressed={activeType === id} className={activeType === id ? 'active' : ''} onClick={() => selectType(id)}><Icon size={19} />{t(label)}</button>)}
           </div>}
           <label className="new-post-field"><span>{isShop ? t("Nama Produk") : t("Judul Postingan")} <b>*</b></span><input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={R.titleMax} placeholder={t("Judul postingan")} className={input} /><small>{titleLength}/{R.titleMax}</small></label>
           <label className="new-post-field"><span>{t("Deskripsi")}</span><textarea ref={descriptionInput} value={content} onChange={(e) => { setContent(e.target.value); setError(''); }} rows={7} placeholder={t("Bagikan cerita Anda, tambahkan #hashtag dan @username...")} className={input} /><small className="new-post-description-count">{chars} {t("karakter")}{!isShop ? ` (min. ${R.descriptionMinChars})` : ''}</small></label>
           <div className="new-post-tools">
-            <button type="button" onClick={() => {setActiveDetail('hashtag');requestAnimationFrame(() => document.getElementById('post-hashtag-entry')?.focus());}}><Hash size={16} />Hashtag</button>
-            <button type="button" onClick={() => setActiveDetail(activeDetail === 'link' ? '' : 'link')}><LinkIcon size={16} />{t("Link")}</button>
-            <button type="button" onClick={() => {setActiveDetail('mention'); requestAnimationFrame(() => document.getElementById('post-mention-entry')?.focus());}}><AtSign size={16} />Mention</button>
-            <button type="button" onClick={() => setActiveDetail(activeDetail === 'location' ? '' : 'location')}><MapPin size={16} />{t("Location")}</button>
+            <button type="button" className={activeDetail === 'hashtag' ? 'active' : ''} onClick={() => {setActiveDetail('hashtag');requestAnimationFrame(() => document.getElementById('post-hashtag-entry')?.focus());}}><Hash size={16} />{t("Hashtag")}</button>
+            <button type="button" className={activeDetail === 'link' || Boolean(linkUrl.trim()) ? 'active' : ''} onClick={() => {const next = activeDetail === 'link' ? '' : 'link'; setActiveDetail(next); if (next === 'link') requestAnimationFrame(() => document.getElementById('post-link-entry')?.focus());}}><LinkIcon size={16} />{t("Link")}</button>
+            <button type="button" className={activeDetail === 'mention' ? 'active' : ''} onClick={() => {setActiveDetail('mention'); requestAnimationFrame(() => document.getElementById('post-mention-entry')?.focus());}}><AtSign size={16} />{t("Mention")}</button>
+            <button type="button" className={activeDetail === 'location' || Boolean(location.trim()) ? 'active' : ''} onClick={() => setActiveDetail(activeDetail === 'location' ? '' : 'location')}><MapPin size={16} />{t("Location")}</button>
           </div>
           {(activeDetail === 'hashtag' || activeDetail === 'mention') && <div className="new-post-details"><HashtagInput value={hashtags.map((tag) => '#' + tag).join(' ')} onChange={(next) => {
               const allowed = new Set(parseTokens(next, '#'));
               setHashtagInput(next);
               setContent((current) => current.replace(/#[\p{L}\p{N}_]+/gu, (tag) => allowed.has(tag.slice(1).toLowerCase()) ? tag : ''));
             }} textTags={[]} maximum={maxTags} minimum={R.hashtagsMin} /><MentionInput value={mentionInput} onChange={setMentionInput} textMentions={tokensInText(content, '@')} maximum={R.mentionsMax} /></div>}
-          {(activeDetail === 'link' || activeType === 'link' || linkUrl) && <div className="new-post-detail-row"><LinkIcon size={17} /><input value={linkUrl} onChange={(e) => {setLinkUrl(e.target.value);setLinkPreview(null);}} placeholder="https://..." className={input} /><button type="button" onClick={previewLink} disabled={!linkUrl.trim()}>{t("Pratinjau")}</button></div>}
-          {linkPreview && <div className="new-post-link-preview">{linkPreview.image && <img src={linkPreview.image} alt="" />}<div><strong>{linkPreview.title}</strong><p>{linkPreview.description}</p></div></div>}
+          {(activeDetail === 'link' || activeType === 'link' || Boolean(linkUrl)) && <div className="new-post-detail-row"><LinkIcon size={17} /><input id="post-link-entry" type="url" value={linkUrl} onChange={(e) => {setLinkUrl(e.target.value);setLinkPreview(null);setError('');}} onBlur={() => {if (linkUrl.trim()) setLinkUrl(normalizeUrlInput(linkUrl));}} onKeyDown={(e) => {if (e.key === 'Enter') {e.preventDefault(); void previewLink(undefined, true);}}} placeholder="https://postter.us" className={input} />{linkUrl && <button type="button" onClick={() => {setLinkUrl('');setLinkPreview(null);}} title={t("Hapus tautan")} aria-label={t("Hapus tautan")}><X size={15} /></button>}<button type="button" onClick={() => void previewLink(undefined, true)} disabled={!linkUrl.trim()}>{t("Pratinjau")}</button></div>}
+          {linkPreview && <div className="new-post-link-preview">{(linkPreview.image_url || linkPreview.image) && !(linkPreview.image_url || linkPreview.image).includes('google.com/s2/favicons') && <img src={linkPreview.image_url || linkPreview.image} alt="" />}<div><strong>{linkPreview.title || normalizedLinkUrl}</strong>{linkPreview.description && <p>{linkPreview.description}</p>}</div></div>}
           {(activeDetail === 'location' || activeType === 'location' || location) && <div className="new-post-detail-row"><MapPin size={17} /><input data-field="location" value={location} maxLength={255} onChange={(e) => setLocation(e.target.value)} placeholder={t("Lokasi")} className={input} /><button type="button" onClick={useMyLocation} disabled={locating}>{locating ? <Loader2 size={16} className="animate-spin" /> : <LocateFixed size={16} />}{t("Lokasi saya")}</button></div>}
-          <section className="new-post-media"><h4>Media</h4><div className="new-post-media-grid">
-            {media.map((m) => <div key={m.url} className="new-post-thumbnail">{m.type === 'image' ? <img src={m.url} alt="Media terunggah" /> : <div><Video size={26} /><span>{formatDuration(m.duration)}</span></div>}<button type="button" onClick={() => removeMedia(m.url)} aria-label={t("Hapus media")}><X size={14} /></button></div>)}
-            <button type="button" className="new-post-add-media" disabled={uploading > 0 || (activeType === 'video' ? videos.length > 0 || !isShop && images.length > 0 : images.length >= R.imagesMax || !isShop && videos.length > 0)} onClick={() => activeType === 'video' ? videoInput.current?.click() : imageInput.current?.click()}><Plus size={20} /><span>{t("Tambah Media")}</span><small>{activeType === 'video' ? 'Video, maks. 30 menit' : 'JPG, PNG, GIF, WebP'}<br />{activeType === 'video' ? 'Maks. 1 video' : 'Maks. 10 MB / gambar'}</small></button>
-          </div>{images.length > 0 && <button type="button" className="new-post-crop" onClick={cropImage} disabled={uploading > 0} title="Potong gambar pertama menjadi persegi"><Crop size={15} />{t("Crop persegi")}</button>}{uploading > 0 && <p className="new-post-uploading"><Loader2 size={16} className="animate-spin" />Mengunggah {uploading} file...</p>}</section>
+          <section className="new-post-media"><h4>{t("Media")}</h4><div className="new-post-media-grid">
+            {media.map((m) => <div key={m.url} className="new-post-thumbnail">{m.type === 'image' ? <img src={m.url} alt={t("Media terunggah")} /> : <div><Video size={26} /><span>{formatDuration(m.duration)}</span></div>}<button type="button" onClick={() => removeMedia(m.url)} aria-label={t("Hapus media")}><X size={14} /></button></div>)}
+            <button type="button" className="new-post-add-media" disabled={uploading > 0 || (activeType === 'video' ? videos.length > 0 || !isShop && images.length > 0 : images.length >= R.imagesMax || !isShop && videos.length > 0)} onClick={() => activeType === 'video' ? videoInput.current?.click() : imageInput.current?.click()}><Plus size={20} /><span>{t("Tambah Media")}</span><small>{activeType === 'video' ? t("Video, maks. 30 menit") : t("JPG, PNG, GIF, WebP")}<br />{activeType === 'video' ? t("Maks. 1 video") : t("Maks. 10 MB / gambar")}</small></button>
+          </div>{images.length > 0 && <button type="button" className="new-post-crop" onClick={cropImage} disabled={uploading > 0} title={t("Potong gambar pertama menjadi persegi")}><Crop size={15} />{t("Crop persegi")}</button>}{uploading > 0 && <p className="new-post-uploading"><Loader2 size={16} className="animate-spin" />{t("Mengunggah")} {uploading} {t("file...")}</p>}</section>
           <input ref={imageInput} type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple className="hidden" onChange={(e) => {upload(e.target.files, 'image');e.target.value = '';}} />
           <input ref={videoInput} type="file" accept="video/*,.mkv,.flv,.wmv,.mxf,.ts" className="hidden" onChange={(e) => {upload(e.target.files, 'video');e.target.value = '';}} />
           <label className="new-post-shop-toggle"><input type="checkbox" checked={isShop} disabled={isEdit || uploading > 0 || submitting || locating} onChange={(e) => selectType(e.target.checked ? 'shop' : 'image')} /><span className="new-post-switch" /><span>{t("Tambahkan ke Shop")}<small>{t("Jika produk, akan ditampilkan di tab Shop")}</small></span></label>
         {isShop &&
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 rounded-xl border border-border-subtle/50 p-3">
-            <label className="flex flex-col gap-1 text-xs font-bold">{t("Harga")}<span className="sr-only">wajib</span>
+            <label className="flex flex-col gap-1 text-xs font-bold">{t("Harga")}<span className="sr-only">{t("wajib")}</span>
               <div className="flex gap-2">
                 <select value={shop.currency} onChange={(e) => setShop({ ...shop, currency: e.target.value })} className={`${input} w-24`}>{CURRENCIES.map((c) => <option key={c}>{c}</option>)}</select>
                 <input type="number" min="0" step={currencyDecimals(shop.currency) ? '0.01' : '1'} value={shop.price} onChange={(e) => setShop({ ...shop, price: e.target.value })} placeholder="0" className={input} />
@@ -393,20 +422,20 @@ export default function CreatePostModal({ isOpen, onClose, onSaved, editPost, in
 
 
           <label className="new-post-visibility">{t("Visibilitas")}<select value={visibility} onChange={(e) => setVisibility(e.target.value)}><option value="public">{t("Publik")}</option><option value="followers">{t("Hanya pengikut")}</option></select></label>
-          {error && <p className="new-post-error" role="alert">{error}</p>}
-          {!error && problems.length > 0 && <details className="new-post-validation"><summary>Ketentuan postingan ({problems.length} belum terpenuhi)</summary><ul>{problems.map((problem) => <li key={problem}>{problem}</li>)}</ul></details>}
+          {error && <p className="new-post-error" role="alert">{t(error)}</p>}
+          {!error && problems.length > 0 && <details className="new-post-validation"><summary>{t("Ketentuan postingan (")}{problems.length} {t("belum terpenuhi)")}</summary><ul>{problems.map((problem) => <li key={problem}>{problem}</li>)}</ul></details>}
           <div className="new-post-footer">{!isEdit && <button type="button" className="new-post-draft" onClick={saveDraft} disabled={submitting || uploading > 0}><Save size={17} />{t("Draft")}</button>}<button type="button" onClick={submit} disabled={submitting || uploading > 0} className="new-post-submit">{submitting ? <Loader2 size={17} className="animate-spin" /> : <Send size={17} />}{isEdit ? t("Simpan Perubahan") : t("Post Sekarang")}</button></div>
           {draftMessage && <p className="new-post-draft-message" role="status">{draftMessage}</p>}
         </div>
         <aside className="new-post-preview"><h4>{t({ image: 'Pratinjau Gambar', video: 'Pratinjau Video', poster: 'Pratinjau Poster', link: 'Pratinjau Link', location: 'Pratinjau Lokasi', shop: 'Pratinjau Produk' }[activeType])}</h4><article className="new-post-preview-card"><div className="new-post-preview-menu"><MoreHorizontal size={19} /></div>
           {hashtags.length > 0 && <p className="new-post-preview-tags">{hashtags.map((tag) => <span key={tag}>#{tag} </span>)}</p>}
-          {media[0] ? media[0].type === 'image' ? <img src={media[0].url} alt="Pratinjau media" className="new-post-preview-image" /> : <video src={media[0].url} controls className="new-post-preview-image" /> : linkPreview?.image ? <img src={linkPreview.image} alt="Pratinjau link" className="new-post-preview-image" /> : <div className="new-post-preview-placeholder">{activeType === 'video' ? <Video size={36} /> : activeType === 'link' ? <LinkIcon size={36} /> : activeType === 'location' ? <MapPin size={36} /> : activeType === 'shop' ? <ShoppingBag size={36} /> : activeType === 'poster' ? <FileText size={36} /> : <ImageIcon size={36} />}<span>{t({ image: 'Pratinjau gambar Anda', video: 'Pratinjau video Anda', poster: 'Pratinjau poster Anda', link: 'Pratinjau tautan Anda', location: location || 'Pratinjau lokasi Anda', shop: 'Pratinjau produk Anda' }[activeType])}</span></div>}
+          {media[0] ? media[0].type === 'image' ? <img src={media[0].url} alt={t("Pratinjau media")} className="new-post-preview-image" /> : <video src={media[0].url} controls className="new-post-preview-image" /> : (linkPreview?.image_url || linkPreview?.image) && !(linkPreview?.image_url || linkPreview?.image).includes('google.com/s2/favicons') ? <img src={linkPreview.image_url || linkPreview.image} alt={t("Pratinjau link")} className="new-post-preview-image" /> : <div className="new-post-preview-placeholder">{activeType === 'video' ? <Video size={36} /> : activeType === 'link' ? <LinkIcon size={36} /> : activeType === 'location' ? <MapPin size={36} /> : activeType === 'shop' ? <ShoppingBag size={36} /> : activeType === 'poster' ? <FileText size={36} /> : <ImageIcon size={36} />}<span>{t({ image: 'Pratinjau gambar Anda', video: 'Pratinjau video Anda', poster: 'Pratinjau poster Anda', link: 'Pratinjau tautan Anda', location: location || 'Pratinjau lokasi Anda', shop: 'Pratinjau produk Anda' }[activeType])}</span></div>}
           <div className="new-post-preview-copy"><h3>{title || (isShop ? t("Nama produk Anda") : t("Judul postingan Anda"))}</h3><div className="new-post-preview-description"><RichText text={content || 'Deskripsi postingan akan muncul di sini.'} /></div>
 
-            {linkUrl && <p className="new-post-preview-meta"><LinkIcon size={16} /><span>{linkUrl}</span></p>}
+            {normalizedLinkUrl && <p className="new-post-preview-meta"><LinkIcon size={16} /><a href={normalizedLinkUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline break-all">{normalizedLinkUrl}</a></p>}
             {mentions.length > 0 && <p className="new-post-preview-meta"><AtSign size={16} /><span>{mentions.map((name) => '@' + name).join('   ')}</span></p>}
             {location && <p className="new-post-preview-meta location"><MapPin size={16} /><span>{location}</span></p>}
-            {isShop && shop.price && <p className="new-post-preview-price">{formatPrice(toMinorUnits(shop.price, shop.currency), shop.currency)}</p>}
+            {isShop && shop.price && <p className="new-post-preview-price">{formatPrice(toMinorUnits(shop.price, shop.currency), shop.currency, language)}</p>}
           </div><div className="new-post-preview-actions"><span><Heart size={18} />0</span><span><MessageCircle size={18} />0</span><span><Share2 size={18} />0</span><span><Eye size={18} />0</span></div>
         </article></aside>
       </div>

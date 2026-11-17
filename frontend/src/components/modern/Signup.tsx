@@ -190,7 +190,7 @@ export default function Signup({ onRegister, onNavigateToLogin, onOAuth }: Signu
                   <div className="pl-3.5 pr-2.5 flex items-center justify-center text-text-secondary group-focus-within:text-text-primary">
                     <Lock size={18} strokeWidth={1.25} />
                   </div>
-                  <input aria-label="Password" autoComplete="new-password" type={showPassword ? 'text' : 'password'} required minLength={8} maxLength={72} value={password} onChange={e => setPassword(e.target.value)}
+                  <input aria-label={t("Password")} autoComplete="new-password" type={showPassword ? 'text' : 'password'} required minLength={8} maxLength={72} value={password} onChange={e => setPassword(e.target.value)}
                     className="flex-1 w-0 bg-transparent py-2.5 pr-2 text-[13px] text-text-primary outline-none placeholder:text-text-secondary border-none focus:ring-0"
                     placeholder={t("Password")}
                   />
@@ -219,9 +219,9 @@ export default function Signup({ onRegister, onNavigateToLogin, onOAuth }: Signu
               <div className="col-span-1 md:col-span-2">
                 <div className="flex items-center w-full bg-surface-card border border-border-subtle rounded-xl focus-within:border-text-primary overflow-hidden">
                   <User size={18} className="ml-3.5 mr-2.5 text-text-secondary" />
-                  <input aria-label="Kode Referral" value={referralCode} onChange={e => setReferralCode(e.target.value)}
+                  <input aria-label={t("Kode Referral")} value={referralCode} onChange={e => setReferralCode(e.target.value)}
                     className="flex-1 w-0 bg-transparent py-2.5 pr-4 text-[13px] text-text-primary outline-none"
-                    placeholder="Kode Referral teman (opsional)"
+                    placeholder={t("Kode Referral teman (opsional)")}
                   />
                 </div>
                 <p className="text-[10px] text-text-secondary mt-1.5 ml-1">{t("Masukkan kode referral teman yang mengajak kamu")}</p>
@@ -240,12 +240,12 @@ export default function Signup({ onRegister, onNavigateToLogin, onOAuth }: Signu
                   <div className="pl-3.5 pr-2 flex items-center text-text-secondary">
                     <Phone size={18} strokeWidth={1.25} />
                   </div>
-                  <select aria-label="Kode negara telepon" value={phoneCode} onChange={e => setPhoneCode(e.target.value)} className="bg-transparent text-[13px] text-text-primary py-2.5 outline-none font-medium appearance-none border-r border-border-subtle pr-2">
+                  <select aria-label={t("Kode negara telepon")} value={phoneCode} onChange={e => setPhoneCode(e.target.value)} className="bg-transparent text-[13px] text-text-primary py-2.5 outline-none font-medium appearance-none border-r border-border-subtle pr-2">
                     <option value="+62">+62</option>
                     <option value="+60">+60</option>
                     <option value="+65">+65</option>
                   </select>
-                  <input aria-label="Nomor HP" type="tel" autoComplete="tel-national" value={phoneLocal} onChange={e => setPhoneLocal(e.target.value.replace(/\D/g, ''))}
+                  <input aria-label={t("Nomor HP")} type="tel" autoComplete="tel-national" value={phoneLocal} onChange={e => setPhoneLocal(e.target.value.replace(/\D/g, ''))}
                     className="flex-1 px-3 py-2.5 bg-transparent text-[13px] outline-none placeholder:text-text-secondary"
                     placeholder="812 3456 7890"
                   />

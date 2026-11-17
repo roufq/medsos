@@ -29,3 +29,13 @@ test('invalid audio stream releases devices and reports the problem', async () =
   await assert.rejects(acquireCallMedia({ getUserMedia: async () => stream }, 'voice', () => {}), /tidak menghasilkan audio/);
   assert.equal(stopped, true);
 });
+
+test('microphone error messages retain the original device failure', async () => {
+  for (const name of ['NotAllowedError', 'SecurityError', 'NotFoundError', 'NotReadableError']) {
+    const cause = Object.assign(new Error('device failure'), { name });
+    await assert.rejects(acquireCallMedia({ getUserMedia: async () => { throw cause; } }, 'voice', () => {}), error => {
+      assert.equal(error.cause, cause);
+      return true;
+    });
+  }
+});

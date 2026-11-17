@@ -1,4 +1,3 @@
-import React from 'react';
 import PostCard from '../post/PostCard';
 
 const ProfilePostList = ({ posts, onDeletePost }) => {

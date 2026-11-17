@@ -87,38 +87,17 @@ func PublicProfile(c goravelhttp.Context) goravelhttp.Response {
 	return c.Response().Json(200, user)
 }
 
-func AdminActivity(c goravelhttp.Context) goravelhttp.Response {
-	var activities []models.UserActivity
-	query := db.DB.Preload("User").Order("id desc").Limit(100)
-	if id := c.Request().Query("user_id", ""); id != "" {
-		query = query.Where("user_id = ?", id)
-	}
-	if query.Find(&activities).Error != nil {
-		return c.Response().Json(500, goravelhttp.Json{"error": "Gagal membaca aktivitas"})
-	}
-	for i := range activities {
-		activities[i].User.HidePrivateData()
-	}
-	return c.Response().Json(200, activities)
-}
-
-func AdminSessions(c goravelhttp.Context) goravelhttp.Response {
-	var sessions []struct {
-		UserID       int64     `json:"user_id"`
-		Name         string    `json:"name"`
-		Username     *string   `json:"username"`
-		LastActivity time.Time `json:"last_activity"`
-		ExpiresAt    time.Time `json:"expires_at"`
-	}
-	if db.DB.Table("login_sessions s").Select("s.user_id, users.name, users.username, s.last_activity, s.expires_at").Joins("JOIN users ON users.id = s.user_id").Order("s.last_activity desc").Limit(100).Scan(&sessions).Error != nil {
-		return c.Response().Json(500, goravelhttp.Json{"error": "Gagal membaca sesi"})
-	}
-	return c.Response().Json(200, sessions)
-}
-
 func AdminPosts(c goravelhttp.Context) goravelhttp.Response {
 	var posts []models.Post
-	query := db.DB.Preload("User").Preload("Media").Preload("Link").Order("id desc").Limit(100)
+	query := db.DB.Unscoped().Preload("User").Preload("Media").Preload("Link").Order("posts.id desc").Limit(100)
+	status := c.Request().Query("status", "active")
+	if status == "active" {
+		query = query.Where("posts.deleted_at IS NULL")
+	} else if status == "removed" {
+		query = query.Where("posts.deleted_at IS NOT NULL")
+	} else if status != "all" {
+		return c.Response().Json(400, goravelhttp.Json{"error": "Invalid content status"})
+	}
 	if raw := c.Request().Query("before_id", ""); raw != "" {
 		id, err := strconv.ParseInt(raw, 10, 64)
 		if err != nil || id < 1 {
@@ -136,17 +115,6 @@ func AdminPosts(c goravelhttp.Context) goravelhttp.Response {
 		posts[i].User.HidePrivateData()
 	}
 	return c.Response().Json(200, posts)
-}
-
-func (h *PostController) AdminDeletePost(c goravelhttp.Context) goravelhttp.Response {
-	id, err := routePostID(c)
-	if err != nil {
-		return c.Response().Json(404, goravelhttp.Json{"error": "Postingan tidak ditemukan"})
-	}
-	if err = h.postService.DeletePostAsAdmin(id); err != nil {
-		return c.Response().Json(400, goravelhttp.Json{"error": "Gagal menghapus postingan"})
-	}
-	return c.Response().Json(200, goravelhttp.Json{"ok": true})
 }
 
 func AdminSponsorPost(c goravelhttp.Context) goravelhttp.Response {

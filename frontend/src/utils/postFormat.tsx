@@ -47,26 +47,18 @@ export function mergeTokens(...lists: string[][]): string[] {
   return Array.from(new Set(lists.flat()));
 }
 
-export function timeAgo(value?: string): string {
-  if (!value) return '';
-  const seconds = Math.max(0, (Date.now() - new Date(value).getTime()) / 1000);
-  if (seconds < 60) return 'baru saja';
-  if (seconds < 3600) return `${Math.floor(seconds / 60)} mnt`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)} jam`;
-  if (seconds < 7 * 86400) return `${Math.floor(seconds / 86400)} hari`;
-  return new Date(value).toLocaleDateString();
-}
+export { timeAgo } from '../i18n/language';
 
 // Currencies without minor units store the whole amount in price_minor.
 const ZERO_DECIMAL = new Set(['IDR', 'JPY', 'KRW', 'VND', 'CLP', 'ISK', 'UGX', 'XAF', 'XOF']);
 
 export const currencyDecimals = (currency: string) => (ZERO_DECIMAL.has(currency.toUpperCase()) ? 0 : 2);
 
-export function formatPrice(priceMinor: number, currency: string): string {
+export function formatPrice(priceMinor: number, currency: string, language = 'id'): string {
   const decimals = currencyDecimals(currency);
   const amount = priceMinor / 10 ** decimals;
   try {
-    return new Intl.NumberFormat(undefined, { style: 'currency', currency, minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(amount);
+    return new Intl.NumberFormat(language === 'en' ? 'en-US' : 'id-ID', { style: 'currency', currency, minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(amount);
   } catch {
     return `${currency} ${amount.toFixed(decimals)}`;
   }

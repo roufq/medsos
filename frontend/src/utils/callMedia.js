@@ -21,10 +21,10 @@ export async function acquireCallMedia(mediaDevices, mode, cameraOff) {
     return stream;
   } catch (error) {
     if (error.name === 'NotAllowedError' || error.name === 'SecurityError') {
-      throw new Error('Izin mikrofon ditolak. Izinkan mikrofon pada pengaturan situs Postter di browser, lalu coba lagi.');
+      throw new Error('Izin mikrofon ditolak. Izinkan mikrofon pada pengaturan situs Postter di browser, lalu coba lagi.', { cause: error });
     }
-    if (error.name === 'NotFoundError') throw new Error('Mikrofon tidak ditemukan. Hubungkan mikrofon lalu coba lagi.');
-    if (error.name === 'NotReadableError') throw new Error('Mikrofon tidak dapat digunakan. Periksa apakah sedang dipakai aplikasi lain.');
+    if (error.name === 'NotFoundError') throw new Error('Mikrofon tidak ditemukan. Hubungkan mikrofon lalu coba lagi.', { cause: error });
+    if (error.name === 'NotReadableError') throw new Error('Mikrofon tidak dapat digunakan. Periksa apakah sedang dipakai aplikasi lain.', { cause: error });
     throw error;
   }
 }

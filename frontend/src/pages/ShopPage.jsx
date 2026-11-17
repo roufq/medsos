@@ -1,27 +1,34 @@
 import { useLanguage } from "../context/LanguageContext";import { useEffect, useState } from 'react';
-import { Loader2, ShoppingBag } from 'lucide-react';
+import { Loader2, ShoppingBag, Shuffle, Gift, ArrowRight } from 'lucide-react';
 import AppLayout from '../components/modern/AppLayout';
-import PostCard from '../components/modern/PostCard';
+import DiscoveryCard from '../components/modern/DiscoveryCard';
 import { useAuth } from '../context/AuthContext';
 import { postApi } from '../api/postApi';
 const PAGE_SIZE = 20;
 export default function ShopPage() {const { t } = useLanguage();
   const { user, loading: authLoading } = useAuth();
+  const [category,setCategory] = useState('all');
+  const [randomOrder,setRandomOrder] = useState(null);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [error, setError] = useState('');
+  const userId = user?.id;
+  const requestKey = `${userId || ''}:${authLoading}`;
+  const [loadedRequest, setLoadedRequest] = useState(requestKey);
+  if (loadedRequest !== requestKey) {
+    setLoadedRequest(requestKey); setLoading(true); setError(''); setProducts([]); setHasMore(false); setCategory('all'); setRandomOrder(null);
+  }
   useEffect(() => {
     if (authLoading) return;
     let active = true;
-    setLoading(true);setError('');setProducts([]);setHasMore(false);
-    postApi.getFeed(PAGE_SIZE, 0, null, null, 'shop', !user).then((data) => {
+    postApi.getFeed(PAGE_SIZE, 0, null, null, 'shop', !userId).then((data) => {
       if (active) {setProducts(data || []);setHasMore((data || []).length === PAGE_SIZE);}
     }).catch((err) => {if (active) setError(err.response?.data?.error || 'Gagal memuat produk.');}).
     finally(() => {if (active) setLoading(false);});
     return () => {active = false;};
-  }, [user?.id, authLoading]);
+  }, [userId, authLoading]);
   const addProduct = (post) => {if (post.post_type === 'shop') setProducts((current) => [post, ...current.filter((item) => item.id !== post.id)]);};
   const loadMore = async () => {
     if (loadingMore || !products.length) return;
@@ -33,11 +40,22 @@ export default function ShopPage() {const { t } = useLanguage();
     } catch (err) {setError(err.response?.data?.error || 'Gagal memuat produk berikutnya.');} finally
     {setLoadingMore(false);}
   };
-  return <AppLayout currentTab="shop" onPostCreated={addProduct}><div className="w-full"><div className="mb-6"><h1 className="flex items-center gap-3 text-2xl font-bold"><ShoppingBag size={25} />Shop</h1><p className="mt-2 text-sm text-text-secondary">{t("Temukan produk terbaru dari komunitas.")}</p></div>
-    {loading && <div className="flex justify-center py-16"><Loader2 className="animate-spin" size={30} /></div>}
-    {error && <p role="alert" className="mb-4 rounded-xl bg-error/10 p-4 text-sm text-error">{error}</p>}
-    {!loading && !error && !products.length && <div className="rounded-2xl bg-white p-10 text-center text-sm text-text-secondary">{t("Belum ada produk yang dapat ditampilkan.")}</div>}
-    <div className="w-full flex flex-col gap-5">{products.map((post) => <PostCard key={post.id} post={post} onUpdated={(updated) => setProducts((current) => current.map((item) => item.id === updated.id ? updated : item))} onDeleted={(id) => setProducts((current) => current.filter((item) => item.id !== id))} />)}</div>
-    {hasMore && <button type="button" disabled={loadingMore} onClick={loadMore} className="mx-auto mt-6 flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-semibold disabled:opacity-50">{loadingMore && <Loader2 size={16} className="animate-spin" />}{t("Muat lebih banyak")}</button>}
-  </div></AppLayout>;
+  const categories=[...new Set(products.map(post=>post.shop?.category).filter(Boolean))];
+  const visible=products.filter(post=>category==='all' || post.shop?.category===category);
+  const shown=randomOrder ? [...visible].sort((a,b)=>randomOrder.indexOf(a.id)-randomOrder.indexOf(b.id)) : visible;
+  const shuffle=()=>{
+    const ids=products.map(post=>post.id);
+    for(let i=ids.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[ids[i],ids[j]]=[ids[j],ids[i]];}
+    setRandomOrder(ids);
+  };
+  return <AppLayout wide currentTab="shop" onPostCreated={addProduct}><div className="reference-shop"><main className="reference-shop-main">
+    <div className="reference-shop-heading"><div><h1><ShoppingBag size={29}/>{t('Shop')}</h1><p>{t('Temukan produk terbaru dari komunitas.')}</p></div><button className="reference-shop-banner" onClick={shuffle}><Gift size={46}/><span><strong>{t('Temukan produk pilihan')}</strong><small>{t('Jelajahi produk dan terhubung langsung dengan penjual.')}</small></span><ArrowRight size={18}/></button></div>
+    <nav className="video-reference-topics" aria-label={t('Kategori produk')}><button className={category==='all'?'active':''} onClick={()=>setCategory('all')} aria-pressed={category==='all'}>{t('Semua')}</button>{categories.map(name=><button key={name} className={category===name?'active':''} aria-pressed={category===name} onClick={()=>setCategory(name)}>{t(name)}</button>)}</nav>
+    <div className="reference-shop-selection"><div><h2><Shuffle size={22}/>{t('Pilihan produk')}</h2><p>{t('Temukan produk terbaru dari komunitas.')}</p></div><button onClick={shuffle} disabled={!products.length}><Shuffle size={15}/>{t('Acak Lagi')}</button></div>
+    {loading && <p role="status" className="reference-empty"><Loader2 className="animate-spin"/>{t('Memuat…')}</p>}
+    {error && <p role="alert" className="video-error">{t(error)}</p>}
+    {!loading && !error && !shown.length && <p className="reference-empty">{t('Belum ada produk yang dapat ditampilkan.')}</p>}
+    <div className="reference-shop-grid">{shown.map(post=><DiscoveryCard key={post.id} post={post} product onUpdated={updated=>setProducts(current=>current.map(item=>item.id===updated.id?updated:item))}/>)}</div>
+    {hasMore && <button className="video-load-more" disabled={loadingMore} onClick={loadMore}>{loadingMore&&<Loader2 size={15} className="animate-spin"/>}{t('Muat lebih banyak')}</button>}
+  </main><aside className="reference-shop-side"><section><h2>{t('Kategori produk')}</h2><button className={category==='all'?'active':''} onClick={()=>setCategory('all')}><ShoppingBag size={16}/>{t('Semua')}<span>{products.length}</span></button>{categories.map(name=><button key={name} className={category===name?'active':''} onClick={()=>setCategory(name)}>{t(name)}<span>{products.filter(post=>post.shop?.category===name).length}</span></button>)}</section><section className="reference-shop-side-banner"><Gift size={40}/><h2>{t('Temukan produk pilihan')}</h2><p>{t('Jelajahi produk dan terhubung langsung dengan penjual.')}</p><button onClick={shuffle}>{t('Acak Lagi')}<ArrowRight size={16}/></button></section></aside></div></AppLayout>;
 }

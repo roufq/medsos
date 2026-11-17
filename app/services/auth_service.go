@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
+	"log"
 	"net/mail"
 	"regexp"
 	"strings"
@@ -246,6 +247,7 @@ func issueTokens(user *models.User, existingID ...string) (*dto.AuthResponse, er
 	if len(existingID) > 0 {
 		id = existingID[0]
 	}
+	freshSession := id == ""
 	if id == "" {
 		var err error
 		id, err = session.Start(user.ID)
@@ -262,6 +264,11 @@ func issueTokens(user *models.User, existingID ...string) (*dto.AuthResponse, er
 	refreshToken, err := jwt.GenerateRefreshToken(user, id)
 	if err != nil {
 		return nil, err
+	}
+	if freshSession {
+		if err := db.DB.Create(&models.UserActivity{UserID: user.ID, Action: "POST", Target: "/api/v1/auth/login", Description: "Memulai sesi login"}).Error; err != nil {
+			log.Printf("login activity recording failed: %v", err)
+		}
 	}
 	return &dto.AuthResponse{AccessToken: accessToken, RefreshToken: refreshToken, User: *user}, nil
 }

@@ -37,6 +37,7 @@ const onPublicPage = () => { const path = window.location.pathname; return PUBLI
 
 function goToLogin(reason) {
   if (onPublicPage()) return;
+  if (reason === 'session_idle_expired') { window.location.replace('/explore'); return; }
   const query = reason ? `?reason=${encodeURIComponent(reason)}` : '';
   window.location.href = `/login${query}`;
 }

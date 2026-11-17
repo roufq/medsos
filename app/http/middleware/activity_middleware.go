@@ -13,14 +13,18 @@ func ActivityLog() http.Middleware {
 		c.Request().Next()
 		status := c.Response().Origin().Status()
 		id, ok := c.Value("userID").(int64)
-		if !ok || id < 1 || c.Request().Method() == "GET" || status < 200 || status >= 400 {
+		if !ok || id < 1 || status < 200 || status >= 400 {
 			return
 		}
 		target := c.Request().Path()
+		method := c.Request().Method()
+		if !models.ShouldRecordActivity(method, target) {
+			return
+		}
 		if len(target) > 255 {
 			target = target[:255]
 		}
-		if err := db.DB.Create(&models.UserActivity{UserID: id, Action: c.Request().Method(), Target: target}).Error; err != nil {
+		if err := db.DB.Create(&models.UserActivity{UserID: id, Action: method, Target: target, Description: models.ActivityDescription(method, target)}).Error; err != nil {
 			log.Printf("activity recording failed: %v", err)
 		}
 	}

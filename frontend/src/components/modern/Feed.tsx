@@ -55,7 +55,7 @@ export default function Feed({ canCreate = true, activeComposerType, posts, curr
       {visiblePosts.length === 0 ?
         <div className="bg-white rounded-2xl p-8 border border-border-subtle/30 text-center shadow-sm">
           <p className="text-text-secondary font-medium mb-1">{t("Belum ada postingan.")}</p>
-          <p className="text-xs text-outline">Ikuti akun lain atau buat postingan pertama Anda.</p>
+          <p className="text-xs text-outline">{t("Ikuti akun lain atau buat postingan pertama Anda.")}</p>
         </div> :
         visiblePosts.map((post) =>
           <PostCard key={post.id} post={post} onDeleted={onPostDeleted} onUpdated={onPostUpdated} onReposted={onPostCreated} />

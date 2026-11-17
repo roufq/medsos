@@ -1,3 +1,4 @@
+import { useLanguage } from '../../context/LanguageContext';
 import { useEffect, useRef, useState } from 'react';
 import { Bell, Loader2, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -13,6 +14,8 @@ export default function ChatDetails({ peer, onClose, onSettings, onDelete }: {
   onSettings: (settings: Settings) => void;
   onDelete: () => void;
 }) {
+  const { t: translateUI } = useLanguage();
+
   const [settings, setSettings] = useState<Settings | null>(null);
   const [action, setAction] = useState<Action>(null);
   const [nickname, setNickname] = useState('');
@@ -70,38 +73,38 @@ export default function ChatDetails({ peer, onClose, onSettings, onDelete }: {
   const titles = { nickname: 'Nicknames', block: settings?.blocked ? 'Unblock user?' : 'Block user?', report: 'Report chat', delete: 'Delete chat?' };
 
   return (
-    <aside id="chat-details" aria-label="Chat details" className="absolute inset-y-0 right-0 z-30 w-full sm:w-[272px] xl:static xl:shrink-0 border-l border-border-subtle/30 flex flex-col text-text-primary"
+    <aside id="chat-details" aria-label={translateUI("Chat details")} className="absolute inset-y-0 right-0 z-30 w-full sm:w-[272px] xl:static xl:shrink-0 border-l border-border-subtle/30 flex flex-col text-text-primary"
       style={{ backgroundColor: 'rgb(var(--card-bg))' }}
       onKeyDown={(event) => {
         if (event.key === 'Escape' && !busy) { event.stopPropagation(); if (action) setAction(null); else onClose(); }
       }}>
       <div className="h-[68px] px-4 flex items-center justify-between border-b border-border-subtle/30 shrink-0">
-        <h2 className="text-sm font-bold">Details</h2>
-        <button ref={closeRef} type="button" aria-label="Close details" onClick={onClose} className="p-2 rounded-full hover:bg-surface-container-low"><X size={17} /></button>
+        <h2 className="text-sm font-bold">{translateUI("Details")}</h2>
+        <button ref={closeRef} type="button" aria-label={translateUI("Close details")} onClick={onClose} className="p-2 rounded-full hover:bg-surface-container-low"><X size={17} /></button>
       </div>
       <div className="px-4 py-4 border-b border-border-subtle/30">
-        <button type="button" role="switch" aria-checked={settings?.muted || false} aria-label="Mute messages" disabled={busy || !settings}
+        <button type="button" role="switch" aria-checked={settings?.muted || false} aria-label={translateUI("Mute messages")} disabled={busy || !settings}
           onClick={() => run(() => save({ muted: !settings?.muted }))} className="flex w-full items-center gap-3 text-xs disabled:opacity-50">
-          <Bell size={18} /><span className="flex-1 text-left">Mute messages</span>
+          <Bell size={18} /><span className="flex-1 text-left">{translateUI("Mute messages")}</span>
           <span className={`w-8 h-[18px] p-0.5 rounded-full transition-colors ${settings?.muted ? 'bg-primary' : 'bg-outline/30'}`}>
             <span className={`block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform ${settings?.muted ? 'translate-x-3.5' : ''}`} />
           </span>
         </button>
       </div>
       <div className="flex-1 min-h-36 overflow-y-auto p-4">
-        <h3 className="text-xs font-bold mb-4">Members</h3>
+        <h3 className="text-xs font-bold mb-4">{translateUI("Members")}</h3>
         <Link to={`/profile/${peer.username || peer.id}`} className="flex items-center gap-3 rounded-lg hover:bg-surface-container-low p-1 -mx-1">
           <img src={peer.avatar_url || '/frontend/dist/favicon.svg'} alt="" className="w-10 h-10 rounded-full object-cover" />
           <span className="min-w-0"><span className="block text-xs font-semibold truncate">{peer.name}</span><span className="block text-[11px] text-text-secondary truncate">{peer.username || ''}</span></span>
         </Link>
       </div>
-      {!action && error && <p role="alert" className="px-4 py-2 text-xs text-red-500">{error}</p>}
-      {notice && <p role="status" className="px-4 py-2 text-xs text-text-secondary">{notice}</p>}
+      {!action && error && <p role="alert" className="px-4 py-2 text-xs text-red-500">{translateUI(error)}</p>}
+      {notice && <p role="status" className="px-4 py-2 text-xs text-text-secondary">{translateUI(notice)}</p>}
       <div className="border-t border-border-subtle/30 py-2 text-xs">
-        <button type="button" disabled={!settings || busy} onClick={() => open('nickname')} className="w-full px-4 py-3 text-left hover:bg-surface-container-low disabled:opacity-50">Nicknames{settings?.nickname && <span className="block mt-1 text-text-secondary truncate">{settings.nickname}</span>}</button>
-        <button type="button" disabled={!settings || busy} onClick={() => open('block')} className="w-full px-4 py-3 text-left hover:bg-surface-container-low disabled:opacity-50">{settings?.blocked ? 'Unblock' : 'Block'}</button>
-        <button type="button" disabled={!settings || busy} onClick={() => open('report')} className="w-full px-4 py-3 text-left text-red-500 hover:bg-surface-container-low disabled:opacity-50">Report</button>
-        <button type="button" disabled={!settings || busy} onClick={() => open('delete')} className="w-full px-4 py-3 text-left text-red-500 hover:bg-surface-container-low disabled:opacity-50">Delete chat</button>
+        <button type="button" disabled={!settings || busy} onClick={() => open('nickname')} className="w-full px-4 py-3 text-left hover:bg-surface-container-low disabled:opacity-50">{translateUI("Nicknames")}{settings?.nickname && <span className="block mt-1 text-text-secondary truncate">{settings.nickname}</span>}</button>
+        <button type="button" disabled={!settings || busy} onClick={() => open('block')} className="w-full px-4 py-3 text-left hover:bg-surface-container-low disabled:opacity-50">{settings?.blocked ? translateUI("Unblock") : translateUI("Block")}</button>
+        <button type="button" disabled={!settings || busy} onClick={() => open('report')} className="w-full px-4 py-3 text-left text-red-500 hover:bg-surface-container-low disabled:opacity-50">{translateUI("Report")}</button>
+        <button type="button" disabled={!settings || busy} onClick={() => open('delete')} className="w-full px-4 py-3 text-left text-red-500 hover:bg-surface-container-low disabled:opacity-50">{translateUI("Delete chat")}</button>
       </div>
 
       {action && <div className="fixed inset-0 z-[140] bg-black/60 flex items-center justify-center p-4" onClick={() => { if (!busy) setAction(null); }}>
@@ -115,20 +118,19 @@ export default function ChatDetails({ peer, onClose, onSettings, onDelete }: {
             if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
           }}>
           <h3 id="chat-action-title" className="font-bold mb-4">{titles[action]}</h3>
-          {action === 'nickname' && <label className="block text-xs">Nama panggilan (hanya terlihat oleh Anda)
-            <input value={nickname} onChange={(event) => setNickname(event.target.value)} maxLength={80} className="mt-2 w-full rounded-lg border border-border-subtle p-3 bg-surface-container-low" placeholder={peer.name} />
-            <span className="block mt-2 text-text-secondary">Kosongkan untuk memakai nama asli.</span>
+          {action === 'nickname' && <label className="block text-xs">{translateUI("Nama panggilan (hanya terlihat oleh Anda)")}<input value={nickname} onChange={(event) => setNickname(event.target.value)} maxLength={80} className="mt-2 w-full rounded-lg border border-border-subtle p-3 bg-surface-container-low" placeholder={peer.name} />
+            <span className="block mt-2 text-text-secondary">{translateUI("Kosongkan untuk memakai nama asli.")}</span>
           </label>}
           {action === 'report' && <div className="space-y-3 text-xs">
-            <label className="block">Alasan<select value={reason} onChange={(event) => setReason(event.target.value)} className="mt-2 w-full rounded-lg border border-border-subtle p-3 bg-surface-container-low">{['Spam', 'Pelecehan', 'Penipuan', 'Konten tidak pantas', 'Lainnya'].map((value) => <option key={value}>{value}</option>)}</select></label>
-            <label className="block">Detail<textarea value={details} onChange={(event) => setDetails(event.target.value)} maxLength={2000} rows={4} className="mt-2 w-full rounded-lg border border-border-subtle p-3 bg-surface-container-low" /></label>
+            <label className="block">{translateUI("Alasan")}<select value={reason} onChange={(event) => setReason(event.target.value)} className="mt-2 w-full rounded-lg border border-border-subtle p-3 bg-surface-container-low">{['Spam', 'Pelecehan', 'Penipuan', 'Konten tidak pantas', 'Lainnya'].map((value) => <option key={value}>{value}</option>)}</select></label>
+            <label className="block">{translateUI("Detail")}<textarea value={details} onChange={(event) => setDetails(event.target.value)} maxLength={2000} rows={4} className="mt-2 w-full rounded-lg border border-border-subtle p-3 bg-surface-container-low" /></label>
           </div>}
           {action === 'block' && <p className="text-sm text-text-secondary">{settings?.blocked ? `Izinkan pesan dan panggilan dengan ${peer.name} kembali?` : `${peer.name} tidak dapat mengirim pesan atau menelepon Anda. Anda juga tidak dapat menghubunginya selama diblokir.`}</p>}
-          {action === 'delete' && <p className="text-sm text-text-secondary">Riwayat chat dihapus hanya untuk Anda. Riwayat lawan chat tetap tersedia. Pesan baru akan muncul kembali.</p>}
-          {error && <p role="alert" className="mt-3 text-xs text-red-500">{error}</p>}
+          {action === 'delete' && <p className="text-sm text-text-secondary">{translateUI("Riwayat chat dihapus hanya untuk Anda. Riwayat lawan chat tetap tersedia. Pesan baru akan muncul kembali.")}</p>}
+          {error && <p role="alert" className="mt-3 text-xs text-red-500">{translateUI(error)}</p>}
           <div className="flex justify-end gap-2 mt-5">
-            <button type="button" disabled={busy} onClick={() => setAction(null)} className="rounded-lg px-4 py-2 text-sm hover:bg-surface-container-low">Batal</button>
-            <button type="submit" disabled={busy} className={`rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-50 ${action === 'delete' || action === 'block' ? 'bg-red-600' : 'bg-primary'}`}>{busy ? <Loader2 size={18} className="animate-spin" /> : action === 'delete' ? 'Hapus chat' : action === 'report' ? 'Kirim laporan' : 'Simpan'}</button>
+            <button type="button" disabled={busy} onClick={() => setAction(null)} className="rounded-lg px-4 py-2 text-sm hover:bg-surface-container-low">{translateUI("Batal")}</button>
+            <button type="submit" disabled={busy} className={`rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-50 ${action === 'delete' || action === 'block' ? 'bg-red-600' : 'bg-primary'}`}>{busy ? <Loader2 size={18} className="animate-spin" /> : action === 'delete' ? translateUI("Hapus chat") : action === 'report' ? translateUI("Kirim laporan") : translateUI("Simpan")}</button>
           </div>
         </form>
       </div>}

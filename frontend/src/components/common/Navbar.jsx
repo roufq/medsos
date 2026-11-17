@@ -1,5 +1,4 @@
 import { profileUrl } from '../../utils/profileUrl';
-import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Search, LogOut, Home, User, Shield } from 'lucide-react';
@@ -8,9 +7,9 @@ const Navbar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    logout();
-    navigate('/thanks');
+  const handleLogout = async () => {
+    await logout();
+    navigate('/explore', { replace: true });
   };
 
   const avatar = user?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=100';

@@ -4,7 +4,7 @@ import { useLanguage } from "../../context/LanguageContext";
 import { profileUrl } from '../../utils/profileUrl';
 import { useEffect, useRef, useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Camera, MapPin, Link as LinkIcon, LayoutGrid, Rows3, Trash2, Lock, Ban, Search, Heart, Play, Settings, Eye, Flame, ArrowRight, ChevronLeft, ChevronRight, MoreHorizontal, FileText, ShoppingBag, Repeat2 } from 'lucide-react';
+import { Camera, MapPin, Link as LinkIcon, LayoutGrid, Rows3, Trash2, Lock, Ban, Search, Heart, MessageCircle, Share2, Play, Settings, Eye, Flame, ArrowRight, ChevronLeft, ChevronRight, MoreHorizontal, FileText, ShoppingBag, Repeat2 } from 'lucide-react';
 import { timeAgo } from '../../utils/postFormat';
 import { postApi } from '../../api/postApi';
 import { userApi } from '../../api/userApi';
@@ -47,11 +47,11 @@ function FollowListModal({ userId, kind, onClose }: { userId: number; kind: 'fol
     <Modal title={kind === 'followers' ? t("Pengikut") : t("Mengikuti")} onClose={onClose}>
       <div className="flex items-center gap-2 rounded-xl border border-border-subtle px-3 py-2 mb-3">
         <Search className="w-4 h-4 text-outline" />
-        <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Cari nama atau username" className="flex-1 text-sm outline-none" autoFocus />
+        <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("Cari nama atau username")} className="flex-1 text-sm outline-none" autoFocus />
       </div>
-      {error && <p className="text-xs text-error">{error}</p>}
-      {loading && <p className="text-xs text-text-secondary">Memuat…</p>}
-      {!loading && !error && users.length === 0 && <p className="text-xs text-text-secondary">Tidak ada akun.</p>}
+      {error && <p className="text-xs text-error">{t(error)}</p>}
+      {loading && <p className="text-xs text-text-secondary">{t("Memuat…")}</p>}
+      {!loading && !error && users.length === 0 && <p className="text-xs text-text-secondary">{t("Tidak ada akun.")}</p>}
       <div className="flex flex-col gap-1">
         {users.map((u) =>
           <Link key={u.id} to={profileUrl(u)} onClick={onClose} className="flex items-center gap-3 rounded-lg p-2 hover:bg-surface-container-low">
@@ -65,6 +65,8 @@ function FollowListModal({ userId, kind, onClose }: { userId: number; kind: 'fol
 }
 
 function ProfileMedia({ post, compact = false }: { post: any; compact?: boolean; }) {
+  const { t: translateUI } = useLanguage();
+
   const source = post.original_post || post;
   const image = source.media?.find((m: any) => m.media_type === 'image');
   const video = source.media?.find((m: any) => m.media_type === 'video');
@@ -73,17 +75,17 @@ function ProfileMedia({ post, compact = false }: { post: any; compact?: boolean;
     {thumbnail ? <img src={thumbnail} alt="" loading="lazy" /> : video ? <video src={video.media_url} preload="metadata" muted playsInline /> : <div className="profile-media-placeholder"><FileText size={28} /></div>}
     {video && <span className="profile-play"><Play size={22} fill="currentColor" /></span>}
     {video?.duration_seconds > 0 && <span className="profile-duration">{Math.floor(video.duration_seconds / 60)}:{String(video.duration_seconds % 60).padStart(2, '0')}</span>}
-    {post.repost_of_id ? <span className="profile-shop-badge"><Repeat2 size={11} />Repost</span> : source.post_type === 'shop' && <span className="profile-shop-badge"><ShoppingBag size={11} />Shop</span>}
+    {post.repost_of_id ? <span className="profile-shop-badge"><Repeat2 size={11} />{translateUI("Repost")}</span> : source.post_type === 'shop' && <span className="profile-shop-badge"><ShoppingBag size={11} />{translateUI("Shop")}</span>}
   </div>;
 }
 
 function GridTile({ post }: { post: any; }) {
-  const { t } = useLanguage();
+  const { t , language: uiLanguage} = useLanguage();
   const isPureRepost = Boolean(post.repost_of_id) && !(post.content || '').trim() && Boolean(post.original_post);
   const source = post.original_post || post;
   const statsSource = isPureRepost ? source : post;
   return <Link to={postUrl(isPureRepost ? source : post)} className="profile-grid-card">
-    <div className="profile-card-tags postter-grid-tags">{source.is_sponsored && <span className="postter-ad-label">Iklan</span>}{(source.hashtags || []).slice(0,4).map((tag:any)=><span key={tag.tag}>#{tag.tag} </span>)}</div>
+    <div className="profile-card-tags postter-grid-tags">{source.is_sponsored && <span className="postter-ad-label">{t("Iklan")}</span>}{(source.hashtags || []).slice(0,4).map((tag:any)=><span key={tag.tag}>#{tag.tag} </span>)}</div>
     <ProfileMedia post={post} />
     <div className="profile-grid-copy">
       <h3>{source.title || t("Postingan")}</h3>
@@ -92,14 +94,15 @@ function GridTile({ post }: { post: any; }) {
     </div>
     <div className="profile-grid-stats">
       <span><Heart size={12} fill={statsSource.is_liked_by_me ? 'currentColor' : 'none'} />{statsSource.likes_count || 0}</span>
-      <span><Eye size={12} />{statsSource.views_count || 0}</span>
-      <time>{timeAgo(post.created_at)}</time>
+      <span><MessageCircle size={12} />{statsSource.comments_count || 0}</span>
+      <span><Share2 size={12} />{statsSource.shares_count || 0}</span>
+      <time>{timeAgo(post.created_at, uiLanguage)}</time>
     </div>
   </Link>;
 }
 
 export default function Profile({ user, posts, isCurrentUser, onUserChange, onPostsChange }: ProfileProps) {
-  const { t } = useLanguage();
+  const { t , language: uiLanguage} = useLanguage();
   const navigate = useNavigate();
   const { user: viewer } = useAuth();
   const [layout, setLayout] = useState<'grid' | 'long'>(user.profile_layout === 'long' ? 'long' : 'grid');
@@ -235,24 +238,24 @@ export default function Profile({ user, posts, isCurrentUser, onUserChange, onPo
         <section className="profile-summary">
           <div className="profile-identity"><div className="profile-avatar">
             {user.avatar_url ? <img src={user.avatar_url} alt={user.name} /> : <span>{user.name?.slice(0, 1).toUpperCase()}</span>}
-            {isCurrentUser && <button type="button" disabled={uploading} onClick={() => avatarInput.current?.click()} aria-label="Ubah foto profil"><Camera size={18} /></button>}
+            {isCurrentUser && <button type="button" disabled={uploading} onClick={() => avatarInput.current?.click()} aria-label={t("Ubah foto profil")}><Camera size={18} /></button>}
             <input ref={avatarInput} type="file" accept="image/*" className="hidden" onChange={(e) => uploadImage(e.target.files?.[0], 'avatar_url')} />
-          </div><div><h2>{user.name}{user.is_blue_verified && <span className="ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-sky-500 text-white text-[10px] leading-none align-middle" title="Terverifikasi Centang Biru" aria-label="Centang Biru">✓</span>}{user.is_private && <Lock size={13} aria-label="Akun private" />}</h2><p>@{user.username || 'user'}</p><p className="profile-bio">{user.bio || user.title || t("Belum ada bio.")}</p>{user.website && <a href={user.website} target="_blank" rel="noopener noreferrer nofollow"><LinkIcon size={12} />{user.website.replace(/^https?:\/\//, '')}</a>}</div></div>
-          <div className="profile-summary-right"><div className="profile-summary-top"><div className="profile-numbers"><span>Post<strong>{ownPosts.length}</strong></span><button disabled={user.profile_locked} onClick={() => setFollowList('followers')}>{t("Followers")}<strong>{user.followers_count || 0}</strong></button><button disabled={user.profile_locked} onClick={() => setFollowList('following')}>{t("Following")}<strong>{user.following_count || 0}</strong></button></div>
+          </div><div><h2>{user.name}{user.is_blue_verified && <span className="ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-sky-500 text-white text-[10px] leading-none align-middle" title={t("Terverifikasi Centang Biru")} aria-label={t("Centang Biru")}>✓</span>}{user.is_private && <Lock size={13} aria-label={t("Akun private")} />}</h2><p>@{user.username || t("user")}</p><p className="profile-bio">{user.bio || user.title || t("Belum ada bio.")}</p>{user.website && <a href={user.website} target="_blank" rel="noopener noreferrer nofollow"><LinkIcon size={12} />{user.website.replace(/^https?:\/\//, '')}</a>}</div></div>
+          <div className="profile-summary-right"><div className="profile-summary-top"><div className="profile-numbers"><span>{t("Post")}<strong>{ownPosts.length}</strong></span><button disabled={user.profile_locked} onClick={() => setFollowList('followers')}>{t("Followers")}<strong>{user.followers_count || 0}</strong></button><button disabled={user.profile_locked} onClick={() => setFollowList('following')}>{t("Following")}<strong>{user.following_count || 0}</strong></button></div>
             {isCurrentUser ? <button className="profile-primary" onClick={openEdit}>{t("Edit Profile")}</button> : !user.is_blocked_by_me && <button className="profile-primary" onClick={toggleFollow}>{user.follow_status === 'accepted' ? t("Mengikuti") : user.follow_status === 'pending' ? t("Diminta") : t("Ikuti")}</button>}
-            <div className="profile-options"><button aria-label="Menu profil" onClick={() => setMenuOpen(!menuOpen)}><MoreHorizontal size={20} /></button>{menuOpen && <div className="profile-options-menu">{isCurrentUser ? <><button onClick={() => navigate('/settings')}><Settings size={15} />{t("Pengaturan")}</button></> : <><button onClick={async () => { setMenuOpen(false); try { const { token } = await messageApi.createIntent({ user_id: (user as any).public_hash || user.username || user.id }); navigate(`/messages?t=${encodeURIComponent(token)}`); } catch { navigate('/messages'); } }}>{t("Pesan")}</button><button onClick={toggleBlock}><Ban size={15} />{user.is_blocked_by_me ? t("Buka blokir") : t("Blokir")}</button></>}</div>}</div>
-          </div><div className="profile-engagement"><span><Heart size={22} /><div>{totalLikes.toLocaleString()}<small>{t("Likes")}</small></div></span><span><Eye size={22} /><div>{totalViews.toLocaleString()}<small>Views</small></div></span></div></div>
+            <div className="profile-options"><button aria-label={t("Menu profil")} onClick={() => setMenuOpen(!menuOpen)}><MoreHorizontal size={20} /></button>{menuOpen && <div className="profile-options-menu">{isCurrentUser ? <><button onClick={() => navigate('/settings')}><Settings size={15} />{t("Pengaturan")}</button></> : <><button onClick={async () => { setMenuOpen(false); try { const { token } = await messageApi.createIntent({ user_id: (user as any).public_hash || user.username || user.id }); navigate(`/messages?t=${encodeURIComponent(token)}`); } catch { navigate('/messages'); } }}>{t("Pesan")}</button><button onClick={toggleBlock}><Ban size={15} />{user.is_blocked_by_me ? t("Buka blokir") : t("Blokir")}</button></>}</div>}</div>
+          </div><div className="profile-engagement"><span><Heart size={22} /><div>{totalLikes.toLocaleString(uiLanguage === 'en' ? 'en-US' : 'id-ID')}<small>{t("Likes")}</small></div></span><span><Eye size={22} /><div>{totalViews.toLocaleString(uiLanguage === 'en' ? 'en-US' : 'id-ID')}<small>{t("Views")}</small></div></span></div></div>
         </section>
-        {user.is_blocked_by_me || user.profile_locked ? <section className="profile-post-panel profile-empty"><Lock size={28} /><h3>{user.is_blocked_by_me ? 'Anda memblokir akun ini' : 'Akun ini private'}</h3><p>{user.is_blocked_by_me ? 'Buka blokir untuk melihat postingannya.' : 'Ikuti akun ini untuk melihat postingannya.'}</p></section> : <section className="profile-post-panel">
-          <div className="profile-toolbar"><div className="profile-tabs" aria-label="Jenis postingan">{[['posts', t("Posts")], ['reposts', `Repost${repostPosts.length ? ` (${repostPosts.length})` : ''}`], ['reels', 'Reels'], ['tagged', 'Tagged'], ['shop', 'Shop'], ['location', t("Location")], ...(isCurrentUser ? [['saved', t("Tersimpan")]] : [])].map(([id, label]) => <button key={id} onClick={() => setTab(id as typeof tab)} className={tab === id ? 'active' : ''} aria-pressed={tab === id}>{label}</button>)}</div><div className="profile-layout-buttons"><button className={layout === 'grid' ? 'active' : ''} aria-label={t("Tampilan grid")} aria-pressed={layout === 'grid'} onClick={() => chooseLayout('grid')}><LayoutGrid size={13} />Grid</button><button className={layout === 'long' ? 'active' : ''} aria-label={t("Tampilan list")} aria-pressed={layout === 'long'} onClick={() => chooseLayout('long')}><Rows3 size={13} />List</button></div></div>
-          {shownPosts.length === 0 && <div className="profile-empty"><FileText size={32} /><p>{tab === 'saved' && saved === null ? 'Memuat postingan tersimpan...' : 'Belum ada postingan untuk kategori ini.'}</p></div>}
+        {user.is_blocked_by_me || user.profile_locked ? <section className="profile-post-panel profile-empty"><Lock size={28} /><h3>{user.is_blocked_by_me ? t("Anda memblokir akun ini") : t("Akun ini private")}</h3><p>{user.is_blocked_by_me ? t("Buka blokir untuk melihat postingannya.") : t("Ikuti akun ini untuk melihat postingannya.")}</p></section> : <section className="profile-post-panel">
+          <div className="profile-toolbar"><div className="profile-tabs" aria-label={t("Jenis postingan")}>{[['posts', t("Posts")], ['reposts', `Repost${repostPosts.length ? ` (${repostPosts.length})` : ''}`], ['reels', 'Reels'], ['tagged', 'Tagged'], ['shop', 'Shop'], ['location', t("Location")], ...(isCurrentUser ? [['saved', t("Tersimpan")]] : [])].map(([id, label]) => <button key={id} onClick={() => setTab(id as typeof tab)} className={tab === id ? 'active' : ''} aria-pressed={tab === id}>{t(label)}</button>)}</div><div className="profile-layout-buttons"><button className={layout === 'grid' ? 'active' : ''} aria-label={t("Tampilan grid")} aria-pressed={layout === 'grid'} onClick={() => chooseLayout('grid')}><LayoutGrid size={13} />{t("Grid")}</button><button className={layout === 'long' ? 'active' : ''} aria-label={t("Tampilan list")} aria-pressed={layout === 'long'} onClick={() => chooseLayout('long')}><Rows3 size={13} />{t("List")}</button></div></div>
+          {shownPosts.length === 0 && <div className="profile-empty"><FileText size={32} /><p>{tab === 'saved' && saved === null ? t("Memuat postingan tersimpan...") : t("Belum ada postingan untuk kategori ini.")}</p></div>}
           {layout === 'grid' && tab !== 'reposts' ? <div className="profile-post-grid">{pagePosts.map((post) => <GridTile key={post.id} post={post} />)}</div> : <div className="profile-post-list">{pagePosts.map((post) => <PostCard key={post.id} post={post} onUpdated={replace} onDeleted={remove} />)}</div>}
-          {pages > 1 && <nav className="profile-pagination" aria-label="Halaman postingan"><button disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)} aria-label={t("Halaman sebelumnya")}><ChevronLeft size={14} /></button>{Array.from({ length: pages }, (_, index) => <button key={index} className={currentPage === index + 1 ? 'active' : ''} onClick={() => setPage(index + 1)} aria-current={currentPage === index + 1 ? 'page' : undefined}>{index + 1}</button>)}<button disabled={currentPage === pages} onClick={() => setPage(currentPage + 1)} aria-label={t("Halaman berikutnya")}><ChevronRight size={14} /></button></nav>}
+          {pages > 1 && <nav className="profile-pagination" aria-label={t("Halaman postingan")}><button disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)} aria-label={t("Halaman sebelumnya")}><ChevronLeft size={14} /></button>{Array.from({ length: pages }, (_, index) => <button key={index} className={currentPage === index + 1 ? 'active' : ''} onClick={() => setPage(index + 1)} aria-current={currentPage === index + 1 ? 'page' : undefined}>{index + 1}</button>)}<button disabled={currentPage === pages} onClick={() => setPage(currentPage + 1)} aria-label={t("Halaman berikutnya")}><ChevronRight size={14} /></button></nav>}
         </section>}
-        {!user.profile_locked && !user.is_blocked_by_me && portfolios.length > 0 && <details className="profile-portfolio"><summary>Karya unggulan ({portfolios.length})</summary>{portfolios.map((item) => <div key={item.id}><a href={/^https?:\/\//i.test(item.link_url || '') ? item.link_url : undefined} target="_blank" rel="noopener noreferrer">{item.title}</a>{isCurrentUser && <button aria-label="Hapus karya" onClick={async () => { if (window.confirm('Hapus karya ini?')) { await userApi.deletePortfolio(item.id); setPortfolios((list) => list.filter((p) => p.id !== item.id)); } }}><Trash2 size={14} /></button>}</div>)}</details>}
+        {!user.profile_locked && !user.is_blocked_by_me && portfolios.length > 0 && <details className="profile-portfolio"><summary>{t("Karya unggulan (")}{portfolios.length})</summary>{portfolios.map((item) => <div key={item.id}><a href={/^https?:\/\//i.test(item.link_url || '') ? item.link_url : undefined} target="_blank" rel="noopener noreferrer">{item.title}</a>{isCurrentUser && <button aria-label={t("Hapus karya")} onClick={async () => { if (window.confirm('Hapus karya ini?')) { await userApi.deletePortfolio(item.id); setPortfolios((list) => list.filter((p) => p.id !== item.id)); } }}><Trash2 size={14} /></button>}</div>)}</details>}
       </div>
-      {!user.profile_locked && !user.is_blocked_by_me && <aside className="profile-right-column"><section className="profile-side-panel"><div className="profile-panel-heading"><h3><FileText size={15} />{t("Postingan Terbaru")}</h3><button onClick={() => { setTab('posts'); setPage(1); chooseLayout('long'); }}>{t("Lihat Semua")}<ArrowRight size={13} /></button></div><div className="profile-latest">{latest.map((post) => <Link key={post.id} to={postUrl(post)} className="profile-latest-row"><ProfileMedia post={post} compact /><div className="profile-latest-copy"><div className="profile-latest-author">{user.avatar_url ? <img src={user.avatar_url} alt="" /> : <span>{user.name?.slice(0, 1)}</span>}<div>{user.name}<small>{timeAgo(post.created_at)}</small></div></div><h4>{post.title || t("Postingan")}</h4><p>{post.content}</p>{post.location && <span className="profile-card-location"><MapPin size={11} />{post.location}</span>}<div className="profile-latest-stats"><span><Heart size={14} />{post.likes_count || 0}</span><span><Eye size={14} />{post.views_count || 0}</span></div></div></Link>)}{!latest.length && <p className="profile-side-empty">Belum ada postingan terbaru.</p>}</div></section>
-        <section className="profile-side-panel"><div className="profile-panel-heading"><h3><Flame size={16} />Trending</h3><Link to="/search">{t("Lihat Semua")}<ArrowRight size={13} /></Link></div><div className="profile-trending">{trending.map((item, index) => <Link key={item.title} to={`/search?q=${encodeURIComponent(item.title)}`}><div><ProfileMedia post={item.post} compact /><span className="profile-trending-rank">{index + 1}</span></div><h4>{item.title}</h4><p>{item.count} posts</p></Link>)}</div>{!trending.length && <p className="profile-side-empty">Lokasi dan hashtag dari postingan akan muncul di sini.</p>}</section>
+      {!user.profile_locked && !user.is_blocked_by_me && <aside className="profile-right-column"><section className="profile-side-panel"><div className="profile-panel-heading"><h3><FileText size={15} />{t("Postingan Terbaru")}</h3><button onClick={() => { setTab('posts'); setPage(1); chooseLayout('long'); }}>{t("Lihat Semua")}<ArrowRight size={13} /></button></div><div className="profile-latest">{latest.map((post) => <Link key={post.id} to={postUrl(post)} className="profile-latest-row"><ProfileMedia post={post} compact /><div className="profile-latest-copy"><div className="profile-latest-author">{user.avatar_url ? <img src={user.avatar_url} alt="" /> : <span>{user.name?.slice(0, 1)}</span>}<div>{user.name}<small>{timeAgo(post.created_at, uiLanguage)}</small></div></div><h4>{post.title || t("Postingan")}</h4><p>{post.content}</p>{post.location && <span className="profile-card-location"><MapPin size={11} />{post.location}</span>}<div className="profile-latest-stats"><span><Heart size={14} />{post.likes_count || 0}</span><span><Eye size={14} />{post.views_count || 0}</span></div></div></Link>)}{!latest.length && <p className="profile-side-empty">{t("Belum ada postingan terbaru.")}</p>}</div></section>
+        <section className="profile-side-panel"><div className="profile-panel-heading"><h3><Flame size={16} />{t("Trending")}</h3><Link to="/search">{t("Lihat Semua")}<ArrowRight size={13} /></Link></div><div className="profile-trending">{trending.map((item, index) => <Link key={item.title} to={`/search?q=${encodeURIComponent(item.title)}`}><div><ProfileMedia post={item.post} compact /><span className="profile-trending-rank">{index + 1}</span></div><h4>{item.title}</h4><p>{item.count} {t("posts")}</p></Link>)}</div>{!trending.length && <p className="profile-side-empty">{t("Lokasi dan hashtag dari postingan akan muncul di sini.")}</p>}</section>
       </aside>}
       {followList && <FollowListModal userId={user.id} kind={followList} onClose={() => setFollowList('')} />}
 
@@ -260,7 +263,7 @@ export default function Profile({ user, posts, isCurrentUser, onUserChange, onPo
         <Modal title={t("Edit profil")} onClose={() => setEditOpen(false)}>
           <div className="flex flex-col gap-3">
             {([['name', t("Nama lengkap")], ['title', t("Jabatan / peran")], ['company', t("Perusahaan")], ['location', t("Lokasi")], ['website', 'Website (https://…)']] as const).map(([key, label]) =>
-              <label key={key} className="text-xs font-semibold flex flex-col gap-1">{label}<input value={(form as any)[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })} className={field} /></label>
+              <label key={key} className="text-xs font-semibold flex flex-col gap-1">{t(label)}<input value={(form as any)[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })} className={field} /></label>
             )}
             <label className="text-xs font-semibold flex flex-col gap-1">{t("Bio")}<textarea value={form.bio} maxLength={500} rows={3} onChange={(e) => setForm({ ...form, bio: e.target.value })} className={field} /><span className="text-right text-[10px] text-text-secondary">{form.bio.length}/500</span></label>
             <button type="button" onClick={async () => { if (await updateProfile(form)) setEditOpen(false); }} className="rounded-full bg-primary py-2 text-sm font-bold text-white">{t("Simpan")}</button>

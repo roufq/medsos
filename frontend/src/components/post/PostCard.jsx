@@ -1,11 +1,13 @@
+import {useLanguage} from '../../context/LanguageContext';
 import { profileUrl } from '../../utils/profileUrl';
-import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Trash2, Heart, MessageCircle, Share2, Globe } from 'lucide-react';
 import LinkPreviewCard from './LinkPreviewCard';
 
 const PostCard = ({ post, onDelete }) => {
+const {language:uiLanguage}=useLanguage();
+
   const { user } = useAuth();
   const avatar = post.user?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=100';
 
@@ -32,7 +34,7 @@ const PostCard = ({ post, onDelete }) => {
             </Link>
             <div className="flex items-center gap-1 text-[11px] text-[#65676B] font-semibold">
               <span>
-                {new Date(post.created_at).toLocaleString('en-GB', {
+                {new Date(post.created_at).toLocaleString(uiLanguage === 'en' ? 'en-US' : 'id-ID', {
                   day: '2-digit',
                   month: 'short',
                   hour: '2-digit',

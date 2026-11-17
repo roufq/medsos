@@ -91,6 +91,9 @@ func canViewPreloadedPost(viewerID int64, post *models.Post, blocked, following 
 }
 
 func canViewPost(viewerID int64, post *models.Post) bool {
+	if post == nil || post.DeletedAt.Valid {
+		return false
+	}
 	if post.RepostOfID != nil {
 		var orig models.Post
 		if db.DB.First(&orig, *post.RepostOfID).Error != nil || !canViewPost(viewerID, &orig) || !canViewPost(0, &orig) {
@@ -558,8 +561,11 @@ func (h *SocialController) Share(c goravelhttp.Context) goravelhttp.Response {
 		Channel     string `json:"channel"`
 		RecipientID int64  `json:"recipient_id"`
 		Message     string `json:"message"`
+		PrepareOnly bool   `json:"prepare_only"`
 	}
-	_ = c.Request().Bind(&input)
+	if c.Request().Bind(&input) != nil {
+		return c.Response().Json(400, goravelhttp.Json{"error": "invalid share request"})
+	}
 	input.Channel = strings.ToLower(strings.TrimSpace(input.Channel))
 	if !shareChannels[input.Channel] {
 		return c.Response().Json(400, goravelhttp.Json{"error": "unsupported share channel"})
@@ -577,6 +583,12 @@ func (h *SocialController) Share(c goravelhttp.Context) goravelhttp.Response {
 		title = *post.Title
 	}
 	links := shareLinks(postID, title)
+	if input.PrepareOnly {
+		if input.Channel == "message" {
+			return c.Response().Json(400, goravelhttp.Json{"error": "message preparation is not supported"})
+		}
+		return c.Response().Json(200, goravelhttp.Json{"prepared": true, "share_url": publicPostURL(postID), "intent_url": links[input.Channel], "channel": input.Channel})
+	}
 	if input.Channel == "message" {
 		if input.RecipientID <= 0 || input.RecipientID == userID {
 			return c.Response().Json(400, goravelhttp.Json{"error": "recipient_id is required"})
@@ -619,7 +631,10 @@ func (h *SocialController) Share(c goravelhttp.Context) goravelhttp.Response {
 			return c.Response().Json(500, goravelhttp.Json{"error": "failed to send message"})
 		}
 	}
-	db.DB.Create(&models.PostShare{PostID: postID, UserID: userID, Channel: input.Channel})
+	// A delivered message must not look failed because its counter could not be saved.
+	if err := db.DB.Create(&models.PostShare{PostID: postID, UserID: userID, Channel: input.Channel}).Error; err != nil && input.Channel != "message" {
+		return c.Response().Json(503, goravelhttp.Json{"error": "Gagal mencatat pembagian postingan"})
+	}
 	notifyUser(post.UserID, userID, "share", "post", postID, "Someone shared your post")
 	var sharesCount int64
 	db.DB.Model(&models.PostShare{}).Where("post_id = ?", postID).Count(&sharesCount)
@@ -858,7 +873,7 @@ func (h *SocialController) ReviewReport(c goravelhttp.Context) goravelhttp.Respo
 		Status     string `json:"status"`
 		DeletePost bool   `json:"delete_post"`
 	}
-	if c.Request().Bind(&input) != nil || (input.Status != "resolved" && input.Status != "dismissed") {
+	if c.Request().Bind(&input) != nil || (input.Status != "resolved" && input.Status != "dismissed") || (input.DeletePost && input.Status != "resolved") {
 		return c.Response().Json(400, goravelhttp.Json{"error": "status must be resolved or dismissed"})
 	}
 	return dbTransactionResponse(c, func(tx *gorm.DB) error {
@@ -871,7 +886,14 @@ func (h *SocialController) ReviewReport(c goravelhttp.Context) goravelhttp.Respo
 			return err
 		}
 		if input.DeletePost {
-			return tx.Delete(&models.Post{}, report.PostID).Error
+			var active int64
+			if err := tx.Model(&models.Post{}).Where("id = ?", report.PostID).Count(&active).Error; err != nil {
+				return err
+			}
+			if active == 0 {
+				return nil
+			}
+			return services.ModeratePost(tx, adminID, report.PostID, "Pelanggaran kebijakan: "+report.Reason, false)
 		}
 		return nil
 	}, "report reviewed")

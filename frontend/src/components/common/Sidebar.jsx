@@ -1,5 +1,4 @@
 import { profileUrl } from '../../utils/profileUrl';
-import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Users, Bookmark, MonitorPlay, History, Calendar, Settings } from 'lucide-react';

@@ -1,9 +1,8 @@
-import React from 'react';
-import { AuthProvider } from './context/AuthContext';
-import { ThemeProvider } from './context/ThemeContext';
-import { LanguageProvider } from './context/LanguageContext';
+import { AuthProvider } from './context/AuthProvider';
+import { ThemeProvider } from './context/ThemeProvider';
+import { LanguageProvider } from './context/LanguageProvider';
 import AppRouter from './routes/AppRouter';
-import { PlatformProvider } from './context/PlatformContext';
+import { PlatformProvider } from './context/PlatformProvider';
 
 function App() {
   return (

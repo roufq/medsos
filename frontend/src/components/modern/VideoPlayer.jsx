@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Play, Video } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
-export const watchUrl = (post) => `/videos/${post.public_hash || post.id}`;
+import { watchUrl } from '../../utils/postUrl';
 export default function VideoPlayer({ post, preview = false, autoplay = false }) {
   const { t } = useLanguage();
   const media = (post.original_post || post).media || [];

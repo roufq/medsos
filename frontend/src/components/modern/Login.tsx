@@ -60,7 +60,7 @@ export default function Login({ onLogin, onNavigateToSignup, onNavigateToForgot,
               </div>
               <input
                 type={showPassword ? 'text' : 'password'}
-                aria-label="Password"
+                aria-label={t("Password")}
                 autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

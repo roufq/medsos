@@ -25,7 +25,7 @@ interface HeaderProps {
 
 const emptyResults = { users: [], posts: [], jobs: [], products: [] };
 
-export default function Header({ currentUser, searchQuery, setSearchQuery, onNavigate, onOpenProfile, onToggleMobileSidebar, currentTab, onRequestCreatePost, onLogout }: HeaderProps) {const { t } = useLanguage();
+export default function Header({ currentUser, searchQuery, setSearchQuery, onNavigate, onOpenProfile, onToggleMobileSidebar, currentTab, onRequestCreatePost, onLogout }: HeaderProps) {const { t , language: uiLanguage} = useLanguage();
   const { uploadLimitsEnabled } = usePlatform();
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
@@ -102,31 +102,31 @@ export default function Header({ currentUser, searchQuery, setSearchQuery, onNav
           <div className="poster-search relative">
             <div className="poster-search-input flex items-center rounded-full px-4 py-2">
               <Search className="w-5 h-5 text-outline" />
-              <input type="search" value={searchQuery} onFocus={() => setIsFocused(true)} onChange={(event) => setSearchQuery(event.target.value)} onKeyDown={(event) => {if (event.key === 'Enter' && searchQuery.trim().length >= 2) {setIsFocused(false);navigate(`${currentTab === 'explore' ? '/explore' : '/search'}?q=${encodeURIComponent(searchQuery.trim())}`);}}} placeholder="Cari judul, #hashtag, lokasi, @username…" className="bg-transparent border-none outline-none focus:ring-0 text-sm ml-2 w-full text-text-primary placeholder:text-outline" aria-label="Search application" />
+              <input type="search" value={searchQuery} onFocus={() => setIsFocused(true)} onChange={(event) => setSearchQuery(event.target.value)} onKeyDown={(event) => {if (event.key === 'Enter' && searchQuery.trim().length >= 2) {setIsFocused(false);navigate(`${currentTab === 'explore' ? '/explore' : '/search'}?q=${encodeURIComponent(searchQuery.trim())}`);}}} placeholder={t("Cari judul, #hashtag, lokasi, @username…")} className="bg-transparent border-none outline-none focus:ring-0 text-sm ml-2 w-full text-text-primary placeholder:text-outline" aria-label={t("Search application")} />
             </div>
 
             {isFocused && searchQuery.trim().length >= 2 &&
             <div className="absolute left-0 right-0 top-12 max-h-[70vh] overflow-y-auto rounded-2xl border border-border-subtle bg-white p-2 shadow-xl text-text-primary">
-                {isSearching && <p className="px-3 py-4 text-sm text-text-secondary">Searching database...</p>}
+                {isSearching && <p className="px-3 py-4 text-sm text-text-secondary">{t("Searching database...")}</p>}
                 {!isSearching && searchError && <p className="px-3 py-4 text-sm text-error">{searchError}</p>}
-                {!isSearching && !searchError && totalResults === 0 && <p className="px-3 py-4 text-sm text-text-secondary">No matching data found.</p>}
+                {!isSearching && !searchError && totalResults === 0 && <p className="px-3 py-4 text-sm text-text-secondary">{t("No matching data found.")}</p>}
 
                 {results.users.slice(0, 6).map((user: any) =>
               <button key={`user-${user.id}`} type="button" onClick={() => openUser(user.username || user.id)} className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left hover:bg-surface-container-low">
                     <div className="h-9 w-9 overflow-hidden rounded-full bg-secondary-container flex items-center justify-center font-bold text-primary">{user.avatar_url ? <img src={user.avatar_url} alt="" className="h-full w-full object-cover" /> : user.name?.slice(0, 1).toUpperCase()}</div>
-                    <div className="min-w-0"><div className="truncate text-sm font-bold">{user.name}</div><div className="truncate text-xs text-text-secondary">@{user.username || 'user'} · User</div></div>
+                    <div className="min-w-0"><div className="truncate text-sm font-bold">{user.name}</div><div className="truncate text-xs text-text-secondary">@{user.username || t("user")} {t("· User")}</div></div>
                   </button>
               )}
 
                 {results.products.slice(0, 4).map((post: any) =>
               <button key={`product-${post.id}`} type="button" onClick={() => openPost(post)} className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left hover:bg-surface-container-low">
-                    <Package className="h-5 w-5 text-primary" /><div className="min-w-0"><div className="truncate text-sm font-bold">{post.title || post.content || 'Product'}</div><div className="truncate text-xs text-text-secondary">{post.shop?.category || 'Product'}</div></div>
+                    <Package className="h-5 w-5 text-primary" /><div className="min-w-0"><div className="truncate text-sm font-bold">{post.title || post.content || t("Product")}</div><div className="truncate text-xs text-text-secondary">{post.shop?.category || t("Product")}</div></div>
                   </button>
               )}
 
                 {results.posts.slice(0, 4).map((post: any) =>
               <button key={`post-${post.id}`} type="button" onClick={() => openPost(post)} className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left hover:bg-surface-container-low">
-                    <FileText className="h-5 w-5 text-primary" /><div className="min-w-0"><div className="truncate text-sm font-bold">{post.title || post.content || 'Post'}</div><div className="truncate text-xs text-text-secondary">{post.user?.name || 'Post'}</div></div>
+                    <FileText className="h-5 w-5 text-primary" /><div className="min-w-0"><div className="truncate text-sm font-bold">{post.title || post.content || t("Post")}</div><div className="truncate text-xs text-text-secondary">{post.user?.name || t("Post")}</div></div>
                   </button>
               )}
               </div>
@@ -134,40 +134,38 @@ export default function Header({ currentUser, searchQuery, setSearchQuery, onNav
           </div>
         </div>
 
-        <nav className="poster-top-nav" aria-label="Navigasi utama">
+        <nav className="poster-top-nav" aria-label={t("Navigasi utama")}>
           <button className={currentTab === 'home' ? 'active' : ''} onClick={() => onNavigate('home')}><Home size={19} />{t("Home")}</button>
-          <button className={currentTab === 'explore' ? 'active' : ''} onClick={() => onNavigate('explore')}><Compass size={19} />Explore</button>
+          <button className={currentTab === 'explore' ? 'active' : ''} onClick={() => onNavigate('explore')}><Compass size={19} />{t("Explore")}</button>
           {currentTab !== 'explore' && <button className={currentTab === 'profile' ? 'active' : ''} onClick={() => onNavigate('profile')}><UserRound size={19} />{t("Profile")}</button>}
-          <button className={currentTab === 'shop' ? 'active' : ''} aria-current={currentTab === 'shop' ? 'page' : undefined} onClick={() => navigate('/shop')}><ShoppingBag size={19} />Shop</button>
-          {currentTab === 'explore' ? <button onClick={()=>onNavigate('messages')}><Mail size={19}/>{t('Pesan')}</button> : <><button className={currentTab === 'videos' ? 'active' : ''} onClick={() => navigate('/videos')}><SquarePlay size={19} />Video</button><button className={currentTab === 'newpost' ? 'active' : ''} onClick={onRequestCreatePost}><SquarePen size={19} />{t("New Post")}</button></>}
+          <button className={currentTab === 'shop' ? 'active' : ''} aria-current={currentTab === 'shop' ? 'page' : undefined} onClick={() => navigate('/shop')}><ShoppingBag size={19} />{t("Shop")}</button>
+          {currentTab === 'explore' ? <button onClick={()=>onNavigate('messages')}><Mail size={19}/>{t('Pesan')}</button> : <><button className={currentTab === 'videos' ? 'active' : ''} onClick={() => navigate('/videos')}><SquarePlay size={19} />{t("Video")}</button><button className={currentTab === 'newpost' ? 'active' : ''} onClick={onRequestCreatePost}><SquarePen size={19} />{t("New Post")}</button></>}
         </nav>
         <div className="poster-account flex items-center gap-5"><LanguageSwitch />
           <button type="button" className="poster-theme-toggle" onClick={toggleTheme} aria-label={theme === 'dark' ? t("Aktifkan mode terang") : t("Aktifkan mode gelap")} title={theme === 'dark' ? t("Mode terang") : t("Mode gelap")} aria-pressed={theme === 'dark'}>{theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}</button>
           <div className="flex gap-1">
             <div className="relative">
-              <button type="button" onClick={() => {const next = !notificationsOpen;setNotificationsOpen(next);setIsFocused(false);if (next) loadNotifications();}} className="relative p-2 text-text-secondary hover:text-primary transition-all rounded-full hover:bg-surface-container-low cursor-pointer" aria-label="Notifications">
+              <button type="button" onClick={() => {const next = !notificationsOpen;setNotificationsOpen(next);setIsFocused(false);if (next) loadNotifications();}} className="relative p-2 text-text-secondary hover:text-primary transition-all rounded-full hover:bg-surface-container-low cursor-pointer" aria-label={t("Notifications")}>
                 <Bell className="w-5 h-5" />
                 {unreadCount > 0 && <span className="absolute right-0 top-0 min-w-4 h-4 px-1 rounded-full bg-error text-white text-[9px] font-bold flex items-center justify-center">{unreadCount > 99 ? '99+' : unreadCount}</span>}
               </button>
               {notificationsOpen &&
               <div className="absolute right-0 top-11 w-80 max-h-[70vh] overflow-y-auto rounded-2xl border border-border-subtle bg-white p-2 shadow-xl text-text-primary">
                   <div className="flex items-center justify-between gap-2 px-3 py-2">
-                    <span className="text-sm font-bold">Notifications</span>
+                    <span className="text-sm font-bold">{t("Notifications")}</span>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-text-secondary">{unreadCount} unread</span>
+                      <span className="text-xs text-text-secondary">{unreadCount} {t("unread")}</span>
                       {unreadCount > 0 && (
-                        <button type="button" onClick={markAllAsRead} className="rounded-full bg-primary px-2.5 py-1 text-[11px] font-bold text-white hover:opacity-90 cursor-pointer">
-                          Sudah dilihat
-                        </button>
+                        <button type="button" onClick={markAllAsRead} className="rounded-full bg-primary px-2.5 py-1 text-[11px] font-bold text-white hover:opacity-90 cursor-pointer">{t("Sudah dilihat")}</button>
                       )}
                     </div>
                   </div>
-                  {notificationsLoading && notifications.length === 0 && <p className="px-3 py-4 text-xs text-text-secondary">Loading notifications...</p>}
-                  {!notificationsLoading && notifications.length === 0 && <p className="px-3 py-4 text-xs text-text-secondary">No notifications yet.</p>}
+                  {notificationsLoading && notifications.length === 0 && <p className="px-3 py-4 text-xs text-text-secondary">{t("Loading notifications...")}</p>}
+                  {!notificationsLoading && notifications.length === 0 && <p className="px-3 py-4 text-xs text-text-secondary">{t("No notifications yet.")}</p>}
                   {notifications.map((notification) =>
                 <button key={notification.id} type="button" onClick={() => openNotification(notification)} className={`flex w-full gap-3 rounded-xl px-3 py-3 text-left hover:bg-surface-container-low ${notification.read_at ? '' : 'bg-secondary-container/40'}`}>
                       <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-secondary-container flex items-center justify-center text-primary font-bold">{notification.actor?.avatar_url ? <img src={notification.actor.avatar_url} alt="" className="h-full w-full object-cover" /> : notification.actor?.name?.slice(0, 1).toUpperCase() || '!'}</div>
-                      <div className="min-w-0"><p className="text-xs text-text-primary"><span className="font-bold">{notification.actor?.name || 'System'}</span> {notification.actor ? String(notification.message).replace(/^Someone\s+/i, '') : notification.message}</p><p className="mt-1 text-[10px] text-outline">{new Date(notification.created_at).toLocaleString()}</p></div>
+                      <div className="min-w-0"><p className="text-xs text-text-primary"><span className="font-bold">{notification.actor?.name || t("System")}</span> {notification.actor ? String(notification.message).replace(/^Someone\s+/i, '') : notification.message}</p><p className="mt-1 text-[10px] text-outline">{new Date(notification.created_at).toLocaleString(uiLanguage === 'en' ? 'en-US' : 'id-ID')}</p></div>
                     </button>
                 )}
                 </div>
@@ -183,7 +181,7 @@ export default function Header({ currentUser, searchQuery, setSearchQuery, onNav
               tabIndex={0}
               onClick={() => { setProfileMenuOpen((open) => !open); setNotificationsOpen(false); }}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setProfileMenuOpen((open) => !open); setNotificationsOpen(false); } }}
-              aria-label="Menu profil"
+              aria-label={t("Menu profil")}
               className="w-9 h-9 rounded-full overflow-hidden border border-white/25 cursor-pointer active:scale-95 hover:shadow-sm transition-all"
             >
               <img src={currentUser.avatar} alt={currentUser.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
@@ -201,8 +199,8 @@ export default function Header({ currentUser, searchQuery, setSearchQuery, onNav
                     <div className="flex items-center gap-3 min-w-0">
                       <img src={currentUser.avatar} alt={currentUser.name} className="h-10 w-10 rounded-full object-cover border border-white/15 shrink-0" referrerPolicy="no-referrer" />
                       <div className="min-w-0">
-                        <div className="truncate text-sm font-bold text-white">{currentUser.name || 'User'}</div>
-                        <div className="truncate text-xs text-slate-400">@{(currentUser as any).username || 'user'}</div>
+                        <div className="truncate text-sm font-bold text-white">{currentUser.name || t("User")}</div>
+                        <div className="truncate text-xs text-slate-400">@{(currentUser as any).username || t("user")}</div>
                       </div>
                     </div>
                     <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
@@ -216,7 +214,7 @@ export default function Header({ currentUser, searchQuery, setSearchQuery, onNav
                     className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-200 hover:bg-white/10 transition-colors cursor-pointer"
                   >
                     <UserRound className="w-4 h-4 text-slate-400" />
-                    <span>Profile</span>
+                    <span>{t("Profile")}</span>
                   </button>
 
                   {uploadLimitsEnabled && <button
@@ -226,11 +224,9 @@ export default function Header({ currentUser, searchQuery, setSearchQuery, onNav
                   >
                     <span className="flex items-center gap-3">
                       <BadgeCheck className="w-4 h-4 text-indigo-400" />
-                      <span>Pricing</span>
+                      <span>{t("Pricing")}</span>
                     </span>
-                    <span className="rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 px-2.5 py-0.5 text-[10px] font-extrabold text-white">
-                      Pro
-                    </span>
+                    <span className="rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 px-2.5 py-0.5 text-[10px] font-extrabold text-white">{t("Pro")}</span>
                   </button>}
 
                   <button
@@ -239,7 +235,7 @@ export default function Header({ currentUser, searchQuery, setSearchQuery, onNav
                     className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-200 hover:bg-white/10 transition-colors cursor-pointer"
                   >
                     <Settings className="w-4 h-4 text-slate-400" />
-                    <span>Settings</span>
+                    <span>{t("Settings")}</span>
                   </button>
 
                   <button
@@ -249,10 +245,10 @@ export default function Header({ currentUser, searchQuery, setSearchQuery, onNav
                   >
                     <span className="flex items-center gap-3">
                       <Palette className="w-4 h-4 text-slate-400" />
-                      <span>Appearance</span>
+                      <span>{t("Appearance")}</span>
                     </span>
                     <span className="rounded-md bg-white/10 px-2 py-0.5 text-[10px] font-bold text-slate-300">
-                      {theme === 'dark' ? 'Dark' : 'Light'}
+                      {theme === 'dark' ? t("Dark") : t("Light")}
                     </span>
                   </button>
 
@@ -262,7 +258,7 @@ export default function Header({ currentUser, searchQuery, setSearchQuery, onNav
                     className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-200 hover:bg-white/10 transition-colors cursor-pointer"
                   >
                     <HelpCircle className="w-4 h-4 text-slate-400" />
-                    <span>Help & Support</span>
+                    <span>{t("Help & Support")}</span>
                   </button>
 
                   <div className="my-1.5 h-px bg-white/10" />
@@ -273,7 +269,7 @@ export default function Header({ currentUser, searchQuery, setSearchQuery, onNav
                     className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-semibold text-rose-400 hover:bg-rose-500/15 transition-colors cursor-pointer"
                   >
                     <LogOut className="w-4 h-4" />
-                    <span>Log Out</span>
+                    <span>{t("Log Out")}</span>
                   </button>
                 </div>
               </>
@@ -283,13 +279,13 @@ export default function Header({ currentUser, searchQuery, setSearchQuery, onNav
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setHelpOpen(false)}>
               <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#12141f] p-6 text-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-lg font-extrabold flex items-center gap-2"><HelpCircle className="w-5 h-5 text-indigo-400" /> Help & Support</h3>
+                  <h3 className="text-lg font-extrabold flex items-center gap-2"><HelpCircle className="w-5 h-5 text-indigo-400" /> {t("Help & Support")}</h3>
                   <button type="button" onClick={() => setHelpOpen(false)} className="rounded-lg p-1 text-slate-400 hover:text-white cursor-pointer"><X className="w-5 h-5" /></button>
                 </div>
                 <div className="space-y-2.5 text-xs text-slate-300">
-                  <p><strong>• Kuota Posting & Centang Biru:</strong> Akun Free mendapat 1x posting/hari (atau 3x/hari selama 1 bulan dengan membagikan kode referral). Paket berbayar mendapat 3x–24x posting/hari + Centang Biru.</p>
-                  <p><strong>• Berhenti Berlangganan:</strong> Centang biru pemberian admin tetap berlaku tanpa langganan. Kuota paket hanya berlaku ketika pembatasan upload diaktifkan.</p>
-                  <p><strong>• Kontak Bantuan:</strong> Hubungi tim support di <span className="text-indigo-400">support@postter.us</span> atau kelola akun di halaman <button type="button" onClick={() => { setHelpOpen(false); navigate('/settings'); }} className="text-indigo-400 underline font-bold cursor-pointer">Settings</button>.</p>
+                  <p><strong>{t("• Kuota Posting & Centang Biru:")}</strong> {t("Akun Free mendapat 1x posting/hari (atau 3x/hari selama 1 bulan dengan membagikan kode referral). Paket berbayar mendapat 3x–24x posting/hari + Centang Biru.")}</p>
+                  <p><strong>{t("• Berhenti Berlangganan:")}</strong> {t("Centang biru pemberian admin tetap berlaku tanpa langganan. Kuota paket hanya berlaku ketika pembatasan upload diaktifkan.")}</p>
+                  <p><strong>{t("• Kontak Bantuan:")}</strong> {t("Hubungi tim support di")} <span className="text-indigo-400">support@postter.us</span> {t("atau kelola akun di halaman")} <button type="button" onClick={() => { setHelpOpen(false); navigate('/settings'); }} className="text-indigo-400 underline font-bold cursor-pointer">{t("Settings")}</button>.</p>
                 </div>
               </div>
             </div>

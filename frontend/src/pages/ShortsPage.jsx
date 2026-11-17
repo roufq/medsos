@@ -33,7 +33,7 @@ function ShortItem({ post, muted, onToggleMute, onLike, onShare }) {const { t } 
 
       <div className="w-full h-full flex items-center justify-center text-white/70 text-sm">Video sedang diproses…</div>
       }
-      <button type="button" onClick={onToggleMute} className="absolute top-3 right-3 rounded-full bg-black/50 p-2 text-white" aria-label={muted ? 'Nyalakan suara' : 'Matikan suara'}>{muted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}</button>
+      <button type="button" onClick={onToggleMute} className="absolute top-3 right-3 rounded-full bg-black/50 p-2 text-white" aria-label={muted ? t("Nyalakan suara") : t("Matikan suara")}>{muted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}</button>
       <div className="absolute bottom-0 inset-x-0 p-4 pr-16 bg-gradient-to-t from-black/80 to-transparent text-white">
         <Link to={profileUrl(post.user || { id: post.user_id })} className="flex items-center gap-2 font-bold text-sm mb-1">
           <img src={post.user?.avatar_url || '/favicon.svg'} alt="" className="w-8 h-8 rounded-full object-cover" />@{post.user?.username || post.user?.name}
@@ -56,18 +56,28 @@ export default function ShortsPage() {const { t } = useLanguage();
   const [hasMore, setHasMore] = useState(false);
   const [muted, setMuted] = useState(true);
   const [sharing, setSharing] = useState(null);
+  const [error, setError] = useState('');
 
   const load = async (beforeId) => {
     setLoading(true);
+    setError('');
     try {
       const data = (await postApi.getFeed(PAGE_SIZE, 0, null, beforeId || null, 'shorts')) || [];
       setPosts((current) => beforeId ? [...current, ...data] : data);
       setHasMore(data.length === PAGE_SIZE);
+    } catch (e) {
+      setError(e.response?.data?.error || e.message || 'Gagal memuat video.');
     } finally {
       setLoading(false);
     }
   };
-  useEffect(() => {load();}, []);
+  useEffect(() => {
+    let active = true;
+    postApi.getFeed(PAGE_SIZE, 0, null, null, 'shorts').then(data => {
+      if (active) { setPosts(data || []); setHasMore((data || []).length === PAGE_SIZE); }
+    }).catch(e => { if (active) setError(e.response?.data?.error || e.message || 'Gagal memuat video.'); }).finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, []);
 
   const like = async (post) => {
     const { liked, likes_count } = await postApi.toggleLike(post.public_hash || post.id);
@@ -77,11 +87,12 @@ export default function ShortsPage() {const { t } = useLanguage();
   return (
     <AppLayout currentTab="shorts">
       <div className="h-[calc(100vh-110px)] overflow-y-auto snap-y snap-mandatory flex flex-col gap-4 pb-6">
+        {error && <p role="alert" className="text-error">{t(error)}</p>}
         {posts.map((post) =>
         <ShortItem key={post.id} post={post} muted={muted} onToggleMute={() => setMuted((m) => !m)} onLike={() => like(post)} onShare={() => setSharing(post.public_hash || post.id)} />
         )}
         {loading && <div className="flex justify-center py-10"><Loader className="animate-spin text-primary" size={36} /></div>}
-        {!loading && posts.length === 0 && <div className="bg-white rounded-2xl p-10 text-center text-text-secondary">Belum ada Shorts. Unggah video berdurasi 1–1,5 menit untuk tampil di sini.</div>}
+        {!loading && !error && posts.length === 0 && <div className="bg-white rounded-2xl p-10 text-center text-text-secondary">Belum ada Shorts. Unggah video berdurasi 1–1,5 menit untuk tampil di sini.</div>}
         {!loading && hasMore && <button type="button" onClick={() => load(posts[posts.length - 1].id)} className="self-center rounded-full bg-white px-6 py-2 text-sm font-semibold">{t("Muat lebih banyak")}</button>}
       </div>
       {sharing && <ShareModal postId={sharing} onClose={() => setSharing(null)} onShared={(res) => setPosts((current) => current.map((p) => (p.public_hash || p.id) === sharing ? { ...p, shares_count: res?.shares_count ?? ((p.shares_count || 0) + 1) } : p))} />}

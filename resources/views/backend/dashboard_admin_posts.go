@@ -14,7 +14,7 @@ func RenderDashboardAdminPosts(w io.Writer, posts []models.Post, user *models.Us
 		if p.User.Name != "" {
 			authorName = p.User.Name
 		}
-		
+
 		contentPreview := ""
 		if p.Content != nil {
 			contentPreview = *p.Content
@@ -55,6 +55,7 @@ func RenderDashboardAdminPosts(w io.Writer, posts []models.Post, user *models.Us
 						dom.CustomAttr("method", "POST"),
 						dom.Style("display:inline;"),
 					},
+					dom.Input([]dom.Attr{dom.Type("text"), dom.Name("reason"), dom.Required(), dom.CustomAttr("minlength", "5"), dom.CustomAttr("maxlength", "300"), dom.CustomAttr("aria-label", "Alasan moderasi"), dom.Placeholder("Alasan moderasi (5–300 karakter)")}),
 					dom.Button(
 						[]dom.Attr{
 							dom.Type("submit"),
