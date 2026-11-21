@@ -199,9 +199,8 @@ func (c *MessageController) UploadAttachment(ctx goravelhttp.Context) goravelhtt
 	}
 	spec, allowed := allowedMessageExtensions[ext]
 	if !allowed {
-		if ext == "" {
-			ext = ".bin"
-		}
+		// Force .bin for unallowlisted extensions so active types (.xhtml/.xml) cannot execute on /uploads/.
+		ext = ".bin"
 		spec = struct {
 			kind string
 			mime string
@@ -226,7 +225,7 @@ func (c *MessageController) UploadAttachment(ctx goravelhttp.Context) goravelhtt
 	header := make([]byte, 512)
 	n, _ := io.ReadFull(src, header)
 	sniffed := http.DetectContentType(header[:n])
-	if strings.Contains(sniffed, "text/html") || strings.Contains(sniffed, "application/x-msdownload") {
+	if strings.Contains(sniffed, "text/html") || strings.Contains(sniffed, "text/xml") || strings.Contains(sniffed, "application/xml") || strings.Contains(sniffed, "application/x-msdownload") {
 		return ctx.Response().Json(400, goravelhttp.Json{"error": "Tipe konten file tidak diizinkan"})
 	}
 	if _, err := src.Seek(0, io.SeekStart); err != nil {

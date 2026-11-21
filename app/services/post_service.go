@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 	"unicode/utf8"
 
@@ -445,6 +446,15 @@ func (s *postService) ResolveMedia(userID, postID int64, urls []string) ([]dto.M
 	return items, nil
 }
 
+var userQuotaLocks sync.Map
+
+// shortcut: in-process per-user lock serializes quota check+create; use DB SELECT FOR UPDATE if scaling horizontally.
+func lockUserQuota(userID int64) func() {
+	mu, _ := userQuotaLocks.LoadOrStore(userID, &sync.Mutex{})
+	mu.(*sync.Mutex).Lock()
+	return mu.(*sync.Mutex).Unlock
+}
+
 func (s *postService) CreatePost(userID int64, req *dto.CreatePostRequest) (*models.Post, error) {
 	draft := postDraft{
 		authorID:   userID,
@@ -468,7 +478,9 @@ func (s *postService) CreatePost(userID int64, req *dto.CreatePostRequest) (*mod
 		return nil, err
 	}
 
+	unlockQuota := lockUserQuota(userID)
 	if err := checkSubscriptionQuota(userID, draft.location); err != nil {
+		unlockQuota()
 		return nil, err
 	}
 	post := &models.Post{
@@ -496,7 +508,9 @@ func (s *postService) CreatePost(userID int64, req *dto.CreatePostRequest) (*mod
 		post.Link = &models.PostLink{URL: draft.linkURL, PreviewStatus: models.LinkPreviewPending}
 	}
 
-	if err := s.postRepo.Create(post); err != nil {
+	err = s.postRepo.Create(post)
+	unlockQuota()
+	if err != nil {
 		return nil, err
 	}
 	if post.Link != nil {

@@ -1,5 +1,6 @@
+import {useFeedbackState} from '../../hooks/useFeedbackState';
+import {notify} from '../../utils/feedback';
 import { sharePost } from '../../utils/share';
-import Toast from '../common/Toast';
 import { postUrl } from '../../utils/postUrl';
 import { copyToClipboard } from '../../utils/clipboard';
 import { useLanguage } from "../../context/LanguageContext";
@@ -201,8 +202,8 @@ export default function PostCard({ post: initialPost, onDeleted, onUpdated, onRe
   const [lightbox, setLightbox] = useState<number | null>(null);
   const [expanded, setExpanded] = useState(false);
   const [actionBusy, setActionBusy] = useState(false);
-  const [actionNotice, setActionNotice] = useState('');
-  const [actionError, setActionError] = useState('');
+  const setActionNotice = notify.success;
+  const [actionError, setActionError] = useFeedbackState('', 'error');
   const menuRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLElement>(null);
   const likeBusyRef = useRef(false);
@@ -217,11 +218,6 @@ export default function PostCard({ post: initialPost, onDeleted, onUpdated, onRe
     return () => { document.removeEventListener('pointerdown', outside); document.removeEventListener('keydown', keydown); };
   }, [menuOpen]);
 
-  useEffect(() => {
-    if (!actionNotice) return;
-    const timeout = window.setTimeout(() => setActionNotice(''), 2000);
-    return () => window.clearTimeout(timeout);
-  }, [actionNotice]);
 
   const isMine = post.user_id === user?.id;
   const isRepost = Boolean(post.repost_of_id);
@@ -282,7 +278,7 @@ export default function PostCard({ post: initialPost, onDeleted, onUpdated, onRe
       updateDisplay({ is_liked_by_me: result.liked, likes_count: result.likes_count ?? (otherLikes + (result.liked ? 1 : 0)) });
     } catch (err: any) {
       updateDisplay({ is_liked_by_me: wasLiked, likes_count: otherLikes + (wasLiked ? 1 : 0) });
-      alert(err?.response?.data?.error || 'Gagal menyukai postingan');
+      notify.error(err?.response?.data?.error || 'Gagal menyukai postingan');
     } finally {
       likeBusyRef.current = false;
     }
@@ -308,7 +304,7 @@ export default function PostCard({ post: initialPost, onDeleted, onUpdated, onRe
       await postApi.deletePost(postToken);
       onDeleted?.(post.id);
     } catch (err: any) {
-      alert(err?.response?.data?.error || 'Gagal menghapus postingan');
+      notify.error(err?.response?.data?.error || 'Gagal menghapus postingan');
     }
   };
 
@@ -343,7 +339,7 @@ export default function PostCard({ post: initialPost, onDeleted, onUpdated, onRe
           <span className="text-text-secondary font-normal">• {timeAgo(post.created_at, uiLanguage)}</span>
         </div>
       }
-      <header className="flex justify-between items-start mb-3">
+      {displayPost.is_featured&&<p className="text-xs text-primary font-bold mb-2">★ Featured</p>}<header className="flex justify-between items-start mb-3">
         <div className="flex gap-3 min-w-0">
           <Link to={profileUrl(displayPost.user || { id: displayPost.user_id })} className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
             <img src={displayPost.user?.avatar_url || `${import.meta.env.BASE_URL}favicon.svg`} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
@@ -382,7 +378,6 @@ export default function PostCard({ post: initialPost, onDeleted, onUpdated, onRe
         </div>
       </header>
 
-      {actionNotice && <Toast message={t(actionNotice)} onDismiss={() => setActionNotice('')} />}
       {actionError && <p role="alert" className="mb-3 rounded-lg bg-error/10 px-3 py-2 text-xs text-error">{t(actionError)}</p>}
       {displayPost.title && (!isRepost || isPureRepost) && (
         <h3 className="text-lg font-bold text-text-primary mb-2 leading-snug">

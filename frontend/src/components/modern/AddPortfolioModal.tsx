@@ -1,3 +1,4 @@
+import {notify} from '../../utils/feedback';
 import { useLanguage } from "../../context/LanguageContext";import { useState, useRef } from 'react';
 import { X, Image as ImageIcon, Briefcase, Link as LinkIcon, Type } from 'lucide-react';
 import { postApi } from '../../api/postApi';
@@ -5,7 +6,7 @@ import { postApi } from '../../api/postApi';
 interface AddPortfolioModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (newPortfolio: any) => void;
+  onSuccess: (newPortfolio: any) => void | Promise<void>;
 }
 
 export default function AddPortfolioModal({ isOpen, onClose, onSuccess }: AddPortfolioModalProps) {const { t } = useLanguage();
@@ -32,7 +33,7 @@ export default function AddPortfolioModal({ isOpen, onClose, onSuccess }: AddPor
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !selectedFile) {
-      alert('Title and Image are required!');
+      notify.error('Title and Image are required!');
       return;
     }
 
@@ -43,7 +44,7 @@ export default function AddPortfolioModal({ isOpen, onClose, onSuccess }: AddPor
       const imageUrl = uploadRes.url;
 
       // 2. Call onSuccess which will create the portfolio via userApi
-      onSuccess({
+      await onSuccess({
         title,
         description,
         project_type: projectType,
@@ -51,6 +52,7 @@ export default function AddPortfolioModal({ isOpen, onClose, onSuccess }: AddPor
         link_url: linkUrl
       });
 
+      notify.success('Portofolio berhasil disimpan.');
       // Reset form
       setTitle('');
       setDescription('');
@@ -60,7 +62,7 @@ export default function AddPortfolioModal({ isOpen, onClose, onSuccess }: AddPor
       setPreviewUrl(null);
       onClose();
     } catch (error) {
-      alert('Failed to save portfolio');
+      notify.error('Failed to save portfolio');
     } finally {
       setIsSubmitting(false);
     }

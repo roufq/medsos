@@ -1,3 +1,5 @@
+import {notify} from '../utils/feedback';
+import AdPlacement from '../components/common/AdPlacement';
 import { useLanguage } from '../context/LanguageContext';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -8,11 +10,13 @@ import Feed from '../components/modern/Feed';
 import { useAuth } from '../context/AuthContext';
 import { postApi } from '../api/postApi';
 import { userApi } from '../api/userApi';
+import {usePlatform} from '../context/PlatformContext';
 import './HomePage.css';
 
-const PAGE_SIZE = 50;
+
 
 const HomePage = () => {
+ const {settings}=usePlatform();const PAGE_SIZE=Math.min(50,settings?.items_per_page||20);
   const { t: translateUI } = useLanguage();
 
   const { user, loading: authLoading } = useAuth();
@@ -49,7 +53,7 @@ const HomePage = () => {
     }).finally(() => {
       if (version === requestVersion.current) setLoading(false);
     });
-  }, [userId]);
+  }, [userId,PAGE_SIZE]);
 
   // Cursor pagination (before_id) stays correct while new posts arrive.
   const loadMore = async () => {
@@ -94,7 +98,7 @@ const HomePage = () => {
       await userApi.follow(userId);
       setFollowedUsers((prev) => [...prev, userId]);
     } catch (error) {
-      alert(error.response?.data?.error || 'Gagal mengikuti pengguna');
+      notify.error(error.response?.data?.error || 'Gagal mengikuti pengguna');
     }
   };
 
@@ -105,7 +109,7 @@ const HomePage = () => {
         <div className="flex justify-center py-20"><Loader className="animate-spin text-primary" size={40} /></div>
       ) : (
         <div className="poster-feed-layout">
-          {(!error || posts.length > 0) && <Feed
+          {(!error || posts.length > 0) && <div className="poster-feed-main"><AdPlacement placement="feed"/><Feed
             canCreate={Boolean(user)}
             activeComposerType={composerOpen ? activeComposerType : undefined}
             posts={posts}
@@ -118,7 +122,7 @@ const HomePage = () => {
             onLoadMore={loadMore}
             hasMore={hasMore}
             loadingMore={loadingMore}
-          />}
+          /></div>}
           {user && <RightSidebar posts={posts} followedUsers={followedUsers} onFollowSuggestion={handleFollowSuggestion} onNavigate={goTo} onOpenProfile={(id) => navigate(`/profile/${id}`)} />}
         </div>
       )}

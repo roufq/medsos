@@ -1,3 +1,4 @@
+import {notify} from '../../utils/feedback';
 import { useLanguage } from '../../context/LanguageContext';
 import { useState } from 'react';
 
@@ -11,7 +12,7 @@ const AdminModerationTab = ({ stats, reports = [], onReview }) => {
     try {
       await onReview(report.id, status, deletePost);
     } catch (error) {
-      window.alert(error.response?.data?.error || error.message);
+      notify.error(error.response?.data?.error || error.message);
     } finally {
       setBusyId(null);
     }

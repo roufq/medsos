@@ -2,9 +2,11 @@ package notify
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"net/smtp"
 	"os"
@@ -48,6 +50,10 @@ func SendVerification(channel, target, code, purpose string) error {
 }
 
 func sendEmail(target, code, purpose string) error {
+	return SendMessageEmail(target, "Verification code", fmt.Sprintf("Your verification code for %s is %s. This code expires in 10 minutes.", purpose, code))
+}
+
+func SendMessageEmail(target, subject, body string) error {
 	host := configOrEnv("MAIL_HOST")
 	port := configOrEnv("MAIL_PORT", "587")
 	username := configOrEnv("MAIL_USERNAME")
@@ -56,19 +62,52 @@ func sendEmail(target, code, purpose string) error {
 	if host == "" || port == "" || from == "" {
 		return errors.New("SMTP is not configured")
 	}
-	target, from, purpose = headerSanitizer.Replace(target), headerSanitizer.Replace(from), headerSanitizer.Replace(purpose)
-	subject := "Verification code"
-	body := fmt.Sprintf("Your verification code for %s is %s. This code expires in 10 minutes.", purpose, code)
+	target, from, subject = headerSanitizer.Replace(target), headerSanitizer.Replace(from), headerSanitizer.Replace(subject)
 	message := []byte("To: " + target + "\r\n" +
 		"From: " + from + "\r\n" +
 		"Subject: " + subject + "\r\n" +
 		"MIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n" + body)
 	address := host + ":" + port
-	if username == "" {
-		return smtp.SendMail(address, nil, from, []string{target}, message)
+	connection, err := net.DialTimeout("tcp", address, 10*time.Second)
+	if err != nil {
+		return err
 	}
-	auth := smtp.PlainAuth("", username, password, host)
-	return smtp.SendMail(address, auth, from, []string{target}, message)
+	defer connection.Close()
+	if err = connection.SetDeadline(time.Now().Add(20 * time.Second)); err != nil {
+		return err
+	}
+	client, err := smtp.NewClient(connection, host)
+	if err != nil {
+		return err
+	}
+	defer client.Close()
+	if ok, _ := client.Extension("STARTTLS"); ok {
+		if err = client.StartTLS(&tls.Config{ServerName: host, MinVersion: tls.VersionTLS12}); err != nil {
+			return err
+		}
+	}
+	if username != "" {
+		if err = client.Auth(smtp.PlainAuth("", username, password, host)); err != nil {
+			return err
+		}
+	}
+	if err = client.Mail(from); err != nil {
+		return err
+	}
+	if err = client.Rcpt(target); err != nil {
+		return err
+	}
+	writer, err := client.Data()
+	if err != nil {
+		return err
+	}
+	if _, err = writer.Write(message); err != nil {
+		return err
+	}
+	if err = writer.Close(); err != nil {
+		return err
+	}
+	return client.Quit()
 }
 
 func sendWebhook(urlEnv, tokenEnv, channel, target, code, purpose string) error {

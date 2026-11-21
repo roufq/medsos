@@ -9,6 +9,7 @@ import (
 	"goravel/bootstrap"
 	"goravel/pkg/db"
 	"goravel/pkg/jwt"
+	"goravel/pkg/notification"
 )
 
 func main() {
@@ -20,6 +21,7 @@ func main() {
 
 	// Initialize the legacy GORM DB connection
 	db.InitDB()
+	go notification.Run()
 
 	// Run background jobs (link preview fetch, media transcode, ...) from the
 	// "default" queue in-process, since this deployment does not run a

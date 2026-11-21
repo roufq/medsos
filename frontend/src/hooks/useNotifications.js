@@ -56,6 +56,8 @@ export function useNotifications(onOpen) {
       }
       return;
     }
+    if (notification.entity_type==='moderation') {navigate('/admin/moderation');return;}
+    if (notification.entity_type==='content_review') {navigate('/admin/content?status=removed');return;}
     if (onOpen) onOpen(notification);
   };
 

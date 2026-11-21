@@ -1,20 +1,25 @@
+import {configurePlatformDate} from '../utils/platformDate';
 import { PlatformContext } from './PlatformContext';
-import { useEffect, useState, useCallback } from 'react';
+import {useLanguage} from './LanguageContext';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import api from '../api/axios';
 
 
 export function PlatformProvider({ children }) {
+ const {setLanguage}=useLanguage();const missingLanguage=useRef((()=>{try{return !localStorage.getItem('theposter-language')}catch{return false}})());
   const [uploadLimitsEnabled, setEnabled] = useState(false);
+ const [settings,setSettings]=useState(null);
   const refreshSettings = useCallback(async () => {
     const { data } = await api.get('/platform/settings');
-    setEnabled(Boolean(data.upload_limits_enabled));
+    configurePlatformDate(data);setEnabled(Boolean(data.upload_limits_enabled));setSettings(data);
   }, []);
   useEffect(() => {
     let active = true;
     api.get('/platform/settings').then(({ data }) => {
-      if (active) setEnabled(Boolean(data.upload_limits_enabled));
+      if (active) {configurePlatformDate(data);setEnabled(Boolean(data.upload_limits_enabled));setSettings(data);}
     }).catch(() => {});
     return () => { active = false; };
   }, []);
-  return <PlatformContext.Provider value={{ uploadLimitsEnabled, refreshSettings }}>{children}</PlatformContext.Provider>;
+  useEffect(()=>{if(settings?.language&&missingLanguage.current){missingLanguage.current=false;setLanguage(settings.language);}},[settings?.language,setLanguage]);
+  return <PlatformContext.Provider value={{ uploadLimitsEnabled, refreshSettings, settings }}>{children}</PlatformContext.Provider>;
 }

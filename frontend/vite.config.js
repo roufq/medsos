@@ -12,6 +12,7 @@ export default defineConfig({
     strictPort: true,
     proxy: {
       '/api': 'http://127.0.0.1:3000',
+      '/push-sw.js': 'http://127.0.0.1:3000',
       '/uploads': 'http://127.0.0.1:3000',
       '/web': 'http://127.0.0.1:3000',
       '/p/': 'http://127.0.0.1:3000',

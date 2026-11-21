@@ -226,6 +226,7 @@ func RenderLogin(w io.Writer, data LoginData) error {
 									dom.Href("#"),
 								}, dom.Text("Forgotten password?")),
 							),
+							dom.Input([]dom.Attr{dom.Name("otp"), dom.Type("text"), dom.Placeholder("Authenticator code (if 2FA enabled)"), dom.Class("w-full border rounded-xl p-3 my-3"), dom.Attr{Key: "autocomplete", Value: "one-time-code"}}),
 							dom.Div([]dom.Attr{dom.Class("border-t border-border-subtle my-6")}),
 							dom.Div(
 								[]dom.Attr{dom.Class("text-center")},

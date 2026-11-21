@@ -589,7 +589,7 @@
   },
   "Akun": {
     "id": "Akun",
-    "en": "Accounts"
+    "en": "Account"
   },
   "Accounts": {
     "id": "Akun",
@@ -6522,5 +6522,237 @@
   "Hari Ini": {
     "id": "Hari Ini",
     "en": "Today"
+  },
+  "Indonesia": {
+    "id": "Indonesia",
+    "en": "Indonesia"
+  },
+  "Malaysia": {
+    "id": "Malaysia",
+    "en": "Malaysia"
+  },
+  "Singapura": {
+    "id": "Singapura",
+    "en": "Singapore"
+  },
+  "Amerika Serikat": {
+    "id": "Amerika Serikat",
+    "en": "United States"
+  },
+  "Cina": {
+    "id": "Cina",
+    "en": "China"
+  },
+  "India": {
+    "id": "India",
+    "en": "India"
+  },
+  "Provinsi / negara bagian / wilayah": {
+    "id": "Provinsi / negara bagian / wilayah",
+    "en": "Province / state / region"
+  },
+  "Pilih provinsi / negara bagian": {
+    "id": "Pilih provinsi / negara bagian",
+    "en": "Select province / state"
+  },
+  "Data wilayah gagal dimuat.": {
+    "id": "Data wilayah gagal dimuat.",
+    "en": "Unable to load region data."
+  },
+  "Data wilayah": {
+    "id": "Data wilayah",
+    "en": "Region data"
+  },
+  "Pengaturan authenticator": {
+    "id": "Pengaturan authenticator",
+    "en": "Authenticator setup"
+  },
+  "Pindai QR ini dengan aplikasi authenticator, lalu masukkan kode 6 digit di bawah.": {
+    "id": "Pindai QR ini dengan aplikasi authenticator, lalu masukkan kode 6 digit di bawah.",
+    "en": "Scan this QR code with your authenticator app, then enter the 6-digit code below."
+  },
+  "Kode QR pengaturan 2FA": {
+    "id": "Kode QR pengaturan 2FA",
+    "en": "2FA setup QR code"
+  },
+  "QR belum tersedia. Gunakan kunci manual atau mulai ulang pengaturan 2FA.": {
+    "id": "QR belum tersedia. Gunakan kunci manual atau mulai ulang pengaturan 2FA.",
+    "en": "QR is unavailable. Use the manual key or restart 2FA setup."
+  },
+  "Tidak bisa memindai? Masukkan kunci manual": {
+    "id": "Tidak bisa memindai? Masukkan kunci manual",
+    "en": "Cannot scan? Enter the key manually"
+  },
+  "Pilih akun berbasis waktu (TOTP). Penerbit: Postter.": {
+    "id": "Pilih akun berbasis waktu (TOTP). Penerbit: Postter.",
+    "en": "Choose a time-based (TOTP) account. Issuer: Postter."
+  },
+  "Panel samping beranda": {
+    "id": "Panel samping beranda",
+    "en": "Home sidebar"
+  },
+  "Tutup pemberitahuan": {
+    "id": "Tutup pemberitahuan",
+    "en": "Dismiss notification"
+  },
+  "Periksa kembali isian ini.": {
+    "id": "Periksa kembali isian ini.",
+    "en": "Please check this field."
+  },
+  "Berhasil masuk.": {
+    "id": "Berhasil masuk.",
+    "en": "Signed in successfully."
+  },
+  "Akun berhasil dibuat.": {
+    "id": "Akun berhasil dibuat.",
+    "en": "Account created successfully."
+  },
+  "Akun berhasil dibuat, tetapi profil belum tersimpan. Lengkapi di Pengaturan.": {
+    "id": "Akun berhasil dibuat, tetapi profil belum tersimpan. Lengkapi di Pengaturan.",
+    "en": "Your account was created, but your profile was not saved. Complete it in Settings."
+  },
+  "Permintaan penonaktifan akun berhasil disimpan.": {
+    "id": "Permintaan penonaktifan akun berhasil disimpan.",
+    "en": "Account deactivation request saved."
+  },
+  "Postingan berhasil diperbarui.": {
+    "id": "Postingan berhasil diperbarui.",
+    "en": "Post updated successfully."
+  },
+  "Postingan berhasil diterbitkan.": {
+    "id": "Postingan berhasil diterbitkan.",
+    "en": "Post published successfully."
+  },
+  "Perubahan berhasil disimpan.": {
+    "id": "Perubahan berhasil disimpan.",
+    "en": "Changes saved successfully."
+  },
+  "QR 2FA siap dipindai.": {
+    "id": "QR 2FA siap dipindai.",
+    "en": "Your 2FA QR code is ready to scan."
+  },
+  "2FA berhasil diaktifkan.": {
+    "id": "2FA berhasil diaktifkan.",
+    "en": "2FA enabled successfully."
+  },
+  "2FA berhasil dinonaktifkan.": {
+    "id": "2FA berhasil dinonaktifkan.",
+    "en": "2FA disabled successfully."
+  },
+  "Pengaturan notifikasi berhasil diperbarui.": {
+    "id": "Pengaturan notifikasi berhasil diperbarui.",
+    "en": "Notification preferences updated successfully."
+  },
+  "Komentar berhasil dikirim.": {
+    "id": "Komentar berhasil dikirim.",
+    "en": "Comment sent successfully."
+  },
+  "Komentar berhasil diperbarui.": {
+    "id": "Komentar berhasil diperbarui.",
+    "en": "Comment updated successfully."
+  },
+  "Komentar berhasil dihapus.": {
+    "id": "Komentar berhasil dihapus.",
+    "en": "Comment deleted successfully."
+  },
+  "Laporan berhasil dikirim.": {
+    "id": "Laporan berhasil dikirim.",
+    "en": "Report sent successfully."
+  },
+  "Kode embed berhasil disalin.": {
+    "id": "Kode embed berhasil disalin.",
+    "en": "Embed code copied successfully."
+  },
+  "Portofolio berhasil disimpan.": {
+    "id": "Portofolio berhasil disimpan.",
+    "en": "Portfolio saved successfully."
+  },
+  "Profil berhasil diperbarui.": {
+    "id": "Profil berhasil diperbarui.",
+    "en": "Profile updated successfully."
+  },
+  "Bio berhasil diperbarui.": {
+    "id": "Bio berhasil diperbarui.",
+    "en": "Bio updated successfully."
+  },
+  "Foto profil berhasil diperbarui.": {
+    "id": "Foto profil berhasil diperbarui.",
+    "en": "Profile photo updated successfully."
+  },
+  "Pesan berhasil dikirim.": {
+    "id": "Pesan berhasil dikirim.",
+    "en": "Message sent successfully."
+  },
+  "Produk berhasil dikirim.": {
+    "id": "Produk berhasil dikirim.",
+    "en": "Product sent successfully."
+  },
+  "Gambar berhasil diunggah.": {
+    "id": "Gambar berhasil diunggah.",
+    "en": "Image uploaded successfully."
+  },
+  "Media berhasil diunggah.": {
+    "id": "Media berhasil diunggah.",
+    "en": "Media uploaded successfully."
+  },
+  "Advertisement saved": {
+    "id": "Iklan berhasil disimpan.",
+    "en": "Advertisement saved"
+  },
+  "User saved": {
+    "id": "Data pengguna berhasil disimpan.",
+    "en": "User saved"
+  },
+  "Settings saved": {
+    "id": "Pengaturan berhasil disimpan.",
+    "en": "Settings saved"
+  },
+  "Password changed": {
+    "id": "Password berhasil diubah.",
+    "en": "Password changed"
+  },
+  "2FA updated": {
+    "id": "Pengaturan 2FA berhasil diperbarui.",
+    "en": "2FA updated"
+  },
+  "Profile saved": {
+    "id": "Profil berhasil disimpan.",
+    "en": "Profile saved"
+  },
+  "Content updated": {
+    "id": "Konten berhasil diperbarui.",
+    "en": "Content updated"
+  },
+  "Report reviewed": {
+    "id": "Laporan berhasil ditinjau.",
+    "en": "Report reviewed"
+  },
+  "Content restored": {
+    "id": "Konten berhasil dipulihkan.",
+    "en": "Content restored"
+  },
+  "Account status updated": {
+    "id": "Status akun berhasil diperbarui.",
+    "en": "Account status updated"
+  },
+  "Verification updated": {
+    "id": "Verifikasi berhasil diperbarui.",
+    "en": "Verification updated"
+  },
+  "Privacy updated": {
+    "id": "Privasi berhasil diperbarui.",
+    "en": "Privacy updated"
+  },
+  "Session revoked": {
+    "id": "Sesi berhasil dicabut.",
+    "en": "Session revoked"
+  },
+  "Ad status updated": {
+    "id": "Status iklan berhasil diperbarui.",
+    "en": "Ad status updated"
+  },
+  "Advertisement deleted": {
+    "id": "Iklan berhasil dihapus.",
+    "en": "Advertisement deleted"
   }
 }

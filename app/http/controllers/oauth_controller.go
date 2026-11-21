@@ -20,6 +20,7 @@ import (
 	"goravel/app/services"
 	"goravel/pkg/db"
 	"goravel/pkg/hash"
+	"goravel/pkg/platform"
 	"goravel/pkg/session"
 
 	goravelhttp "github.com/goravel/framework/contracts/http"
@@ -62,7 +63,7 @@ func providerConfig(name string) (oauthProvider, error) {
 	}
 	if p.clientID == "" || p.clientSecret == "" {
 		// shortcut: local/dev OAuth simulation when credentials are empty, disable in production via OAUTH_DEV_MODE=false and APP_ENV=production
-		if strings.EqualFold(os.Getenv("OAUTH_DEV_MODE"), "true") || strings.EqualFold(os.Getenv("APP_ENV"), "local") {
+		if strings.EqualFold(os.Getenv("OAUTH_DEV_MODE"), "true") && strings.EqualFold(os.Getenv("APP_ENV"), "local") {
 			p.devMode = true
 			return p, nil
 		}
@@ -206,6 +207,13 @@ func (h *OAuthController) Callback(c goravelhttp.Context) goravelhttp.Response {
 	// OAuth must not bypass the blocked check of password login.
 	if user.AccountStatus != "active" {
 		return c.Response().Redirect(http.StatusFound, frontendURL("/login?oauth_error=account_inactive"))
+	}
+	settings, settingsErr := platform.Settings()
+	if settingsErr != nil {
+		return oauthErrorRedirect(c, "login", "oauth_failed", 503, "Account security settings unavailable")
+	}
+	if user.TwoFactorEnabled || user.TwoFactorRequired || (user.Role == models.RoleAdmin && settings.RequireAdminTwoFactor) {
+		return c.Response().Redirect(http.StatusFound, frontendURL("/login?reason=two_factor_required"))
 	}
 	tokens, err := services.IssueTokens(user)
 	if err != nil {
@@ -389,6 +397,9 @@ func upsertOAuthUser(provider string, identity oauthIdentityPayload, referralCod
 		_ = db.DB.Where("LOWER(email) = LOWER(?)", identity.Email).First(&user).Error
 	}
 	if user.ID == 0 {
+		if settings, e := platform.Settings(); e != nil || settings.RegistrationClosed {
+			return nil, errors.New("Registration is closed")
+		}
 		password, _ := randomURLToken(48)
 		encoded, _ := hash.HashPassword(password)
 		name := strings.TrimSpace(identity.Name)

@@ -12,6 +12,7 @@ import (
 	"goravel/app/models"
 	"goravel/app/services"
 	"goravel/pkg/csrf"
+	"goravel/pkg/db"
 	"goravel/pkg/jwt"
 	"goravel/resources/views/backend"
 
@@ -44,6 +45,12 @@ func NewAuthController(authService services.AuthService) *AuthController {
 // middleware.AuthMiddleware can require the two to match for cookie-backed
 // requests. See pkg/csrf.
 func setAuthCookies(c goravelhttp.Context, accessToken, refreshToken string) {
+	if db.DB != nil {
+		if claims, err := jwt.ValidateAccessToken(accessToken); err == nil && claims.SessionID != "" {
+			db.DB.Model(&models.LoginSession{}).Where("id = ? AND (ip_address = '' OR ip_address IS NULL)", claims.SessionID).Update("ip_address", c.Request().Ip())
+		}
+	}
+
 	c.Response().Cookie(authCookie("token", accessToken, int(jwt.AccessTTL.Seconds()), true))
 	c.Response().Cookie(authCookie("refresh_token", refreshToken, int(jwt.RefreshTTL.Seconds()), true))
 	if csrfToken, err := csrf.NewToken(); err == nil {
@@ -60,7 +67,7 @@ func clearAuthCookies(c goravelhttp.Context) {
 // authCookie applies SameSite=Lax everywhere and Secure whenever the app is
 // served over HTTPS, so session cookies never travel over plain HTTP.
 func authCookie(name, value string, maxAge int, httpOnly bool) goravelhttp.Cookie {
-	secure := strings.HasPrefix(strings.ToLower(os.Getenv("APP_URL")), "https://")
+	secure := strings.EqualFold(os.Getenv("SESSION_SECURE"), "true") || strings.HasPrefix(strings.ToLower(os.Getenv("APP_URL")), "https://")
 	return goravelhttp.Cookie{Name: name, Value: value, MaxAge: maxAge, Path: "/", HttpOnly: httpOnly, Secure: secure, SameSite: "Lax"}
 }
 
@@ -196,6 +203,7 @@ func (h *AuthController) HandleLoginWeb(c goravelhttp.Context) goravelhttp.Respo
 
 	req := dto.LoginRequest{
 		Email:    email,
+		OTP:      c.Request().Input("otp"),
 		Password: password,
 	}
 
@@ -250,8 +258,8 @@ func (h *AuthController) HandleRegisterWeb(c goravelhttp.Context) goravelhttp.Re
 	}
 
 	req := dto.RegisterRequest{
-		Name:     firstName + " " + surname,
-		Email:    email,
+		Name:         firstName + " " + surname,
+		Email:        email,
 		Password:     password,
 		ReferralCode: c.Request().Input("referral_code"),
 	}

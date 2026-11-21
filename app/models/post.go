@@ -31,6 +31,7 @@ type Post struct {
 	Location       *string        `gorm:"type:varchar(255);index" json:"location,omitempty"`
 	Visibility     string         `gorm:"type:varchar(20);not null;default:'public';index" json:"visibility"`
 	IsSponsored    bool           `gorm:"not null;default:false;index" json:"is_sponsored"`
+	IsFeatured     bool           `gorm:"not null;default:false;index" json:"is_featured"`
 	RepostOfID     *int64         `gorm:"index" json:"repost_of_id,omitempty"`
 	OriginalPost   *Post          `gorm:"foreignKey:RepostOfID;constraint:OnDelete:SET NULL" json:"original_post,omitempty"`
 	CreatedAt      time.Time      `gorm:"autoCreateTime;index:idx_posts_created;index:idx_posts_user_created,priority:2" json:"created_at"`

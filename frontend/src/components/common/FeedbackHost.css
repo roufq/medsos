@@ -1,0 +1,10 @@
+.form-feedback-stack{position:fixed;right:20px;top:max(80px,env(safe-area-inset-top));z-index:10000;display:flex;flex-direction:column;gap:8px;width:min(350px,calc(100vw - 32px));pointer-events:none}
+.form-feedback{position:relative;overflow:hidden;--feedback-tone:#2783db;display:flex;align-items:flex-start;gap:10px;padding:12px 10px 12px 13px;border:1px solid rgb(var(--border,206 208 212)/.7);border-left:3px solid var(--feedback-tone);border-radius:11px;background:rgb(var(--card-bg,255 255 255));color:rgb(var(--text-main,28 30 33));box-shadow:0 5px 22px #0002;pointer-events:auto;animation:form-feedback-enter .16s ease-out}
+.form-feedback-success{--feedback-tone:#15956a}.form-feedback-error{--feedback-tone:#e25760}.form-feedback>svg{color:var(--feedback-tone);flex:none;margin-top:1px}.form-feedback p{font:500 12px/1.6 Inter,Arial,sans-serif;margin:0;overflow-wrap:anywhere;min-width:0;flex:1;max-height:160px;overflow:auto}.form-feedback button{display:grid;place-items:center;flex:none;padding:6px;margin:-3px -2px -3px 0;border:0;border-radius:6px;color:inherit;background:transparent;cursor:pointer}.form-feedback button:hover{background:rgb(var(--surface-low,240 242 245))}.form-feedback button:focus-visible{outline:2px solid var(--feedback-tone);outline-offset:2px}
+@keyframes form-feedback-enter{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:none}}
+@media(max-width:767px){.form-feedback-stack{left:12px;right:12px;top:max(72px,env(safe-area-inset-top));width:auto}}
+@media(prefers-reduced-motion:reduce){.form-feedback{animation:none}}
+
+.form-feedback-countdown{position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--feedback-tone);transform-origin:left;animation:form-feedback-countdown var(--feedback-duration) linear forwards;pointer-events:none}
+@keyframes form-feedback-countdown{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+@media(prefers-reduced-motion:reduce){.form-feedback-countdown{animation-timing-function:steps(4,end)}}

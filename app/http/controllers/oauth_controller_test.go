@@ -7,9 +7,15 @@ import (
 
 func TestOAuthHelpers(t *testing.T) {
 	t.Setenv("OAUTH_DEV_MODE", "true")
+	t.Setenv("APP_ENV", "production")
 	t.Setenv("OAUTH_GOOGLE_CLIENT_ID", "")
 	t.Setenv("OAUTH_GOOGLE_CLIENT_SECRET", "")
 
+	if _, err := providerConfig("google"); err == nil {
+		t.Fatal("expected error when OAUTH_DEV_MODE=true outside APP_ENV=local")
+	}
+
+	t.Setenv("APP_ENV", "local")
 	p, err := providerConfig("google")
 	if err != nil || !p.devMode || p.name != "google" {
 		t.Fatalf("expected devMode google provider, got %+v, err=%v", p, err)

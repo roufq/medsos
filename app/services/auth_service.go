@@ -17,7 +17,9 @@ import (
 	"goravel/pkg/db"
 	"goravel/pkg/hash"
 	"goravel/pkg/jwt"
+	"goravel/pkg/platform"
 	"goravel/pkg/session"
+	"goravel/pkg/totp"
 )
 
 type AuthService interface {
@@ -76,6 +78,9 @@ func NewAuthService(userRepo repositories.UserRepository) AuthService {
 }
 
 func (s *authService) Register(req *dto.RegisterRequest) (*dto.AuthResponse, error) {
+	if settings, e := platform.Settings(); e == nil && settings.RegistrationClosed {
+		return nil, errors.New("Registration is currently closed")
+	}
 	req.Email = strings.ToLower(strings.TrimSpace(req.Email))
 	req.Name = strings.TrimSpace(req.Name)
 	if len(req.Name) < 2 || len(req.Name) > 100 {
@@ -198,6 +203,24 @@ func (s *authService) Login(req *dto.LoginRequest) (*dto.AuthResponse, error) {
 		return nil, errors.New("account is not active")
 	}
 
+	settings, settingsErr := platform.Settings()
+	if settingsErr != nil {
+		return nil, errors.New("Account security settings unavailable")
+	}
+	if !user.TwoFactorEnabled && (user.TwoFactorRequired || (user.Role == models.RoleAdmin && settings.RequireAdminTwoFactor)) {
+		return nil, errors.New("2FA enrollment required; contact another administrator")
+	}
+	if user.TwoFactorEnabled {
+		secret, e := totp.Decrypt(user.TwoFactorSecret)
+		counter, ok := totp.Validate(secret, req.OTP, user.TwoFactorCounter, time.Now())
+		if e != nil || !ok {
+			return nil, errors.New("Authenticator code required or invalid")
+		}
+		result := db.DB.Model(&models.User{}).Where("id = ? AND two_factor_counter = ?", user.ID, user.TwoFactorCounter).Update("two_factor_counter", counter)
+		if result.Error != nil || result.RowsAffected != 1 {
+			return nil, errors.New("Authenticator code already used")
+		}
+	}
 	return issueTokens(user)
 }
 

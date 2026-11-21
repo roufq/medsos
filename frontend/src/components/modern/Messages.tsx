@@ -1,3 +1,4 @@
+import {notify} from '../../utils/feedback';
 import { useLanguage } from '../../context/LanguageContext';
 import { useState, useRef, useEffect, useMemo } from 'react';
 import {
@@ -503,13 +504,14 @@ export default function Messages({ currentUser }: MessagesProps) {
     );
   };
 
+  const setSendError=(message:string)=>{setError(message);notify.error(message);};
   const handleSendMessage = async () => {
     const text = messageText.trim();
     if (!text || !selectedConv || sending || chatBlocked) return;
 
     messageInputRef.current?.focus({ preventScroll: true });
     setSending(true);
-    setError('');
+    setSendError('');
     try {
       const urlMatch = text.match(URL_REGEX);
       let extra: any = { message_type: 'text' };
@@ -530,11 +532,11 @@ export default function Messages({ currentUser }: MessagesProps) {
         };
       }
       const sentMsg = await messageApi.sendMessage(selectedConv.otherUser.id, text, extra);
-      appendSentMessage(sentMsg);
+      appendSentMessage(sentMsg);notify.success('Pesan berhasil dikirim.');
       setMessageText('');
       setEmojiMenuOpen(false);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Gagal mengirim pesan.');
+      setSendError(err.response?.data?.error || 'Gagal mengirim pesan.');
     } finally {
       setSending(false);
     }
@@ -545,7 +547,7 @@ export default function Messages({ currentUser }: MessagesProps) {
     if (!fileList.length || !selectedConv) return;
     setAttachMenuOpen(false);
     setUploading(true);
-    setError('');
+    setSendError('');
 
     for (const file of fileList) {
       try {
@@ -558,10 +560,10 @@ export default function Messages({ currentUser }: MessagesProps) {
           attachment_size: uploaded.file_size || file.size,
           attachment_mime: uploaded.mime_type || file.type,
         });
-        appendSentMessage(sentMsg);
+        appendSentMessage(sentMsg);notify.success('Pesan berhasil dikirim.');
         if (messageText.trim()) setMessageText('');
       } catch (err: any) {
-        setError(err.response?.data?.error || `Gagal mengirim file ${file.name}`);
+        setSendError(err.response?.data?.error || `Gagal mengirim file ${file.name}`);
       }
     }
     setUploading(false);
@@ -575,7 +577,7 @@ export default function Messages({ currentUser }: MessagesProps) {
       return;
     }
     setLocatingGps(true);
-    setError('');
+    setSendError('');
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         try {
@@ -597,9 +599,9 @@ export default function Messages({ currentUser }: MessagesProps) {
               }),
             }
           );
-          appendSentMessage(sentMsg);
+          appendSentMessage(sentMsg);notify.success('Pesan berhasil dikirim.');
         } catch (err: any) {
-          setError(err.response?.data?.error || 'Gagal mengirim lokasi.');
+          setSendError(err.response?.data?.error || 'Gagal mengirim lokasi.');
         } finally {
           setLocatingGps(false);
         }
@@ -615,7 +617,7 @@ export default function Messages({ currentUser }: MessagesProps) {
   const sendManualLocation = async () => {
     if (!selectedConv || !manualLocationAddress.trim()) return;
     setSending(true);
-    setError('');
+    setSendError('');
     try {
       const label = manualLocationLabel.trim() || 'Lokasi Saya';
       const address = manualLocationAddress.trim();
@@ -632,11 +634,11 @@ export default function Messages({ currentUser }: MessagesProps) {
           }),
         }
       );
-      appendSentMessage(sentMsg);
+      appendSentMessage(sentMsg);notify.success('Pesan berhasil dikirim.');
       setManualLocationAddress('');
       setLocationModalOpen(false);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Gagal mengirim lokasi.');
+      setSendError(err.response?.data?.error || 'Gagal mengirim lokasi.');
     } finally {
       setSending(false);
     }
@@ -645,7 +647,7 @@ export default function Messages({ currentUser }: MessagesProps) {
   const sendLinkAttachment = async () => {
     if (!selectedConv || !linkInputUrl.trim()) return;
     setSending(true);
-    setError('');
+    setSendError('');
     try {
       let url = linkInputUrl.trim();
       if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
@@ -654,12 +656,12 @@ export default function Messages({ currentUser }: MessagesProps) {
         message_type: 'link',
         metadata_json: JSON.stringify({ title, url }),
       });
-      appendSentMessage(sentMsg);
+      appendSentMessage(sentMsg);notify.success('Pesan berhasil dikirim.');
       setLinkInputUrl('');
       setLinkInputTitle('');
       setLinkModalOpen(false);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Gagal mengirim tautan.');
+      setSendError(err.response?.data?.error || 'Gagal mengirim tautan.');
     } finally {
       setSending(false);
     }
@@ -668,7 +670,7 @@ export default function Messages({ currentUser }: MessagesProps) {
   const sendShopProductCard = async (post: any) => {
     if (!selectedConv || !post) return;
     setSending(true);
-    setError('');
+    setSendError('');
     try {
       const shop = post.shop || {};
       const firstImage = (post.media || []).find((m: any) => m.media_type === 'image')?.media_url || '';
@@ -695,11 +697,11 @@ export default function Messages({ currentUser }: MessagesProps) {
           }),
         }
       );
-      appendSentMessage(sentMsg, true);
+      appendSentMessage(sentMsg, true);notify.success('Produk berhasil dikirim.');
       setPendingShopPost(null);
       setIntentTargetUser(null);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Gagal mengirim kartu produk.');
+      setSendError(err.response?.data?.error || 'Gagal mengirim kartu produk.');
     } finally {
       setSending(false);
     }

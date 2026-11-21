@@ -105,6 +105,9 @@ func InitDB() {
 	// 3. Auto Migrate Models
 	err = DB.AutoMigrate(
 		&models.PlatformSetting{},
+		&models.AdCampaign{},
+		&models.TrafficEvent{},
+		&models.NotificationDelivery{}, &models.PushSubscription{}, &models.PushKey{},
 		&models.UserActivity{},
 		&models.User{},
 		&models.Post{},

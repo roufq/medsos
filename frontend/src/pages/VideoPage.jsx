@@ -7,15 +7,13 @@ import VideoPlayer from '../components/modern/VideoPlayer';
 import { watchUrl } from '../utils/postUrl';
 import { uniquePosts } from '../utils/discovery';
 import { postApi } from '../api/postApi';
-import { userApi } from '../api/userApi';
 import { profileUrl } from '../utils/profileUrl';
 import { timeAgo } from '../utils/postFormat';
 import { useLanguage } from '../context/LanguageContext';
-import { useAuth } from '../context/AuthContext';
 const SIZE = 20;
 
 export default function VideoPage() {
-  const { t, language } = useLanguage(), { user } = useAuth(), { token } = useParams();
+  const { t, language } = useLanguage(), { token } = useParams();
   const navigate = useNavigate(), route = useLocation();
   const [posts,setPosts] = useState([]), [shorts,setShorts] = useState([]), [watching,setWatching] = useState(null);
   const [loading,setLoading] = useState(true), [busy,setBusy] = useState(false), [more,setMore] = useState(false), [error,setError] = useState(''), [topic,setTopic] = useState('all');
@@ -61,7 +59,7 @@ export default function VideoPage() {
     {!token && <nav className="video-reference-topics" aria-label={t('Filter video')}><button className={topic==='all'?'active':''} aria-pressed={topic==='all'} onClick={()=>setTopic('all')}>{t('Semua')}</button>{topics.map(tag=><button key={tag} className={topic===tag?'active':''} aria-pressed={topic===tag} onClick={()=>setTopic(tag)}>#{tag}</button>)}</nav>}
     {loading && <p role="status" className="reference-empty"><Loader2 className="animate-spin"/>{t('Memuat…')}</p>}
     {error && <p role="alert" className="video-error">{t(error)}</p>}
-    {!loading && featured && <section className="video-reference-feature"><VideoPlayer post={featured} autoplay={Boolean(token && route.state?.autoplay)}/><div className="video-reference-feature-copy"><PostCard post={featured} hideMedia defaultCommentsOpen={Boolean(token)} onUpdated={update} onDeleted={remove}/>{featured.user_id!==user?.id && <button className="video-reference-follow" onClick={async()=>{try{if(featured.user?.is_followed_by_me)await userApi.unfollow(featured.user_id);else await userApi.follow(featured.user_id);update({...featured,user:{...featured.user,is_followed_by_me:!featured.user?.is_followed_by_me}});}catch{setError('Gagal mengikuti akun.');}}}>{t(featured.user?.is_followed_by_me?'Mengikuti':'Ikuti')}</button>}</div></section>}
+    {!loading && featured && <section className="video-reference-feature"><VideoPlayer post={featured} autoplay={Boolean(token && route.state?.autoplay)}/><div className="video-reference-feature-copy"><PostCard post={featured} hideMedia defaultCommentsOpen={Boolean(token)} onUpdated={update} onDeleted={remove}/></div></section>}
     {!loading && !featured && !error && <div className="reference-empty"><Film size={32}/>{t('Belum ada video.')}</div>}
     {!token && !loading && <><section className="video-reference-section"><div className="video-reference-section-title"><h2>{t('Video Populer')}</h2>{more && <button disabled={busy} onClick={loadMore}>{t('Muat lebih banyak')}<ArrowRight size={14}/></button>}</div><div className="video-reference-popular">{recommended.map(post=>card(post))}</div>{!recommended.length && <p className="text-sm text-text-secondary">{t('Belum ada video lain.')}</p>}</section><section className="video-reference-section"><div className="video-reference-section-title"><h2><Play size={18} fill="currentColor"/>{t('Shorts')}</h2></div><div className="video-reference-shorts">{shortVideos.map(post=>card(post,true))}</div>{!shortVideos.length && <p className="text-sm text-text-secondary">{t('Belum ada Shorts.')}</p>}</section></>}
   </main><aside className="video-reference-recommendations"><h2>{t('Video yang Direkomendasikan')}</h2>{recommended.slice(0,8).map(post=><article key={post.id}><div className="video-reference-thumb"><VideoPlayer post={post} preview/></div><div><Link to={watchUrl(post)}><h3>{post.title || t('Video')}</h3></Link><Link to={profileUrl(post.user || {})}>{post.user?.name}{post.user?.is_blue_verified && <BadgeCheck size={11}/>}</Link><small>{number(post.views_count)} {t('views')} · {timeAgo(post.created_at,language)}</small></div></article>)}{!loading && !recommended.length && <p className="text-sm text-text-secondary">{t('Belum ada rekomendasi video.')}</p>}</aside></div></AppLayout>;

@@ -8,7 +8,7 @@ export default function MobileNav({ user, currentTab, onCreate }: any) {
 
   const navigate = useNavigate();
   const items = [
-    ['home', 'Home', Home, user ? '/' : '/home'], ['explore', 'Explore', Compass, '/explore'],
+    ['home', 'Home', Home, '/home'], ['explore', 'Explore', Compass, '/explore'],
     ['shop', 'Shop', ShoppingBag, '/shop'], ['newpost', 'New Post', Plus, null],
     ['notifications', 'Notification', Bell, '/notifications'], ['profile', 'Profil', UserRound, user ? profileUrl(user) : '/login'],
   ] as const;

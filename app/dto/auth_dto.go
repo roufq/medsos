@@ -6,24 +6,25 @@ import (
 
 // RegisterRequest defines the input payload for user registration
 type RegisterRequest struct {
-	Name        string `form:"name" json:"name" binding:"required,min=2,max=100"`
-	Username    string `form:"username" json:"username"`
-	Email       string `form:"email" json:"email" binding:"required,email,max=100"`
-	Phone       string `form:"phone" json:"phone"`
+	Name         string `form:"name" json:"name" binding:"required,min=2,max=100"`
+	Username     string `form:"username" json:"username"`
+	Email        string `form:"email" json:"email" binding:"required,email,max=100"`
+	Phone        string `form:"phone" json:"phone"`
 	PhoneCountry string `form:"phone_country" json:"phone_country"`
-	AccountType string `form:"account_type" json:"account_type"`
-	Password    string `form:"password" json:"password" binding:"required,min=8,max=72"`
+	AccountType  string `form:"account_type" json:"account_type"`
+	Password     string `form:"password" json:"password" binding:"required,min=8,max=72"`
 
-	Gender      string   `form:"gender" json:"gender"`
-	BirthDate   string   `form:"birth_date" json:"birth_date"`
-	Country     string   `form:"country" json:"country"`
-	City        string   `form:"city" json:"city"`
-	Interests    string   `form:"interests" json:"interests"` // comma separated from frontend FormData
-	ReferralCode string   `form:"referral_code" json:"referral_code"`
+	Gender       string `form:"gender" json:"gender"`
+	BirthDate    string `form:"birth_date" json:"birth_date"`
+	Country      string `form:"country" json:"country"`
+	City         string `form:"city" json:"city"`
+	Interests    string `form:"interests" json:"interests"` // comma separated from frontend FormData
+	ReferralCode string `form:"referral_code" json:"referral_code"`
 }
 
 // LoginRequest defines the credentials payload for log in
 type LoginRequest struct {
+	OTP        string `form:"otp" json:"otp"`
 	Identifier string `form:"identifier" json:"identifier"`
 	Email      string `form:"email" json:"email"`
 	Username   string `form:"username" json:"username"`

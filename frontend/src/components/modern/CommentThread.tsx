@@ -1,3 +1,5 @@
+import {useFeedbackState} from '../../hooks/useFeedbackState';
+import {notify} from '../../utils/feedback';
 import { useLanguage } from "../../context/LanguageContext";
 import { useEffect, useState } from 'react';
 import { Send, Pencil, Trash2, CornerDownRight, ChevronDown, ChevronUp } from 'lucide-react';
@@ -26,7 +28,7 @@ export default function CommentThread({ postId, postOwnerId, onCountChange }: Co
   const [replyTo, setReplyTo] = useState<any | null>(null);
   const [editing, setEditing] = useState<{ id: number; text: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useFeedbackState('', 'error');
 
   const toggleReplies = (id: number) => {
     setOpenReplies((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -66,6 +68,7 @@ export default function CommentThread({ postId, postOwnerId, onCountChange }: Co
         const comment = await postApi.addComment(postId, text);
         setComments((current) => [...current, { ...comment, replies: [] }]);
       }
+      notify.success('Komentar berhasil dikirim.');
       onCountChange?.(1);
       setDraft('');
       setReplyTo(null);
@@ -84,7 +87,7 @@ export default function CommentThread({ postId, postOwnerId, onCountChange }: Co
       setComments((current) =>
         current.map((c) => ({ ...apply(c), replies: (c.replies || []).map(apply) }))
       );
-      setEditing(null);
+      setEditing(null);notify.success('Komentar berhasil diperbarui.');
     } catch (err) {
       setError(errorText(err, 'Gagal mengubah komentar'));
     }
@@ -101,7 +104,7 @@ export default function CommentThread({ postId, postOwnerId, onCountChange }: Co
           .filter((c) => c.id !== comment.id)
           .map((c) => ({ ...c, replies: (c.replies || []).filter((r: any) => r.id !== comment.id) }))
       );
-      onCountChange?.(-deletedTotal);
+      onCountChange?.(-deletedTotal);notify.success('Komentar berhasil dihapus.');
     } catch (err) {
       setError(errorText(err, 'Gagal menghapus komentar'));
     }

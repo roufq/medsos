@@ -1,3 +1,5 @@
+import {notify} from '../../utils/feedback';
+import {useFeedbackState} from '../../hooks/useFeedbackState';
 import MentionInput from './MentionInput';
 import { useLanguage } from "../../context/LanguageContext";import { useEffect, useMemo, useRef, useState } from 'react';
 import { X, Image as ImageIcon, Video, Link as LinkIcon, MapPin, Loader2, ShoppingBag, FileText, LocateFixed, Hash, AtSign, Plus, Save, Send, Heart, MessageCircle, Share2, Eye, MoreHorizontal, Crop } from 'lucide-react';
@@ -68,7 +70,7 @@ export default function CreatePostModal({ isOpen, onClose, onSaved, editPost, in
   const isEdit = Boolean(editPost);
   const [activeType, setActiveType] = useState('image');
   const [activeDetail, setActiveDetail] = useState('');
-  const [draftMessage, setDraftMessage] = useState('');
+  const [draftMessage, setDraftMessage] = useFeedbackState('', 'success');
   const descriptionInput = useRef<HTMLTextAreaElement>(null);
   const draftKey = `theposter-draft-${user?.id || 'local'}`;
   const [mode, setMode] = useState<'post' | 'shop'>('post');
@@ -85,7 +87,7 @@ export default function CreatePostModal({ isOpen, onClose, onSaved, editPost, in
   const [uploading, setUploading] = useState(0);
   const [locating, setLocating] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useFeedbackState('', 'error');
   const imageInput = useRef<HTMLInputElement>(null);
   const videoInput = useRef<HTMLInputElement>(null);
   const mediaTouched = useRef(false);
@@ -212,12 +214,13 @@ export default function CreatePostModal({ isOpen, onClose, onSaved, editPost, in
       setError(kind === 'image' ? `Maksimal ${R.imagesMax} gambar.` : 'Maksimal 1 video.');
       return;
     }
+    let uploadedCount=0;
     setUploading((n) => n + selected.length);
     for (const file of selected) {
       try {
         const res = await postApi.uploadMedia(file);
         if (res.media_type !== kind) throw new Error(kind === 'image' ? 'File bukan gambar.' : 'File bukan video.');
-        mediaTouched.current = true;
+        mediaTouched.current = true;uploadedCount++;
         setMedia((current) => [...current, { url: res.url, type: res.media_type, duration: res.duration_seconds || 0 }]);
       } catch (err) {
         setError(errorText(err, `Gagal mengunggah ${file.name}`));
@@ -225,6 +228,7 @@ export default function CreatePostModal({ isOpen, onClose, onSaved, editPost, in
         setUploading((n) => n - 1);
       }
     }
+    if(uploadedCount)notify.success('Media berhasil diunggah.');
   };
 
   const removeMedia = (url: string) => {mediaTouched.current = true;setMedia((current) => current.filter((m) => m.url !== url));};
@@ -297,6 +301,7 @@ export default function CreatePostModal({ isOpen, onClose, onSaved, editPost, in
         setTitle('');setContent('');setMedia([]);setLinkUrl('');setLinkPreview(null);setHashtagInput('');setMentionInput('');setLocation('');
         setShop({ price: '', currency: 'IDR', category: '', condition: '', stock: '', brand: '', fulfillment: [], payment: '' });
       }
+      notify.success(isEdit?'Postingan berhasil diperbarui.':'Postingan berhasil diterbitkan.');
       onSaved?.(saved);
       onClose();
     } catch (err) {

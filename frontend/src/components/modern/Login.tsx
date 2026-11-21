@@ -1,21 +1,20 @@
 import { useState, FormEvent } from 'react';
 import { Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
-import OAuthButtons from './OAuthButtons';
 import AuthLayout from './AuthLayout';
 
 interface LoginProps {
-	onLogin: (identifier: string, password?: string) => void | Promise<void>;
+	onLogin: (identifier: string, password?: string, otp?: string) => void | Promise<void>;
 	onNavigateToSignup: () => void;
 	onNavigateToForgot: () => void;
-	onOAuth: (provider: string) => void;
   defaultEmail?: string;
 }
 
-export default function Login({ onLogin, onNavigateToSignup, onNavigateToForgot, onOAuth, defaultEmail = '' }: LoginProps) {
+export default function Login({ onLogin, onNavigateToSignup, onNavigateToForgot, defaultEmail = '' }: LoginProps) {
   const { t } = useLanguage();
 	const [email, setEmail] = useState(defaultEmail);
 	const [password, setPassword] = useState('');
+ const [otp,setOtp]=useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -23,7 +22,7 @@ export default function Login({ onLogin, onNavigateToSignup, onNavigateToForgot,
     e.preventDefault();
     if (busy) return;
     setBusy(true);
-    try { await onLogin(email, password); } finally { setBusy(false); }
+    try { await onLogin(email, password, otp); } finally { setBusy(false); }
   };
 
   return (
@@ -79,6 +78,7 @@ export default function Login({ onLogin, onNavigateToSignup, onNavigateToForgot,
             </div>
           </div>
 
+          <label className="block text-sm">Authenticator / 2FA<input aria-label="Authenticator / 2FA" autoComplete="one-time-code" value={otp} onChange={e=>setOtp(e.target.value)} inputMode="numeric" maxLength={6} placeholder="Optional: 6 digits" className="w-full rounded-xl border border-border-subtle p-3 mt-2 bg-transparent"/></label>
           <div className="flex justify-end">
             <button
               type="button"
@@ -97,16 +97,6 @@ export default function Login({ onLogin, onNavigateToSignup, onNavigateToForgot,
             {busy && <Loader2 size={17} className="inline-block mr-2 animate-spin" />}{t('Sign In')}
           </button>
         </form>
-
-        <div className="mt-8 flex items-center">
-          <div className="flex-1 border-t border-border-subtle"></div>
-          <span className="px-4 text-xs text-text-secondary font-medium">{t("or")}</span>
-          <div className="flex-1 border-t border-border-subtle"></div>
-        </div>
-
-        <div className="mt-8 space-y-3">
-          <OAuthButtons onOAuth={onOAuth} verb="Sign in" />
-        </div>
 
         <div className="mt-10 text-center text-sm text-text-secondary">
           {t("Don't have an account?")}{' '}

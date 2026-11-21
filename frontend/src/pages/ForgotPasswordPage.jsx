@@ -1,3 +1,4 @@
+import {useFeedbackState} from '../hooks/useFeedbackState';
 import { useLanguage } from "../context/LanguageContext";import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { authApi } from '../api/authApi';
@@ -8,8 +9,8 @@ export default function ForgotPasswordPage() {const { t } = useLanguage();
   const [code, setCode] = useState('');
   const [password, setPassword] = useState('');
   const [sent, setSent] = useState(false);
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
+  const [message, setMessage] = useFeedbackState('', 'success');
+  const [error, setError] = useFeedbackState('', 'error');
 
   async function requestCode(event) {
     event.preventDefault();

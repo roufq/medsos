@@ -55,7 +55,7 @@ func messageTestDB(t *testing.T) *gorm.DB {
 	sqlDB.SetMaxOpenConns(1)
 	t.Cleanup(func() { _ = sqlDB.Close() })
 	require.NoError(t, testDB.AutoMigrate(&models.User{}))
-	require.NoError(t, testDB.Set("gorm:ignore_relationships", true).AutoMigrate(&models.ConversationSetting{}, &models.ConversationReport{}, &models.Conversation{}, &models.Message{}, &models.Notification{}))
+	require.NoError(t, testDB.Set("gorm:ignore_relationships", true).AutoMigrate(&models.ConversationSetting{}, &models.ConversationReport{}, &models.Conversation{}, &models.Message{}, &models.Notification{}, &models.NotificationDelivery{}))
 	previous := db.DB
 	db.DB = testDB
 	t.Cleanup(func() { db.DB = previous })

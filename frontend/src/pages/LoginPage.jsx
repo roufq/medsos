@@ -1,3 +1,5 @@
+import {notify} from '../utils/feedback';
+import {useFeedbackState} from '../hooks/useFeedbackState';
 import { useLanguage } from '../context/LanguageContext';
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -14,15 +16,16 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const reason = params.get('reason') || params.get('oauth_error');
-  const [error, setError] = useState(OAUTH_REASONS[reason] || '');
+  const [error, setError] = useFeedbackState(OAUTH_REASONS[reason] || '', 'error');
   const [pending, setPending] = useState(null);
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useFeedbackState('', 'success');
 
-  const handleLogin = async (identifier, password) => {
+  const handleLogin = async (identifier, password, otp) => {
     setError('');
     setMessage('');
     try {
-      await login(identifier, password);
+      await login(identifier, password, otp);
+      notify.success('Berhasil masuk.');
       navigate('/');
     } catch (err) {
       const text = err.response?.data?.error || 'Email/username atau password salah.';
@@ -57,7 +60,6 @@ const LoginPage = () => {
         onLogin={handleLogin}
         onNavigateToSignup={() => navigate('/register')}
         onNavigateToForgot={() => navigate('/forgot-password')}
-        onOAuth={(provider) => { window.location.href = authApi.oauthStartUrl(provider, { from: 'login' }); }}
       />
     </>
   );

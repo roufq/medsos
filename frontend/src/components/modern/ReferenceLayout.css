@@ -23,7 +23,7 @@
 .poster-app[data-page="home"] .poster-post { padding: 20px; }
 .poster-app[data-page="home"] .poster-panel { padding: 24px; background: rgb(var(--card-bg) / .85); }
 @media (min-width: 1200px) { .poster-app[data-page="home"] .poster-feed-layout:has(.poster-right) { grid-template-columns: minmax(0,720px) minmax(260px,350px); max-width:1120px; } }
-.poster-app[data-page="home"] .poster-feed-layout .poster-right { top: 89px; max-height: none; overflow: visible; }
+
 
 .poster-app[data-page="profile"] .profile-dashboard { display: block; max-width: 1120px; margin-inline: auto; }
 .poster-app[data-page="profile"] .profile-right-column { display: none; }
@@ -126,7 +126,6 @@
 .video-reference-feature-copy .poster-post > header { margin-top: 14px; }
 .video-reference-feature-copy .poster-post > h3 { font-size: 22px; }
 .video-reference-feature-copy .poster-post > .text-sm { font-size: 12px; }
-.video-reference-follow { background: rgb(var(--text-main)); color: rgb(var(--card-bg)); border-radius: 30px; padding: 8px 20px; font-size: 11px; margin-top: 10px; }
 .video-reference-section { margin-top: 28px; padding-top: 20px; border-top: 1px solid rgb(var(--border) / .6); }
 .video-reference-section-title { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
 .video-reference-section-title h2, .video-reference-recommendations > h2 { font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 8px; }

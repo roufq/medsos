@@ -12,6 +12,7 @@ import (
 	"goravel/app/repositories"
 	"goravel/app/services"
 	"goravel/pkg/db"
+	"goravel/pkg/platform"
 	"goravel/pkg/session"
 
 	goravelhttp "github.com/goravel/framework/contracts/http"
@@ -131,6 +132,19 @@ func resolveInteractivePost(viewerID, postID int64) (int64, models.Post, bool) {
 		return orig.ID, orig, true
 	}
 	return post.ID, post, true
+}
+
+func notifyAdmins(actorID int64) {
+	settings, e := platform.Settings()
+	if e != nil || !settings.AdminNotifications {
+		return
+	}
+	admins := []models.User{}
+	if db.DB.Where("role = ? AND account_status = ?", models.RoleAdmin, "active").Find(&admins).Error == nil {
+		for _, admin := range admins {
+			notifyUser(admin.ID, actorID, "report", "moderation", 0, "New report awaits administrator review")
+		}
+	}
 }
 
 func notifyUser(userID, actorID int64, kind, entityType string, entityID int64, message string) {
@@ -668,6 +682,7 @@ func (h *SocialController) Report(c goravelhttp.Context) goravelhttp.Response {
 	if err := db.DB.Create(&report).Error; err != nil {
 		return c.Response().Json(409, goravelhttp.Json{"error": "post was already reported"})
 	}
+	notifyAdmins(userID)
 	return c.Response().Json(201, report)
 }
 
@@ -849,14 +864,18 @@ type adminReportResponse struct {
 
 func (h *SocialController) AdminReports(c goravelhttp.Context) goravelhttp.Response {
 	reports := make([]adminReportResponse, 0)
-	err := db.DB.Table("post_reports AS reports").
+	query := db.DB.Table("post_reports AS reports").
 		Select(`reports.*, posts.public_hash AS post_hash, posts.title AS post_title, posts.content AS post_content,
 			posts.user_id AS author_id, authors.name AS author_name,
 			authors.avatar_url AS author_avatar, reporters.name AS reporter_name`).
 		Joins("LEFT JOIN posts ON posts.id = reports.post_id").
 		Joins("LEFT JOIN users AS authors ON authors.id = posts.user_id").
 		Joins("LEFT JOIN users AS reporters ON reporters.id = reports.reporter_id").
-		Order("reports.id DESC").Limit(200).Scan(&reports).Error
+		Order("reports.id DESC")
+	if before, _ := strconv.ParseInt(c.Request().Query("before_id", "0"), 10, 64); before > 0 {
+		query = query.Where("reports.id < ?", before)
+	}
+	err := query.Limit(200).Scan(&reports).Error
 	if err != nil {
 		return c.Response().Json(500, goravelhttp.Json{"error": "failed to load reports"})
 	}

@@ -29,6 +29,7 @@ func ExplorePosts(viewerID int64, limit, offset int, topic, sort, search string)
 		pattern := "%" + strings.TrimLeft(search, "#@") + "%"
 		query = query.Where("posts.title LIKE ? OR posts.content LIKE ? OR EXISTS (SELECT 1 FROM users u WHERE u.id = posts.user_id AND (u.name LIKE ? OR u.username LIKE ?)) OR EXISTS (SELECT 1 FROM post_hashtags h WHERE h.post_id=posts.id AND h.tag LIKE ?)", pattern, pattern, pattern, pattern, pattern)
 	}
+	query = query.Order("posts.is_featured DESC")
 	if sort == "popular" {
 		query = query.Order("((SELECT COUNT(*) FROM post_likes l WHERE l.post_id=posts.id) + (SELECT COUNT(*) FROM post_comments c WHERE c.post_id=posts.id)) DESC")
 	}

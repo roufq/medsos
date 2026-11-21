@@ -3,6 +3,7 @@ package controllers
 import (
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	http "github.com/goravel/framework/contracts/http"
@@ -45,6 +46,21 @@ func AdminActivity(c http.Context) http.Response {
 	query, limit, err := activityFilters(c, db.DB.Preload("User"), "user_id", "created_at")
 	if err != nil {
 		return c.Response().Json(400, http.Json{"error": err.Error()})
+	}
+
+	if search := strings.TrimSpace(c.Request().Query("q", "")); search != "" {
+		if len(search) > 200 {
+			return c.Response().Json(400, http.Json{"error": "Search is too long"})
+		}
+		value := "%" + search + "%"
+		query = query.Where("description LIKE ? OR target LIKE ? OR reason LIKE ? OR EXISTS (SELECT 1 FROM users WHERE users.id=user_activities.user_id AND (users.name LIKE ? OR users.username LIKE ?))", value, value, value, value, value)
+	}
+	if category := strings.Trim(c.Request().Query("category", ""), "/"); category != "" {
+		allowed := map[string]bool{"users": true, "posts": true, "ads": true, "reports": true, "auth": true, "settings": true}
+		if !allowed[category] {
+			return c.Response().Json(400, http.Json{"error": "Invalid category"})
+		}
+		query = query.Where("target LIKE ?", "%/"+category+"%")
 	}
 	if raw := c.Request().Query("before_id", ""); raw != "" {
 		id, err := strconv.ParseUint(raw, 10, 64)

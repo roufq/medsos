@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"errors"
+	"strconv"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -115,6 +116,7 @@ func (c *MessageController) ReportConversation(ctx http.Context) http.Response {
 	if result.RowsAffected == 0 {
 		return ctx.Response().Json(409, http.Json{"error": "Pengguna ini sudah Anda laporkan"})
 	}
+	notifyAdmins(userID)
 	return ctx.Response().Json(201, report)
 }
 
@@ -124,7 +126,11 @@ func (c *MessageController) AdminConversationReports(ctx http.Context) http.Resp
 		AuthorName   string `json:"author_name"`
 		ReporterName string `json:"reporter_name"`
 	}
-	err := db.DB.Table("conversation_reports AS reports").Select("reports.*, authors.name AS author_name, reporters.name AS reporter_name").Joins("LEFT JOIN users AS authors ON authors.id = reports.reported_user_id").Joins("LEFT JOIN users AS reporters ON reporters.id = reports.reporter_id").Order("reports.id DESC").Limit(200).Scan(&reports).Error
+	query := db.DB.Table("conversation_reports AS reports").Select("reports.*, authors.name AS author_name, reporters.name AS reporter_name").Joins("LEFT JOIN users AS authors ON authors.id = reports.reported_user_id").Joins("LEFT JOIN users AS reporters ON reporters.id = reports.reporter_id").Order("reports.id DESC")
+	if before, _ := strconv.ParseInt(ctx.Request().Query("before_id", "0"), 10, 64); before > 0 {
+		query = query.Where("reports.id < ?", before)
+	}
+	err := query.Limit(200).Scan(&reports).Error
 	if err != nil {
 		return ctx.Response().Json(500, http.Json{"error": "Gagal memuat laporan chat"})
 	}

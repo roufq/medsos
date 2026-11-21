@@ -1,0 +1,19 @@
+{
+  "source": "https://github.com/dr5hn/countries-states-cities-database",
+  "revision": "01cdb8d69b330d51590b26a4a703a0bc9a331336",
+  "license": "ODbL-1.0",
+  "countries": {
+    "US": {
+      "regions": 51,
+      "places": 26720
+    },
+    "CN": {
+      "regions": 31,
+      "places": 3800
+    },
+    "IN": {
+      "regions": 36,
+      "places": 4326
+    }
+  }
+}

@@ -1,3 +1,4 @@
+import {notify} from '../../utils/feedback';
 import { useState, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { userApi } from '../../api/userApi';
@@ -27,9 +28,9 @@ const ProfileHeader = ({ profileUser, isOwnProfile, onProfileUpdated }) => {
         onProfileUpdated(updated);
       }
       updateProfileState(updated);
-      setEditingBio(false);
+      setEditingBio(false);notify.success('Bio berhasil diperbarui.');
     } catch (e) {
-      alert('Failed to update bio: ' + e.message);
+      notify.error('Failed to update bio: ' + e.message);
     } finally {
       setUpdating(false);
     }
@@ -53,9 +54,9 @@ const ProfileHeader = ({ profileUser, isOwnProfile, onProfileUpdated }) => {
       if (onProfileUpdated) {
         onProfileUpdated(updated);
       }
-      updateProfileState(updated);
+      updateProfileState(updated);notify.success('Foto profil berhasil diperbarui.');
     } catch (e) {
-      alert('Failed to upload photo: ' + e.message);
+      notify.error('Failed to upload photo: ' + e.message);
     } finally {
       setUpdating(false);
     }

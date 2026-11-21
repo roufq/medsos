@@ -1,3 +1,4 @@
+import {notify} from '../../utils/feedback';
 import { useAuth } from '../../context/AuthContext';
 import { postUrl } from '../../utils/postUrl';
 import { useLanguage } from "../../context/LanguageContext";
@@ -132,9 +133,10 @@ export default function Profile({ user, posts, isCurrentUser, onUserChange, onPo
     try {
       const updated = await userApi.updateProfile(changes);
       onUserChange({ ...user, ...updated });
+      notify.success('Profil berhasil diperbarui.');
       return true;
     } catch (err) {
-      alert(errorText(err, 'Gagal memperbarui profil'));
+      notify.error(errorText(err, 'Gagal memperbarui profil'));
       return false;
     }
   };
@@ -147,7 +149,7 @@ export default function Profile({ user, posts, isCurrentUser, onUserChange, onPo
       if (res.media_type !== 'image') throw new Error('File harus berupa gambar');
       await updateProfile({ [field]: res.url });
     } catch (err: any) {
-      alert(errorText(err, err?.message || 'Gagal mengunggah gambar'));
+      notify.error(errorText(err, err?.message || 'Gagal mengunggah gambar'));
     } finally {
       setUploading(false);
     }
@@ -170,7 +172,7 @@ export default function Profile({ user, posts, isCurrentUser, onUserChange, onPo
         if (status === 'accepted' && user.profile_locked) window.location.reload();
       }
     } catch (err) {
-      alert(errorText(err, 'Gagal memperbarui status mengikuti'));
+      notify.error(errorText(err, 'Gagal memperbarui status mengikuti'));
     }
   };
 
@@ -187,7 +189,7 @@ export default function Profile({ user, posts, isCurrentUser, onUserChange, onPo
         onPostsChange([]);
       }
     } catch (err) {
-      alert(errorText(err, 'Gagal memperbarui blokir'));
+      notify.error(errorText(err, 'Gagal memperbarui blokir'));
     }
   };
 

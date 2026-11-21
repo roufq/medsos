@@ -57,7 +57,7 @@ func Api() {
 	api.Middleware(middleware.RateLimit("oauth-callback", 30, time.Minute)).Get("auth/oauth/{provider}/callback", oauthController.Callback)
 	api.Middleware(middleware.RateLimit("oauth-callback", 30, time.Minute)).Post("auth/oauth/{provider}/callback", oauthController.Callback)
 	api.Get("embed/posts/{id}", socialController.EmbedPost)
-	api.Middleware(middleware.RateLimit("public", 300, time.Minute)).Group(func(public route.Router) {
+	api.Middleware(middleware.PublicMaintenance(), middleware.RateLimit("public", 300, time.Minute)).Group(func(public route.Router) {
 		public.Get("platform/settings", controllers.PlatformSettings)
 		public.Get("public/posts", postController.PublicFeed)
 		public.Get("public/explore", controllers.Explore)
@@ -65,8 +65,13 @@ func Api() {
 		public.Get("public/users/{id}", controllers.PublicProfile)
 	})
 
+	api.Middleware(middleware.RateLimit("traffic", 90, time.Minute)).Post("traffic", controllers.RecordTraffic)
+	api.Get("ads", controllers.PublicAds)
+	api.Middleware(middleware.RateLimit("ad-click", 60, time.Minute)).Get("ads/{id}/click", controllers.PublicAdClick)
+
+	api.Middleware(middleware.RateLimit("guest-post", 5, time.Hour)).Post("guest/posts", controllers.GuestPost)
 	// Authenticated Endpoints
-	api.Middleware(middleware.AuthMiddleware(), middleware.RateLimit("api", 300, time.Minute), middleware.ActivityLog()).Group(func(router route.Router) {
+	api.Middleware(middleware.AuthMiddleware(), middleware.PlatformPolicy(), middleware.RateLimit("api", 300, time.Minute), middleware.ActivityLog()).Group(func(router route.Router) {
 		// Auth
 		router.Post("auth/logout", authController.LogoutAPI)
 		router.Get("auth/session", controllers.SessionInfo)
@@ -152,8 +157,27 @@ func Api() {
 		router.Get("messages/call/poll", msgController.PollCallSignals)
 		router.Get("messages/call/config", msgController.GetCallConfig)
 
+		router.Middleware(middleware.RateLimit("two-factor", 8, time.Minute)).Post("auth/2fa/setup", controllers.TwoFactorSetup)
+		router.Middleware(middleware.RateLimit("two-factor", 8, time.Minute)).Post("auth/2fa/confirm", controllers.TwoFactorConfirm)
+		router.Get("push/config", controllers.PushConfig)
+		router.Post("push/subscription", controllers.PushSubscribe)
+		router.Delete("push/subscription", controllers.PushSubscribe)
 		// Admin Operations
-		router.Middleware(middleware.AdminMiddleware()).Group(func(admin route.Router) {
+		router.Middleware(middleware.StaffMiddleware()).Group(func(admin route.Router) {
+			admin.Get("admin/console/users", controllers.AdminConsoleUsers)
+			admin.Get("admin/console/users/{id}", controllers.AdminConsoleUser)
+			admin.Post("admin/console/users", controllers.AdminCreateUser)
+			admin.Put("admin/console/users/{id}", controllers.AdminSaveUser)
+			admin.Get("admin/console/settings", controllers.AdminConsoleSettings)
+			admin.Put("admin/console/settings", controllers.AdminConsoleSettings)
+			admin.Get("admin/analytics", controllers.AdminAnalytics)
+			admin.Get("admin/ads", controllers.AdminAds)
+			admin.Post("admin/ads", controllers.AdminAds)
+			admin.Put("admin/ads/{id}", controllers.AdminAds)
+			admin.Delete("admin/ads/{id}", controllers.AdminAds)
+			admin.Delete("admin/sessions/{id}", controllers.AdminRevokeSession)
+			admin.Delete("admin/posts/{id}/purge", controllers.AdminPurgePost)
+			admin.Put("admin/posts/{id}", controllers.AdminEditPost)
 			admin.Get("admin/stats", userController.AdminGetStatsAPI)
 			admin.Put("admin/settings", controllers.UpdatePlatformSettings)
 			admin.Get("admin/activity", controllers.AdminActivity)

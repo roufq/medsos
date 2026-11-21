@@ -24,7 +24,7 @@ func ActivityLog() http.Middleware {
 		if len(target) > 255 {
 			target = target[:255]
 		}
-		if err := db.DB.Create(&models.UserActivity{UserID: id, Action: method, Target: target, Description: models.ActivityDescription(method, target)}).Error; err != nil {
+		if err := db.DB.Create(&models.UserActivity{UserID: id, Action: method, Target: target, IPAddress: c.Request().Ip(), Description: models.ActivityDescription(method, target)}).Error; err != nil {
 			log.Printf("activity recording failed: %v", err)
 		}
 	}

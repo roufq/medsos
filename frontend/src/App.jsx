@@ -1,3 +1,4 @@
+import FeedbackHost from './components/common/FeedbackHost';
 import { AuthProvider } from './context/AuthProvider';
 import { ThemeProvider } from './context/ThemeProvider';
 import { LanguageProvider } from './context/LanguageProvider';
@@ -9,7 +10,7 @@ function App() {
     <LanguageProvider>
     <ThemeProvider>
     <AuthProvider>
-      <PlatformProvider><AppRouter /></PlatformProvider>
+      <PlatformProvider><FeedbackHost /><AppRouter /></PlatformProvider>
     </AuthProvider>
     </ThemeProvider>
     </LanguageProvider>

@@ -1,4 +1,6 @@
 import { Suspense, lazy } from 'react';
+import PlatformGate from '../components/common/PlatformGate';
+import TrafficTracker from '../components/common/TrafficTracker';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import LoginPage from '../pages/LoginPage';
@@ -24,8 +26,8 @@ const ShopPage = lazy(() => import('../pages/ShopPage'));
 const SavedPage = lazy(() => import('../pages/SavedPage'));
 
 const IndexPage = () => {
-  const { isAuthenticated, loading } = useAuth();
-  return loading ? <PageLoader /> : isAuthenticated ? <HomePage /> : <LandingPage />;
+  const { isAuthenticated, loading } = useAuth();const {settings}=usePlatform();
+  return loading ? <PageLoader /> : isAuthenticated ? settings?.default_feed==='explore'?<ExplorePage/>:<HomePage/> : <LandingPage />;
 };
 const VideoRoute = () => {
   const { isAuthenticated, loading } = useAuth();
@@ -44,13 +46,13 @@ const PrivateRoute = ({ children }) => {
   return isAuthenticated ? children : <Navigate to="/login" replace />;
 };
 
-const AdminRoute = ({ children }) => {
+const AdminRoute = ({ children, allowModerator=false }) => {
   const { user, isAuthenticated, loading } = useAuth();
   if (loading) {
     return <PageLoader />;
   }
   if (!isAuthenticated) return <Navigate to="/login" replace />;
-  if (user?.role !== 'admin') return <Navigate to="/" replace />;
+  if (user?.role!=='admin'&&!(allowModerator&&user?.role==='moderator')) return <Navigate to="/" replace />;
 
   return children;
 };
@@ -65,7 +67,7 @@ const PublicRoute = ({ children }) => {
 
 const AppRouter = () => {
   return (
-    <BrowserRouter>
+    <BrowserRouter><TrafficTracker/><PlatformGate>
       <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route
@@ -119,11 +121,11 @@ const AppRouter = () => {
           <Route
             path="/admin/*"
             element={
-              <AdminRoute>
+              <AdminRoute allowModerator>
                 <Routes>
                   <Route path="dashboard" element={<AdminDashboardPage />} />
                   <Route path="users" element={<AdminDashboardPage />} />
-                  <Route path="*" element={<Navigate to="dashboard" replace />} />
+                  <Route path="*" element={<AdminDashboardPage />} />
                 </Routes>
               </AdminRoute>
             }
@@ -135,7 +137,7 @@ const AppRouter = () => {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
-    </BrowserRouter>
+    </PlatformGate></BrowserRouter>
   );
 };
 

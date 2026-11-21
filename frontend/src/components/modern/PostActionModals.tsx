@@ -1,3 +1,5 @@
+import {useFeedbackState} from '../../hooks/useFeedbackState';
+import {notify} from '../../utils/feedback';
 import { sharePost, SHARE_PLATFORMS } from '../../utils/share';
 import { copyToClipboard } from '../../utils/clipboard';
 import { useLanguage } from "../../context/LanguageContext";import { ReactNode, useEffect, useState } from 'react';
@@ -27,11 +29,11 @@ export function Modal({ title, onClose, children, wide }: {title: string;onClose
 }
 
 export function ShareModal({ postId, onClose, onShared }: {postId: number | string;onClose: () => void;onShared?: (result?: any) => void;}) {const { t } = useLanguage();
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useFeedbackState('', 'success');
   const [query, setQuery] = useState('');
   const [users, setUsers] = useState<any[]>([]);
   const [note, setNote] = useState('');
-  const [error, setError] = useState('');
+  const [error, setError] = useFeedbackState('', 'error');
 
   useEffect(() => {
     if (query.trim().length < 2) {setUsers([]);return;}
@@ -121,13 +123,13 @@ export function ShareModal({ postId, onClose, onShared }: {postId: number | stri
 
 export function EmbedModal({ postId, onClose }: {postId: number | string;onClose: () => void;}) {const { t } = useLanguage();
   const [data, setData] = useState<any>(null);
-  const [error, setError] = useState('');
+  const [error, setError] = useFeedbackState('', 'error');
   const [copied, setCopied] = useState(false);
   useEffect(() => {
     postApi.getEmbedCode(postId).then(setData).catch((err) => setError(errorText(err, 'Kode embed tidak tersedia')));
   }, [postId]);
   const copy = async () => {
-    try { await copyToClipboard(data.embed_code); setCopied(true); setError(''); }
+    try { await copyToClipboard(data.embed_code); setCopied(true);notify.success('Kode embed berhasil disalin.'); setError(''); }
     catch { setCopied(false); setError(t('Gagal menyalin kode embed.')); }
   };
   return (
@@ -154,14 +156,14 @@ export function ReportModal({ postId, onClose }: {postId: number | string;onClos
   const [reason, setReason] = useState('');
   const [details, setDetails] = useState('');
   const [done, setDone] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useFeedbackState('', 'error');
   const submit = async () => {
     if (sending) return;
     if (!reason) {setError(t('Pilih alasan laporan.'));return;}
     setSending(true); setError('');
     try {
       await postApi.report(postId, reason, details);
-      setDone(true);
+      setDone(true);notify.success('Laporan berhasil dikirim.');
     } catch (err) {
       setError(errorText(err, t('Gagal mengirim laporan')));
     } finally { setSending(false); }
@@ -192,7 +194,7 @@ export function RepostModal({ postId, onClose, onReposted }: {postId: number | s
   const { t: translateUI } = useLanguage();
 
   const [commentary, setCommentary] = useState('');
-  const [error, setError] = useState('');
+  const [error, setError] = useFeedbackState('', 'error');
   const submit = async () => {
     try {
       const post = await postApi.repost(postId, commentary);

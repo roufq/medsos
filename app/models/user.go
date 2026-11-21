@@ -12,11 +12,14 @@ import (
 type UserRole string
 
 const (
-	RoleAdmin UserRole = "admin"
-	RoleUser  UserRole = "user"
+	RoleAdmin     UserRole = "admin"
+	RoleUser      UserRole = "user"
+	RoleModerator UserRole = "moderator"
 )
 
 type User struct {
+	IsGuest               bool       `gorm:"not null;default:false;index" json:"is_guest"`
+	EmailNotifications    bool       `gorm:"not null;default:false" json:"email_notifications"`
 	PublicHash            *string    `gorm:"type:varchar(32);uniqueIndex" json:"public_hash"`
 	ID                    int64      `gorm:"primaryKey;autoIncrement" json:"id"`
 	Name                  string     `gorm:"type:varchar(100);not null" json:"name"`
@@ -24,7 +27,12 @@ type User struct {
 	Email                 string     `gorm:"type:varchar(100);not null;unique" json:"email"`
 	Phone                 *string    `gorm:"type:varchar(32);uniqueIndex" json:"phone,omitempty"`
 	Password              string     `gorm:"type:varchar(255);not null" json:"-"`
-	Role                  UserRole   `gorm:"type:enum('admin','user');default:'user';not null" json:"role"`
+	Role                  UserRole   `gorm:"type:enum('admin','user','moderator');default:'user';not null" json:"role"`
+	TwoFactorEnabled      bool       `gorm:"not null;default:false" json:"two_factor_enabled"`
+	TwoFactorRequired     bool       `gorm:"not null;default:false" json:"two_factor_required"`
+	TwoFactorSecret       string     `gorm:"type:text" json:"-"`
+	TwoFactorPending      string     `gorm:"type:text" json:"-"`
+	TwoFactorCounter      int64      `gorm:"not null;default:0" json:"-"`
 	AccountType           string     `gorm:"type:varchar(20);not null;default:'personal'" json:"account_type"`
 	AccountStatus         string     `gorm:"type:varchar(24);not null;default:'active';index" json:"account_status"`
 	AvatarURL             *string    `gorm:"type:varchar(500)" json:"avatar_url"`

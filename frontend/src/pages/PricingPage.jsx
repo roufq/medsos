@@ -1,3 +1,4 @@
+import {useFeedbackState} from '../hooks/useFeedbackState';
 import { useLanguage } from '../context/LanguageContext';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -198,7 +199,7 @@ export default function PricingPage() {
   const [billingPhone, setBillingPhone] = useState(user?.phone || '');
   const [agreeTerms, setAgreeTerms] = useState(true);
   const [busy, setBusy] = useState(false);
-  const [notice, setNotice] = useState(null);
+  const [notice, setNotice] = useFeedbackState(null, 'success');
 
   const currentPlanId = user?.subscription_plan || 'free';
 

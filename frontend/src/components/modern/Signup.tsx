@@ -1,13 +1,13 @@
+import {useFeedbackState} from '../../hooks/useFeedbackState';
 import { useState, FormEvent, useEffect } from 'react';
 import { Eye, EyeOff, Mail, Lock, Phone, User, Calendar, MapPin, ChevronDown, Loader2 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
-import OAuthButtons from './OAuthButtons';
 import AuthLayout from './AuthLayout';
+import { REGISTRATION_COUNTRIES, loadRegistrationRegions, phoneCountryForCode } from '../../utils/registrationRegions';
 
 interface SignupProps {
 	onRegister: (email: string, fullName: string, password?: string, extra?: Record<string, any>) => void | Promise<void>;
 	onNavigateToLogin: () => void;
-	onOAuth: (provider: string, referralCode?: string) => void;
 }
 
 const INTERESTS = [
@@ -15,7 +15,6 @@ const INTERESTS = [
   'Kuliner', 'Fashion', 'Game', 'Bisnis', 'Lainnya'
 ];
 
-const COUNTRIES = ["Indonesia", "Malaysia", "Singapore"];
 
 const FALLBACK_ID_REGIONS: Record<string, string[]> = {
   "DKI Jakarta": ["Jakarta Pusat", "Jakarta Selatan", "Jakarta Barat", "Jakarta Timur", "Jakarta Utara"],
@@ -29,17 +28,7 @@ const FALLBACK_ID_REGIONS: Record<string, string[]> = {
   "Sulawesi Selatan": ["Makassar", "Gowa", "Maros", "Parepare"]
 };
 
-const REGION_DATA: Record<string, Record<string, string[]>> = {
-  "Malaysia": {
-    "Kuala Lumpur": ["Kuala Lumpur"],
-    "Selangor": ["Petaling Jaya", "Shah Alam", "Klang", "Subang Jaya"]
-  },
-  "Singapore": {
-    "Singapore": ["Central", "East", "North", "North-East", "West"]
-  }
-};
-
-export default function Signup({ onRegister, onNavigateToLogin, onOAuth }: SignupProps) {
+export default function Signup({ onRegister, onNavigateToLogin }: SignupProps) {
   const { t } = useLanguage();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -61,53 +50,54 @@ export default function Signup({ onRegister, onNavigateToLogin, onOAuth }: Signu
 
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [agree, setAgree] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useFeedbackState('', 'error');
   const [busy, setBusy] = useState(false);
 
   const [provinces, setProvinces] = useState<{id: string, name: string}[]>([]);
   const [cities, setCities] = useState<{id: string, name: string}[]>([]);
   const [isLoadingRegions, setIsLoadingRegions] = useState(false);
+  const [foreignRegions, setForeignRegions] = useState<Record<string,string[]>>({});
+  const [regionError, setRegionError] = useState(false);
+  const [regionRetry, setRegionRetry] = useState(0);
 
   useEffect(() => {
+    const controller = new AbortController();
+    setRegionError(false);
+    setIsLoadingRegions(true);
+    setForeignRegions({});
     if (country === 'Indonesia') {
-      setIsLoadingRegions(true);
-      fetch('https://ibnux.github.io/data-indonesia/provinsi.json')
-        .then(res => res.json())
-        .then(data => {
-          setProvinces(data.map((p: any) => ({ id: p.id, name: p.nama })));
-          setIsLoadingRegions(false);
-        })
-        .catch(err => {
-          console.error(err);
-          setProvinces(Object.keys(FALLBACK_ID_REGIONS).map((name, idx) => ({ id: String(idx + 1), name })));
-          setIsLoadingRegions(false);
-        });
+      fetch('https://ibnux.github.io/data-indonesia/provinsi.json', {signal:controller.signal})
+        .then(res => {if(!res.ok) throw new Error('Regions unavailable');return res.json();})
+        .then(data => {if(!controller.signal.aborted) setProvinces(data.map((p: any) => ({ id: p.id, name: p.nama })));})
+        .catch(() => {if(!controller.signal.aborted) setProvinces(Object.keys(FALLBACK_ID_REGIONS).map((name, idx) => ({ id: String(idx + 1), name })));})
+        .finally(() => {if(!controller.signal.aborted) setIsLoadingRegions(false);});
     } else {
       setProvinces([]);
       setCities([]);
+      loadRegistrationRegions(country,{signal:controller.signal,baseURL:import.meta.env.BASE_URL})
+        .then(data => {if(!controller.signal.aborted) setForeignRegions(data);})
+        .catch(() => {if(!controller.signal.aborted) setRegionError(true);})
+        .finally(() => {if(!controller.signal.aborted) setIsLoadingRegions(false);});
     }
-  }, [country]);
+    return () => controller.abort();
+  }, [country,regionRetry]);
 
   useEffect(() => {
+    const controller = new AbortController();
     if (country === 'Indonesia' && province) {
       const selectedProv = provinces.find(p => p.name === province);
       if (selectedProv) {
         setIsLoadingRegions(true);
-        fetch(`https://ibnux.github.io/data-indonesia/kabupaten/${selectedProv.id}.json`)
-          .then(res => res.json())
-          .then(data => {
-            setCities(data.map((c: any) => ({ id: c.id, name: c.nama })));
-            setIsLoadingRegions(false);
-          })
-          .catch(err => {
-            console.error(err);
-            setCities((FALLBACK_ID_REGIONS[province] || [province]).map((name, idx) => ({ id: String(idx + 1), name })));
-            setIsLoadingRegions(false);
-          });
+        fetch(`https://ibnux.github.io/data-indonesia/kabupaten/${selectedProv.id}.json`, {signal:controller.signal})
+          .then(res => {if(!res.ok) throw new Error('Cities unavailable');return res.json();})
+          .then(data => {if(!controller.signal.aborted) setCities(data.map((c: any) => ({ id: c.id, name: c.nama })));})
+          .catch(() => {if(!controller.signal.aborted) setCities((FALLBACK_ID_REGIONS[province] || [province]).map((name, idx) => ({ id: String(idx + 1), name })));})
+          .finally(() => {if(!controller.signal.aborted) setIsLoadingRegions(false);});
       }
     } else {
       setCities([]);
     }
+    return () => controller.abort();
   }, [province, country, provinces]);
 
   const toggleInterest = (interest: string) => {
@@ -132,7 +122,7 @@ export default function Signup({ onRegister, onNavigateToLogin, onOAuth }: Signu
 
     const extra = {
       phone: phoneLocal ? `${phoneCode}${phoneLocal.replace(/^0+/, '')}` : '',
-      phone_country: phoneCode === '+62' ? 'ID' : phoneCode === '+60' ? 'MY' : 'SG',
+      phone_country: phoneCountryForCode(phoneCode),
       referral_code: referralCode.trim(),
       profile: {
         ...(gender ? { gender } : {}),
@@ -241,9 +231,7 @@ export default function Signup({ onRegister, onNavigateToLogin, onOAuth }: Signu
                     <Phone size={18} strokeWidth={1.25} />
                   </div>
                   <select aria-label={t("Kode negara telepon")} value={phoneCode} onChange={e => setPhoneCode(e.target.value)} className="bg-transparent text-[13px] text-text-primary py-2.5 outline-none font-medium appearance-none border-r border-border-subtle pr-2">
-                    <option value="+62">+62</option>
-                    <option value="+60">+60</option>
-                    <option value="+65">+65</option>
+                    {REGISTRATION_COUNTRIES.map(item=><option key={item.iso} value={item.dial}>{item.dial} {t(item.label)}</option>)}
                   </select>
                   <input aria-label={t("Nomor HP")} type="tel" autoComplete="tel-national" value={phoneLocal} onChange={e => setPhoneLocal(e.target.value.replace(/\D/g, ''))}
                     className="flex-1 px-3 py-2.5 bg-transparent text-[13px] outline-none placeholder:text-text-secondary"
@@ -294,12 +282,13 @@ export default function Signup({ onRegister, onNavigateToLogin, onOAuth }: Signu
                   </div>
                   <select aria-label={t("Negara")} value={country} onChange={e => {
                     setCountry(e.target.value);
+                    if(!phoneLocal) setPhoneCode(REGISTRATION_COUNTRIES.find(item=>item.name===e.target.value)?.dial || '+62');
                     setProvince("");
                     setCity("");
                   }} className="flex-1 w-0 bg-transparent py-2.5 pr-2 text-[13px] text-text-primary outline-none appearance-none border-none focus:ring-0 cursor-pointer">
                     <option value="" disabled>{t("Pilih negara")}</option>
-                    {COUNTRIES.map(c => (
-                      <option key={c} value={c}>{c}</option>
+                    {REGISTRATION_COUNTRIES.map(c => (
+                      <option key={c.iso} value={c.name}>{t(c.label)}</option>
                     ))}
                   </select>
                   <div className="pr-3.5 pl-2 flex items-center pointer-events-none text-text-secondary">
@@ -312,16 +301,16 @@ export default function Signup({ onRegister, onNavigateToLogin, onOAuth }: Signu
                   <div className="pl-3.5 pr-2 flex items-center justify-center text-text-secondary">
                     <MapPin size={18} strokeWidth={1.25} />
                   </div>
-                  <select aria-label={t("Provinsi")} value={province} onChange={e => {
+                  <select aria-label={t("Provinsi / negara bagian / wilayah")} value={province} onChange={e => {
                     setProvince(e.target.value);
                     setCity("");
                   }} className="flex-1 w-0 bg-transparent py-2.5 pr-2 text-[13px] text-text-primary outline-none appearance-none border-none focus:ring-0 cursor-pointer"
-                  disabled={!country || (country === 'Indonesia' ? provinces.length === 0 : !REGION_DATA[country])}>
-                    <option value="" disabled>{t(isLoadingRegions ? 'Memuat...' : 'Pilih provinsi')}</option>
+                  disabled={!country || (country === 'Indonesia' ? provinces.length === 0 : !Object.keys(foreignRegions).length)}>
+                    <option value="" disabled>{t(isLoadingRegions ? 'Memuat...' : 'Pilih provinsi / negara bagian')}</option>
                     {country === 'Indonesia' ? (
                       provinces.map(p => <option key={p.id} value={p.name}>{p.name}</option>)
                     ) : (
-                      country && REGION_DATA[country] && Object.keys(REGION_DATA[country]).map(p => (
+                      country && Object.keys(foreignRegions).length>0 && Object.keys(foreignRegions).map(p => (
                         <option key={p} value={p}>{p}</option>
                       ))
                     )}
@@ -337,12 +326,12 @@ export default function Signup({ onRegister, onNavigateToLogin, onOAuth }: Signu
                     <MapPin size={18} strokeWidth={1.25} />
                   </div>
                   <select aria-label={t("Kota / Kabupaten")} value={city} onChange={e => setCity(e.target.value)} className="flex-1 w-0 bg-transparent py-2.5 pr-2 text-[13px] text-text-primary outline-none appearance-none border-none focus:ring-0 cursor-pointer"
-                  disabled={!province || (country === 'Indonesia' ? cities.length === 0 : (!REGION_DATA[country] || !REGION_DATA[country][province]))}>
+                  disabled={!province || (country === 'Indonesia' ? cities.length === 0 : (!Object.keys(foreignRegions).length || !foreignRegions[province]?.length))}>
                     <option value="" disabled>{t(isLoadingRegions ? 'Memuat...' : 'Pilih kota/kabupaten')}</option>
                     {country === 'Indonesia' ? (
                       cities.map(c => <option key={c.id} value={c.name}>{c.name}</option>)
                     ) : (
-                      country && province && REGION_DATA[country] && REGION_DATA[country][province] && REGION_DATA[country][province].map(c => (
+                      country && province && Object.keys(foreignRegions).length>0 && foreignRegions[province] && foreignRegions[province].map(c => (
                         <option key={c} value={c}>{c}</option>
                       ))
                     )}
@@ -366,6 +355,9 @@ export default function Signup({ onRegister, onNavigateToLogin, onOAuth }: Signu
               </div>
             </div>
           </div>
+
+          {regionError&&<p role="alert" className="text-xs text-error">{t("Data wilayah gagal dimuat.")} <button type="button" className="underline" onClick={()=>setRegionRetry(value=>value+1)}>{t("Coba lagi")}</button></p>}
+          {['United States','China','India'].includes(country)&&<p className="text-[10px] text-text-secondary">{t("Data wilayah")}: <a className="underline" href="https://github.com/dr5hn/countries-states-cities-database" target="_blank" rel="noopener noreferrer">CSC Database</a> · <a className="underline" href={`${import.meta.env.BASE_URL}regions/LICENSE.odbl.txt`} target="_blank" rel="noopener noreferrer">ODbL 1.0</a></p>}
 
           {/* Minat */}
           <div>
@@ -404,16 +396,6 @@ export default function Signup({ onRegister, onNavigateToLogin, onOAuth }: Signu
             <span className="text-lg leading-none">&rarr;</span>
           </button>
         </form>
-
-        <div className="mt-8 flex items-center">
-          <div className="flex-1 border-t border-border-subtle"></div>
-          <span className="px-4 text-[10px] text-text-secondary font-medium">{t("atau daftar dengan")}</span>
-          <div className="flex-1 border-t border-border-subtle"></div>
-        </div>
-
-        <div className="mt-6">
-          <OAuthButtons onOAuth={(provider) => onOAuth(provider, referralCode.trim())} verb="Daftar" />
-        </div>
 
         <div className="mt-8 text-center text-[11px] text-text-secondary">
           {t("Sudah punya akun?")}{' '}

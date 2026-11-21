@@ -15,6 +15,7 @@ import (
 )
 
 func Web() {
+	facades.Route().Get("/push-sw.js", controllers.PushWorker)
 	// 1. Initialize Repositories
 	userRepo := repositories.NewUserRepository()
 	postRepo := repositories.NewPostRepository()
@@ -30,7 +31,7 @@ func Web() {
 	userController := controllers.NewUserController(userService, authService, postService)
 	postController := controllers.NewPostController(postService, userController, localStorage)
 
-	facades.Route().Static("uploads", "./uploads")
+	facades.Route().Middleware(middleware.ConcurrentLimit(300)).Static("uploads", "./uploads")
 
 	// Public, unauthenticated post pages: share target (OpenGraph) and embed.
 	socialController := controllers.NewSocialController()
@@ -46,7 +47,11 @@ func Web() {
 	// ==========================================
 	// SSR Web View Routes (HTML)
 	// ==========================================
-	web := facades.Route().Prefix("web").Middleware(middleware.ConcurrentLimit(300), middleware.RateLimit("web", 180, time.Minute))
+	web := facades.Route().Prefix("web").Middleware(middleware.ConcurrentLimit(300), middleware.RateLimit("web", 180, time.Minute), func(c http.Context) {
+		c.Response().Header("X-Frame-Options", "SAMEORIGIN")
+		c.Response().Header("Content-Security-Policy", "frame-ancestors 'self'")
+		c.Request().Next()
+	})
 
 	web.Get("login", authController.ShowLoginWeb)
 	web.Middleware(middleware.RateLimit("web-login", 10, time.Minute)).Post("login", authController.HandleLoginWeb)

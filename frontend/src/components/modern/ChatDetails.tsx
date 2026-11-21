@@ -1,3 +1,5 @@
+import {notify} from '../../utils/feedback';
+import {useFeedbackState} from '../../hooks/useFeedbackState';
 import { useLanguage } from '../../context/LanguageContext';
 import { useEffect, useRef, useState } from 'react';
 import { Bell, Loader2, X } from 'lucide-react';
@@ -22,8 +24,8 @@ export default function ChatDetails({ peer, onClose, onSettings, onDelete }: {
   const [reason, setReason] = useState('Spam');
   const [details, setDetails] = useState('');
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
-  const [notice, setNotice] = useState('');
+  const [error, setError] = useFeedbackState('', 'error');
+  const [notice, setNotice] = useFeedbackState('', 'success');
   const dialogRef = useRef<HTMLFormElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
 
@@ -50,7 +52,7 @@ export default function ChatDetails({ peer, onClose, onSettings, onDelete }: {
 
   const save = async (patch: { muted?: boolean; nickname?: string }) => {
     const data = await messageApi.updateSettings(peer.id, patch);
-    setSettings(data); onSettings(data);
+    setSettings(data); onSettings(data);if(action===null)notify.success('Perubahan berhasil disimpan.');
   };
 
   const submit = () => run(async () => {
@@ -66,6 +68,7 @@ export default function ChatDetails({ peer, onClose, onSettings, onDelete }: {
       setNotice('Laporan terkirim ke admin.');
     }
     if (action === 'delete') { await messageApi.deleteHistory(peer.id); onDelete(); }
+    if(action!=='report')notify.success('Perubahan berhasil disimpan.');
     setAction(null);
   });
 

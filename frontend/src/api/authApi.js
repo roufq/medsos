@@ -1,14 +1,16 @@
 import api from './axios';
 
 export const authApi = {
+ unsubscribePush: async subscription => api.delete('/push/subscription',{data:subscription}),
  session: async () => (await api.get('/auth/session')).data,
  activity: async () => (await api.post('/auth/activity')).data,
 	forgotPassword: async (target, channel = 'email') => (await api.post('/auth/password/forgot', { target, channel })).data,
 	resetPassword: async (target, code, newPassword) => (await api.post('/auth/password/reset', { target, code, new_password: newPassword })).data,
-	login: async (identifier, password) => {
+	login: async (identifier, password, otp = '') => {
     const formData = new FormData();
 		formData.append('identifier', identifier);
     formData.append('password', password);
+    formData.append('otp', otp);
     const res = await api.post('/auth/login', formData);
     return res.data;
   },

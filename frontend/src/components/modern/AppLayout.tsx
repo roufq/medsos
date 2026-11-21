@@ -1,3 +1,5 @@
+import GuestComposer from '../common/GuestComposer';
+import AdPlacement from '../common/AdPlacement';
 import { useLanguage } from '../../context/LanguageContext';
 import './AppLayout.css';
 import './ReferenceLayout.css';
@@ -31,14 +33,14 @@ interface AppLayoutProps {
 }
 
 const ROUTES: Record<string, string> = {
-  home: '/', explore: '/explore', shop: '/shop', shorts: '/videos', videos: '/videos', network: '/network', messages: '/messages', saved: '/saved',
+  home: '/home', explore: '/explore', shop: '/shop', shorts: '/videos', videos: '/videos', network: '/network', messages: '/messages', saved: '/saved',
   settings: '/settings', pricing: '/pricing', admin: '/admin/dashboard', analytics: '/analytics',
 };
 
 export function useAppNavigate() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  return (tab: string) => navigate(tab === 'profile' ? user ? profileUrl(user) : '/login' : tab === 'home' && !user ? '/home' : ROUTES[tab] || '/');
+  return (tab: string) => navigate(tab === 'profile' ? user ? profileUrl(user) : '/login' : ROUTES[tab] || '/');
 }
 
 export default function AppLayout({ currentTab, children, onPostCreated, composerOpen, setComposerOpen, wide, composerType, setComposerType, onComposerTypeChange }: AppLayoutProps) {
@@ -180,7 +182,7 @@ export default function AppLayout({ currentTab, children, onPostCreated, compose
       <main className={`poster-main ${wide ? 'poster-main-wide' : ''} ${currentTab === 'messages' ? 'poster-main-flush' : ''}`}>
         <Sidebar currentTab={currentTab} onNavigate={goTo} onRequestCreatePost={openComposer} onLogout={handleLogout} />
         {mobileOpen && <Sidebar currentTab={currentTab} onNavigate={goTo} onRequestCreatePost={openComposer} onLogout={handleLogout} mobileOpen onCloseMobile={() => setMobileOpen(false)} />}
-        <div className={`flex-grow min-w-0 ${currentTab === 'messages' ? 'h-full' : ''}`}>{currentTab !== 'messages' && <p className="postter-page-tagline">{translateUI(copy[1])}</p>}{children}</div>
+        <div className={`flex-grow min-w-0 ${currentTab === 'messages' ? 'h-full' : ''}`}>{currentTab !== 'messages' && <p className="postter-page-tagline">{translateUI(copy[1])}</p>}<GuestComposer/><AdPlacement placement="top_banner"/>{currentTab==='profile'&&<AdPlacement placement="profile"/>}{currentTab==='explore'&&<AdPlacement placement="explore"/>}{children}</div>
       </main>
       <MobileNav user={user} currentTab={isComposerOpen ? 'newpost' : currentTab} onCreate={openComposer} />
       {user && <CreatePostModal onTypeChange={onComposerTypeChange} initialType={setComposerType ? composerType : ownComposerType} isOpen={isComposerOpen} onClose={() => setComposer(false)} onSaved={(post) => (onPostCreated ? onPostCreated(post) : navigate(postUrl(post)))} />}

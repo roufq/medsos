@@ -1,4 +1,5 @@
 export const OAUTH_REASONS = {
+ two_factor_required: 'Akun ini memakai 2FA. Masuk dengan password dan kode authenticator.',
   session_idle_expired: 'Sesi berakhir karena tidak aktif selama 12 jam. Silakan masuk kembali.',
   account_inactive: 'Akun Anda tidak aktif (diblokir atau sedang dalam proses penghapusan).',
   session_revoked: 'Sesi Anda telah berakhir. Silakan masuk kembali.',

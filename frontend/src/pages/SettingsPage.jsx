@@ -1,3 +1,5 @@
+import {notify} from '../utils/feedback';
+import {useFeedbackState} from '../hooks/useFeedbackState';
 import { useLanguage } from "../context/LanguageContext";import LanguageSwitch from '../components/common/LanguageSwitch';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -5,6 +7,8 @@ import { CheckCircle2, AlertCircle, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { userApi } from '../api/userApi';
 import { authApi } from '../api/authApi';
+import NotificationSettings from '../components/common/NotificationSettings';
+import TwoFactorSettings from '../components/common/TwoFactorSettings';
 import AppLayout from '../components/modern/AppLayout';
 
 // ISO 3166-1 alpha-2 code, name, and calling code for the phone selector.
@@ -45,7 +49,7 @@ export default function SettingsPage() {const { t } = useLanguage();
   const { user, updateProfileState, logout } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState(null);
-  const [notice, setNotice] = useState({});
+  const [notice, setNotice] = useFeedbackState({}, 'success');
   const [loggingOut, setLoggingOut] = useState(false);
   const handleLogout = async () => {
     if (loggingOut) return;
@@ -54,12 +58,12 @@ export default function SettingsPage() {const { t } = useLanguage();
   };
   const [saving, setSaving] = useState(false);
   const [codes, setCodes] = useState({ email: '', phone: '' });
-  const [verifyNotice, setVerifyNotice] = useState({});
+  const [verifyNotice, setVerifyNotice] = useFeedbackState({}, 'success');
   const [passwords, setPasswords] = useState({ current: '', next: '', confirm: '' });
-  const [passwordNotice, setPasswordNotice] = useState({});
+  const [passwordNotice, setPasswordNotice] = useFeedbackState({}, 'success');
   const [blocked, setBlocked] = useState([]);
   const [deletion, setDeletion] = useState({ password: '', confirm: '' });
-  const [deleteNotice, setDeleteNotice] = useState({});
+  const [deleteNotice, setDeleteNotice] = useFeedbackState({}, 'error');
 
   const [formUser, setFormUser] = useState(null);
   if (user !== formUser) {
@@ -156,6 +160,7 @@ export default function SettingsPage() {const { t } = useLanguage();
     if (!window.confirm('Akun akan dinonaktifkan dan dihapus permanen setelah 30 hari. Lanjutkan?')) return;
     try {
       await userApi.deleteAccount(deletion.password, deletion.confirm);
+      notify.success('Permintaan penonaktifan akun berhasil disimpan.');
       await logout();
       navigate('/explore', { replace: true });
     } catch (err) {
@@ -290,6 +295,8 @@ export default function SettingsPage() {const { t } = useLanguage();
           }
         </Section>
 
+        <Section title="Notifications"><NotificationSettings/></Section>
+        <Section title="Two-Factor Authentication"><TwoFactorSettings/></Section>
         <Section title={t("Hapus akun")} description="Akun dinonaktifkan segera dan dihapus permanen setelah 30 hari. Masuk kembali dalam 30 hari untuk mengaktifkannya lagi.">
           <form onSubmit={deleteAccount} className="flex flex-wrap gap-2">
             {user.needs_password ?

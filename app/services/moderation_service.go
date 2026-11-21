@@ -17,7 +17,7 @@ var ErrModerationState = errors.New("Status konten sudah berubah. Muat ulang daf
 // Caller owns the transaction so report resolution and moderation remain atomic.
 func ModeratePost(tx *gorm.DB, adminID, postID int64, reason string, restore bool) error {
 	var admin models.User
-	if tx.First(&admin, adminID).Error != nil || admin.Role != models.RoleAdmin || admin.AccountStatus != "active" {
+	if tx.First(&admin, adminID).Error != nil || (admin.Role != models.RoleAdmin && admin.Role != models.RoleModerator) || admin.AccountStatus != "active" {
 		return ErrForbidden
 	}
 	reason = strings.TrimSpace(reason)

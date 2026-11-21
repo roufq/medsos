@@ -48,7 +48,7 @@ export default function Sidebar({
   { id: 'settings', label: t("Pengaturan"), icon: Settings }];
 
 
-  if (user?.role === 'admin') {
+  if (['admin','moderator'].includes(user?.role)) {
     menuItems.push({ id: 'admin', label: 'Admin Dashboard', icon: LayoutGrid });
     menuItems.push({ id: 'analytics', label: 'Analytics', icon: BarChart3 });
   }

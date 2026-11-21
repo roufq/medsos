@@ -45,7 +45,7 @@ func RevisionDB(t *testing.T) *gorm.DB {
 	previous := db.DB
 	db.DB = testDB
 	t.Cleanup(func() { db.DB = previous })
-	require.NoError(t, testDB.AutoMigrate(&models.User{}, &models.Post{}, &models.PostMedia{}, &models.PostLike{}, &models.PostComment{}, &models.PostHashtag{}, &models.PostMention{}, &models.PostLink{}, &models.ShopProduct{}, &models.MediaUpload{}, &models.Notification{}, &models.Follow{}, &models.UserBlock{}, &models.SavedPost{}, &models.PostView{}, &models.PostShare{}, &models.PlatformSetting{}, &models.UserActivity{}))
+	require.NoError(t, testDB.AutoMigrate(&models.User{}, &models.Post{}, &models.PostMedia{}, &models.PostLike{}, &models.PostComment{}, &models.PostHashtag{}, &models.PostMention{}, &models.PostLink{}, &models.ShopProduct{}, &models.MediaUpload{}, &models.Notification{}, &models.Follow{}, &models.UserBlock{}, &models.SavedPost{}, &models.PostView{}, &models.PostShare{}, &models.PlatformSetting{}, &models.NotificationDelivery{}, &models.PushSubscription{}, &models.PushKey{}, &models.UserActivity{}, &models.AdCampaign{}, &models.TrafficEvent{}, &models.LoginSession{}, &models.PostReport{}))
 	return testDB
 }
 

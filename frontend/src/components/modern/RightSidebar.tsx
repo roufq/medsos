@@ -1,3 +1,4 @@
+import AdPlacement from '../common/AdPlacement';
 import { useLanguage } from "../../context/LanguageContext";import { useEffect, useMemo, useState } from 'react';
 import { Flame, Users, Hash, ArrowRight, ChevronRight } from 'lucide-react';
 import { networkApi } from '../../api/networkApi';
@@ -26,7 +27,7 @@ export default function RightSidebar({ posts, followedUsers, onFollowSuggestion,
     return [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
   }, [posts]);
   return (
-    <aside className="poster-right">
+    <aside className="poster-right" tabIndex={0} aria-label={t("Panel samping beranda")}><AdPlacement placement="sidebar"/>
       <section className="poster-panel">
         <div className="poster-panel-heading"><h3><Flame size={20} />{t("Trending Topics")}</h3><Link to="/search">{t("Lihat Semua")}<ArrowRight size={14} /></Link></div>
         <div className="poster-topics">

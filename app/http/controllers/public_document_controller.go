@@ -89,7 +89,7 @@ func PublicDocument(c http.Context) http.Response {
 			}
 		}
 	}
-	return c.Response().Header("Content-Type", "text/html; charset=utf-8").Header("Cache-Control", "no-store").String(status, publicDocumentHTML(string(source), title, description, canonical, image, indexable))
+	return c.Response().Header("Content-Type", "text/html; charset=utf-8").Header("Cache-Control", "no-store").Header("X-Frame-Options", "SAMEORIGIN").Header("Content-Security-Policy", "frame-ancestors 'self'").String(status, publicDocumentHTML(string(source), title, description, canonical, image, indexable))
 }
 
 func Robots(c http.Context) http.Response {

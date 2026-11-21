@@ -1,3 +1,4 @@
+import {notify} from '../../utils/feedback';
 import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { postApi } from '../../api/postApi';
@@ -104,7 +105,7 @@ const PostForm = ({ onPostCreated }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!isTitleValid || !isDescriptionValid) {
-       alert('Pastikan Judul (5-100 karakter) dan Deskripsi (minimal 160 karakter) sudah sesuai syarat.');
+       notify.error('Pastikan Judul (5-100 karakter) dan Deskripsi (minimal 160 karakter) sudah sesuai syarat.');
        return;
     }
 
@@ -144,6 +145,7 @@ const PostForm = ({ onPostCreated }) => {
       formData.append('post_type', postType);
 
       const newPost = await postApi.createPost(formData);
+      notify.success('Postingan berhasil diterbitkan.');
       onPostCreated(newPost);
 
       setTitle('');
@@ -156,7 +158,7 @@ const PostForm = ({ onPostCreated }) => {
       setIsShopMode(false);
       setShopData({ price_minor: '', currency: 'IDR', category: '', condition: 'new', stock: '', brand: '', fulfillment: [], payment_method: '' });
     } catch (err) {
-      alert('Gagal membuat postingan: ' + (err.response?.data?.error || err.message));
+      notify.error('Gagal membuat postingan: ' + (err.response?.data?.error || err.message));
     } finally {
       setSubmitting(false);
     }

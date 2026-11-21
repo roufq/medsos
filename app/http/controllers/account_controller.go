@@ -51,6 +51,7 @@ func (h *AccountController) UpdateSettings(c goravelhttp.Context) goravelhttp.Re
 		Interests          []string `json:"interests"`
 		ShopCategory       *string  `json:"shop_category"`
 		IsPrivate          *bool    `json:"is_private"`
+		EmailNotifications *bool    `json:"email_notifications"`
 		ProfileLayout      *string  `json:"profile_layout"`
 		Website            *string  `json:"website"`
 		Bio                *string  `json:"bio"`
@@ -71,6 +72,9 @@ func (h *AccountController) UpdateSettings(c goravelhttp.Context) goravelhttp.Re
 		return c.Response().Json(http.StatusNotFound, goravelhttp.Json{"error": "user not found"})
 	}
 	updates := map[string]any{}
+	if input.EmailNotifications != nil {
+		updates["email_notifications"] = *input.EmailNotifications
+	}
 	if input.Username != nil {
 		username := strings.ToLower(strings.TrimSpace(*input.Username))
 		if !validUsername.MatchString(username) || models.ReservedUsername(username) {

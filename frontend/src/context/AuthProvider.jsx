@@ -29,8 +29,8 @@ export const AuthProvider = ({ children }) => {
 
   // `loading` only covers the initial session check; toggling it here would
   // unmount the login/register page (PublicRoute) and lose its error state.
-  const login = async (email, password) => {
-    const data = await authApi.login(email, password);
+  const login = async (email, password, otp) => {
+    const data = await authApi.login(email, password, otp);
     setUser(data.user);
     return data.user;
   };
@@ -43,6 +43,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = useCallback(async () => {
     try {
+      if('serviceWorker' in navigator){try{const registration=await navigator.serviceWorker.getRegistration('/');const subscription=await registration?.pushManager.getSubscription();if(subscription){await authApi.unsubscribePush(subscription.toJSON());await subscription.unsubscribe();}}catch{/* Logout still completes when push cleanup is unavailable. */}}
       await authApi.logout();
     } catch (e) {
       console.error('Logout API failed:', e);

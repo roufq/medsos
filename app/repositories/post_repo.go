@@ -131,6 +131,7 @@ func (r *postRepo) ListByUserID(viewerID, userID int64) ([]models.Post, error) {
 	var posts []models.Post
 	query := withCounters(db.DB.Model(&models.Post{}), viewerID).
 		Where("user_id = ?", userID).
+		Where(`EXISTS (SELECT 1 FROM users u WHERE u.id = ? AND u.account_status = 'active')`, userID).
 		Where(`NOT EXISTS (SELECT 1 FROM user_blocks b WHERE (b.blocker_id = ? AND b.blocked_id = ?) OR (b.blocker_id = ? AND b.blocked_id = ?))`, viewerID, userID, userID, viewerID).
 		Where(`(? = ? OR EXISTS (SELECT 1 FROM users u WHERE u.id = ? AND u.is_private = 0) OR EXISTS (SELECT 1 FROM follows f WHERE f.follower_id = ? AND f.followed_id = ? AND f.status = 'accepted'))`, viewerID, userID, userID, viewerID, userID).
 		Where(`(posts.repost_of_id IS NULL OR EXISTS (SELECT 1 FROM posts orig JOIN users orig_author ON orig_author.id = orig.user_id WHERE orig.id = posts.repost_of_id AND orig.deleted_at IS NULL AND orig.visibility = 'public' AND orig_author.account_status = 'active' AND orig_author.is_private = 0 AND NOT EXISTS (SELECT 1 FROM user_blocks b WHERE (b.blocker_id = ? AND b.blocked_id = orig.user_id) OR (b.blocker_id = orig.user_id AND b.blocked_id = ?))))`, viewerID, viewerID).

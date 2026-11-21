@@ -7,6 +7,7 @@ import (
 	"goravel/pkg/platform"
 	"goravel/pkg/session"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"net/http"
 	"strconv"
 	"strings"
@@ -29,7 +30,7 @@ func UpdatePlatformSettings(c goravelhttp.Context) goravelhttp.Response {
 		return c.Response().Json(400, goravelhttp.Json{"error": "upload_limits_enabled wajib berupa boolean"})
 	}
 	setting := models.PlatformSetting{ID: 1, UploadLimitsEnabled: *input.Enabled}
-	if db.DB.Save(&setting).Error != nil {
+	if db.DB.Clauses(clause.OnConflict{Columns: []clause.Column{{Name: "id"}}, DoUpdates: clause.Assignments(map[string]any{"upload_limits_enabled": *input.Enabled})}).Create(&setting).Error != nil {
 		return c.Response().Json(500, goravelhttp.Json{"error": "Gagal menyimpan pengaturan"})
 	}
 	return c.Response().Json(200, setting)
@@ -89,7 +90,7 @@ func PublicProfile(c goravelhttp.Context) goravelhttp.Response {
 
 func AdminPosts(c goravelhttp.Context) goravelhttp.Response {
 	var posts []models.Post
-	query := db.DB.Unscoped().Preload("User").Preload("Media").Preload("Link").Order("posts.id desc").Limit(100)
+	query := db.DB.Unscoped().Select("posts.*, (SELECT COUNT(*) FROM post_likes WHERE post_id=posts.id) AS likes_count, (SELECT COUNT(*) FROM post_comments WHERE post_id=posts.id) AS comments_count, (SELECT COUNT(*) FROM post_views WHERE post_id=posts.id) AS views_count, (SELECT COUNT(*) FROM post_shares WHERE post_id=posts.id) AS shares_count").Preload("User").Preload("Media").Preload("Link").Order("posts.id desc").Limit(100)
 	status := c.Request().Query("status", "active")
 	if status == "active" {
 		query = query.Where("posts.deleted_at IS NULL")
