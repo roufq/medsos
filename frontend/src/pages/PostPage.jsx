@@ -73,16 +73,20 @@ export default function PostPage() {
 
   const token = post?.public_hash || post?.id;
   const isMine = post && user && String(post.user_id) === String(user.id);
-  const hasMedia = (post?.media || []).length > 0;
-  const videos = (post?.media || []).filter(m => m.media_type === 'video');
-  const images = (post?.media || []).filter(m => m.media_type === 'image').map(m => m.media_url);
-  const activeSlide = images.length > 0 ? ((slideIndex % images.length) + images.length) % images.length : 0;
-  const moveSlide = (step) => setSlideIndex(i => (i + step + images.length) % images.length);
   const safeExternalUrl = (raw) => {
     if (!raw) return '';
     try { const u = new URL(raw); return u.protocol === 'http:' || u.protocol === 'https:' ? u.href : ''; } catch { return ''; }
   };
   const externalLink = safeExternalUrl(post?.link?.url);
+  const videos = (post?.media || []).filter(m => m.media_type === 'video');
+  const mediaImages = (post?.media || []).filter(m => m.media_type === 'image').map(m => m.media_url);
+  const linkImage = (post?.media || []).length === 0 && post?.link?.image_url && !String(post.link.image_url).includes('google.com/s2/favicons')
+    ? safeExternalUrl(post.link.image_url)
+    : '';
+  const images = linkImage ? [linkImage] : mediaImages;
+  const hasMedia = videos.length > 0 || images.length > 0;
+  const activeSlide = images.length > 0 ? ((slideIndex % images.length) + images.length) % images.length : 0;
+  const moveSlide = (step) => setSlideIndex(i => (i + step + images.length) % images.length);
 
   const toggleLike = async () => {
     if (!user) { navigate('/login'); return; }
@@ -167,6 +171,7 @@ export default function PostPage() {
                     <img
                       src={images[activeSlide]}
                       alt=""
+                      referrerPolicy="no-referrer"
                       className={`w-full object-contain mx-auto transition-all duration-200 ${expanded ? 'lg:max-h-[82vh]' : 'max-h-[75vh]'}`}
                     />
                   </button>
