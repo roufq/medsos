@@ -35,7 +35,7 @@ const (
 	DescriptionMinWords = 160
 	DescriptionMaxWords = 6000
 	HashtagsMin         = 3
-	HashtagsMax         = 9
+	HashtagsMax         = 30
 	ShopHashtagsMax     = 30
 	MentionsMin         = 0
 	MentionsMax         = 10

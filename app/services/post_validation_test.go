@@ -44,7 +44,7 @@ func TestPostRules(t *testing.T) {
 		"description < 160 characters": func(d *postDraft) { d.content = strings.Repeat("a", 159) },
 		"description > 6000":           func(d *postDraft) { d.content = words(6001) },
 		"fewer than 3 hashtags":        func(d *postDraft) { d.tags = d.tags[:2] },
-		"more than 9 hashtags":         func(d *postDraft) { d.tags = strings.Fields("a1 a2 a3 a4 a5 a6 a7 a8 a9 a10") },
+		"more than 30 hashtags":        func(d *postDraft) { d.tags = make([]string, 31); for i := range d.tags { d.tags[i] = "t" + strings.Repeat("a", i+1) } },
 
 		"more than 10 mentions":        func(d *postDraft) { d.mentions = strings.Fields("m1 m2 m3 m4 m5 m6 m7 m8 m9 m10 m11") },
 		"link without valid url":       func(d *postDraft) { d.postType = models.PostTypeLink; d.linkURL = "javascript:alert(1)" },

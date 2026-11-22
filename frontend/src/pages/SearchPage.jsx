@@ -19,7 +19,26 @@ export default function SearchPage() {
   useEffect(() => {
     if (query.trim().length < 2 || query.trim().toLowerCase() === 'shop') return;
     let active = true;
-    socialApi.search(query.trim()).then(data => { if (active) setResults(data); }).catch(e => { if (active) setError(e.response?.data?.error || 'Pencarian gagal'); });
+    const loadAll = async () => {
+      const limit = 200;
+      let offset = 0;
+      let merged = null;
+      while (offset <= 1000) {
+        const data = await socialApi.search(query.trim(), { limit, offset });
+        if (!active) return;
+        merged = merged
+          ? {
+              ...merged,
+              posts: uniquePosts([...(merged.posts || []), ...(data.posts || [])]),
+              products: uniquePosts([...(merged.products || []), ...(data.products || [])]),
+            }
+          : data;
+        setResults(merged);
+        if ((data.posts || []).length < limit && (data.products || []).length < limit) break;
+        offset += limit;
+      }
+    };
+    loadAll().catch(e => { if (active) setError(e.response?.data?.error || 'Pencarian gagal'); });
     return () => { active = false; };
   }, [query,retry]);
   const posts = uniquePosts([...(results?.posts || []), ...(results?.products || [])]);

@@ -9,7 +9,7 @@ export const POST_RULES = {
   descriptionMinWords: 160,
   descriptionMaxWords: 6000,
   hashtagsMin: 3,
-  hashtagsMax: 9,
+  hashtagsMax: 30,
   shopHashtagsMax: 30,
   mentionsMin: 0,
   mentionsMax: 10,

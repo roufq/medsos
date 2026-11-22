@@ -763,43 +763,51 @@ func (h *SocialController) Search(c goravelhttp.Context) goravelhttp.Response {
 	if utf8.RuneCountInString(term) < 1 || utf8.RuneCountInString(term) > 100 {
 		return c.Response().Json(400, goravelhttp.Json{"error": "q must contain 1-100 characters"})
 	}
+	limit, err1 := strconv.Atoi(c.Request().Query("limit", "50"))
+	offset, err2 := strconv.Atoi(c.Request().Query("offset", "0"))
+	if err1 != nil || err2 != nil || limit < 1 || limit > 200 || offset < 0 || offset > 10000 {
+		return c.Response().Json(400, goravelhttp.Json{"error": "invalid pagination"})
+	}
 	like := "%" + term + "%"
 	tag := strings.TrimPrefix(strings.ToLower(term), "#")
 	users := make([]models.User, 0)
 	jobs := make([]models.JobPosting, 0)
+	var accessibleUsers []models.User
 
-	if err := db.DB.Where("id <> ? AND account_status = 'active' AND (name LIKE ? OR username LIKE ? OR title LIKE ? OR company LIKE ? OR location LIKE ?)", userID, like, like, like, like, like).
-		Order("name").Limit(30).Find(&users).Error; err != nil {
-		return c.Response().Json(500, goravelhttp.Json{"error": "failed to search users"})
-	}
-	userIDs := make([]int64, len(users))
-	for i := range users {
-		userIDs[i] = users[i].ID
-	}
-	blockedUsers := blockedBetweenBatch(userID, userIDs)
-	followingUsers := acceptedFollowingBatch(userID, userIDs)
-	accessibleUsers := users[:0]
-	for i := range users {
-		if !blockedUsers[users[i].ID] && (!users[i].IsPrivate || followingUsers[users[i].ID]) {
-			accessibleUsers = append(accessibleUsers, users[i])
+	if offset == 0 {
+		if err := db.DB.Where("id <> ? AND account_status = 'active' AND (name LIKE ? OR username LIKE ? OR title LIKE ? OR company LIKE ? OR location LIKE ?)", userID, like, like, like, like, like).
+			Order("name").Limit(30).Find(&users).Error; err != nil {
+			return c.Response().Json(500, goravelhttp.Json{"error": "failed to search users"})
+		}
+		userIDs := make([]int64, len(users))
+		for i := range users {
+			userIDs[i] = users[i].ID
+		}
+		blockedUsers := blockedBetweenBatch(userID, userIDs)
+		followingUsers := acceptedFollowingBatch(userID, userIDs)
+		accessibleUsers = users[:0]
+		for i := range users {
+			if !blockedUsers[users[i].ID] && (!users[i].IsPrivate || followingUsers[users[i].ID]) {
+				accessibleUsers = append(accessibleUsers, users[i])
+			}
 		}
 	}
 
-	postIDs := make([]int64, 0, 50)
+	postIDs := make([]int64, 0, limit)
 	if err := db.DB.Model(&models.Post{}).Distinct("posts.id").
 		Joins("LEFT JOIN post_hashtags ON post_hashtags.post_id = posts.id").
 		Joins("LEFT JOIN users ON users.id = posts.user_id").
 		Where("posts.post_type <> ? AND (posts.repost_of_id IS NULL OR (posts.content IS NOT NULL AND posts.content <> '')) AND (posts.title LIKE ? OR posts.content LIKE ? OR posts.location LIKE ? OR post_hashtags.tag = ? OR users.name LIKE ? OR users.username LIKE ?)", models.PostTypeShop, like, like, like, tag, like, like).
-		Order("posts.id desc").Limit(50).Pluck("posts.id", &postIDs).Error; err != nil {
+		Order("posts.id desc").Limit(limit).Offset(offset).Pluck("posts.id", &postIDs).Error; err != nil {
 		return c.Response().Json(500, goravelhttp.Json{"error": "failed to search posts"})
 	}
 
-	productIDs := make([]int64, 0, 30)
+	productIDs := make([]int64, 0, limit)
 	if err := db.DB.Model(&models.Post{}).Distinct("posts.id").
 		Joins("JOIN shop_products ON shop_products.post_id = posts.id").
 		Joins("LEFT JOIN users ON users.id = posts.user_id").
 		Where("posts.post_type = ? AND posts.repost_of_id IS NULL AND (posts.title LIKE ? OR posts.content LIKE ? OR shop_products.category LIKE ? OR shop_products.brand LIKE ? OR users.name LIKE ? OR users.username LIKE ?)", models.PostTypeShop, like, like, like, like, like, like).
-		Order("posts.id desc").Limit(30).Pluck("posts.id", &productIDs).Error; err != nil {
+		Order("posts.id desc").Limit(limit).Offset(offset).Pluck("posts.id", &productIDs).Error; err != nil {
 		return c.Response().Json(500, goravelhttp.Json{"error": "failed to search products"})
 	}
 

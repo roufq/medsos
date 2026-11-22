@@ -118,17 +118,37 @@ export default function Header({ currentUser, searchQuery, setSearchQuery, onNav
                   </button>
               )}
 
-                {results.products.slice(0, 4).map((post: any) =>
-              <button key={`product-${post.id}`} type="button" onClick={() => openPost(post)} className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left hover:bg-surface-container-low">
-                    <Package className="h-5 w-5 text-primary" /><div className="min-w-0"><div className="truncate text-sm font-bold">{post.title || post.content || t("Product")}</div><div className="truncate text-xs text-text-secondary">{post.shop?.category || t("Product")}</div></div>
-                  </button>
-              )}
+                {results.products.slice(0, 4).map((post: any) => {
+                  const target = post.original_post || post;
+                  const video = target.media?.find((m: any) => m.media_type === 'video');
+                  const thumb = target.media?.find((m: any) => m.media_type === 'image')?.media_url
+                    || video?.thumbnail_url
+                    || (target.link?.image_url && !String(target.link.image_url).includes('google.com/s2/favicons') ? target.link.image_url : '');
+                  return (
+                    <button key={`product-${post.id}`} type="button" onClick={() => openPost(post)} className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left hover:bg-surface-container-low">
+                      <div className="h-9 w-9 shrink-0 overflow-hidden rounded-lg bg-surface-container-low flex items-center justify-center">
+                        {thumb ? <img src={thumb} alt="" referrerPolicy="no-referrer" className="h-full w-full object-cover" /> : video?.media_url ? <video src={video.media_url} muted playsInline preload="metadata" className="h-full w-full object-cover" /> : <Package className="h-5 w-5 text-primary" />}
+                      </div>
+                      <div className="min-w-0"><div className="truncate text-sm font-bold">{post.title || post.content || t("Product")}</div><div className="truncate text-xs text-text-secondary">{post.shop?.category || t("Product")}</div></div>
+                    </button>
+                  );
+                })}
 
-                {results.posts.slice(0, 4).map((post: any) =>
-              <button key={`post-${post.id}`} type="button" onClick={() => openPost(post)} className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left hover:bg-surface-container-low">
-                    <FileText className="h-5 w-5 text-primary" /><div className="min-w-0"><div className="truncate text-sm font-bold">{post.title || post.content || t("Post")}</div><div className="truncate text-xs text-text-secondary">{post.user?.name || t("Post")}</div></div>
-                  </button>
-              )}
+                {results.posts.slice(0, 4).map((post: any) => {
+                  const target = post.original_post || post;
+                  const video = target.media?.find((m: any) => m.media_type === 'video');
+                  const thumb = target.media?.find((m: any) => m.media_type === 'image')?.media_url
+                    || video?.thumbnail_url
+                    || (target.link?.image_url && !String(target.link.image_url).includes('google.com/s2/favicons') ? target.link.image_url : '');
+                  return (
+                    <button key={`post-${post.id}`} type="button" onClick={() => openPost(post)} className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left hover:bg-surface-container-low">
+                      <div className="h-9 w-9 shrink-0 overflow-hidden rounded-lg bg-surface-container-low flex items-center justify-center">
+                        {thumb ? <img src={thumb} alt="" referrerPolicy="no-referrer" className="h-full w-full object-cover" /> : video?.media_url ? <video src={video.media_url} muted playsInline preload="metadata" className="h-full w-full object-cover" /> : <FileText className="h-5 w-5 text-primary" />}
+                      </div>
+                      <div className="min-w-0"><div className="truncate text-sm font-bold">{post.title || post.content || t("Post")}</div><div className="truncate text-xs text-text-secondary">{post.user?.name || t("Post")}</div></div>
+                    </button>
+                  );
+                })}
               </div>
             }
           </div>
