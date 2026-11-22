@@ -165,7 +165,7 @@ export default function Header({ currentUser, searchQuery, setSearchQuery, onNav
           <button type="button" className="poster-theme-toggle" onClick={toggleTheme} aria-label={theme === 'dark' ? t("Aktifkan mode terang") : t("Aktifkan mode gelap")} title={theme === 'dark' ? t("Mode terang") : t("Mode gelap")} aria-pressed={theme === 'dark'}>{theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}</button>
           <div className="flex gap-1">
             <div className="relative">
-              <button type="button" onClick={() => {const next = !notificationsOpen;setNotificationsOpen(next);setIsFocused(false);if (next) loadNotifications();}} className="relative p-2 text-text-secondary hover:text-primary transition-all rounded-full hover:bg-surface-container-low cursor-pointer" aria-label={t("Notifications")}>
+              <button type="button" onClick={() => {const next = !notificationsOpen;setNotificationsOpen(next);setIsFocused(false);if (next) loadNotifications();}} className="relative p-2 text-text-secondary hover:text-text-primary transition-all rounded-full hover:bg-surface-container-low cursor-pointer" aria-label={t("Notifications")}>
                 <Bell className="w-5 h-5" />
                 {unreadCount > 0 && <span className="absolute right-0 top-0 min-w-4 h-4 px-1 rounded-full bg-error text-white text-[9px] font-bold flex items-center justify-center">{unreadCount > 99 ? '99+' : unreadCount}</span>}
               </button>
@@ -176,7 +176,14 @@ export default function Header({ currentUser, searchQuery, setSearchQuery, onNav
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-text-secondary">{unreadCount} {t("unread")}</span>
                       {unreadCount > 0 && (
-                        <button type="button" onClick={markAllAsRead} className="rounded-full bg-primary px-2.5 py-1 text-[11px] font-bold text-white hover:opacity-90 cursor-pointer">{t("Sudah dilihat")}</button>
+                        <button
+                          type="button"
+                          onClick={markAllAsRead}
+                          style={{ backgroundColor: '#2563eb', color: '#ffffff' }}
+                          className="rounded-full px-2.5 py-1 text-[11px] font-bold hover:opacity-90 cursor-pointer shrink-0"
+                        >
+                          {t("Sudah dilihat")}
+                        </button>
                       )}
                     </div>
                   </div>

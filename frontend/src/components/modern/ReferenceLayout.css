@@ -6,7 +6,8 @@
 .poster-app .poster-search-input input::placeholder { color: rgb(var(--text-muted)); }
 .poster-app .poster-top-nav { gap: 25px; }
 .poster-app .poster-top-nav button.active::after { background: #0768dc; }
-.poster-app .poster-top-nav button:hover, .poster-app .poster-account button:hover { background: rgb(var(--surface-low)); color: #0768dc; }
+.poster-app .poster-top-nav button:hover { background: transparent; color: rgb(var(--text-main)); }
+.poster-app .poster-account button:hover { background: rgb(var(--surface-low)); color: rgb(var(--text-main)); }
 .poster-app .poster-header select { color: rgb(var(--text-main)); }
 .poster-app .poster-header .language-switch { color: rgb(var(--text-main)); background: rgb(var(--surface-low)); border-color: rgb(var(--border) / .6); }
 .poster-app .postter-page-tagline { display: none; }
