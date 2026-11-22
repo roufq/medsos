@@ -29,8 +29,8 @@ import (
 
 // Post content rules from the product requirements.
 const (
-	TitleMinChars       = 5
-	TitleMaxChars       = 100
+	TitleMinChars       = 10
+	TitleMaxChars       = 130
 	DescriptionMinChars = 160
 	DescriptionMinWords = 160
 	DescriptionMaxWords = 6000
@@ -89,7 +89,7 @@ type PostService interface {
 	ResolveMedia(userID, postID int64, urls []string) ([]dto.MediaItem, error)
 	RecordUpload(userID int64, stored *storage.StoredMedia) error
 	GetFeed(viewerID int64, limit, offset int, beforeID int64, shortsOnly bool, kind ...string) ([]models.Post, error)
-	GetUserPosts(viewerID, userID int64) ([]models.Post, error)
+	GetUserPosts(viewerID, userID int64, pagination ...int) ([]models.Post, error)
 	GetPost(viewerID, postID int64) (*models.Post, error)
 	DeletePost(userID int64, postID int64) error
 	GetLinkPreview(targetURL string) (*linkpreview.Preview, error)
@@ -836,8 +836,8 @@ func (s *postService) GetPost(viewerID, postID int64) (*models.Post, error) {
 	return s.postRepo.GetForViewer(viewerID, postID)
 }
 
-func (s *postService) GetUserPosts(viewerID, userID int64) ([]models.Post, error) {
-	return s.postRepo.ListByUserID(viewerID, userID)
+func (s *postService) GetUserPosts(viewerID, userID int64, pagination ...int) ([]models.Post, error) {
+	return s.postRepo.ListByUserID(viewerID, userID, pagination...)
 }
 
 func (s *postService) DeletePost(userID int64, postID int64) error {

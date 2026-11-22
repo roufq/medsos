@@ -36,10 +36,7 @@
 @media (min-width: 1200px) {
   .poster-app[data-page] .poster-right {
     position: sticky;
-    top: 128px;
-    max-height: calc(100dvh - 152px);
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    scrollbar-width: thin;
+    align-self: start;
+    top: 89px;
   }
 }

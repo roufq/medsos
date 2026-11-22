@@ -1,6 +1,7 @@
 import api from './axios';
 
 export const postApi = {
+  trendingTopics: async () => (await api.get('/public/trending-topics')).data,
   explore: async (params = {}, publicView = false) => (await api.get(publicView ? '/public/explore' : '/explore', { params })).data,
   getFeed: async (limit = 50, offset = 0, userId = null, beforeId = null, kind = '', publicView = false) => {
     let url = `${publicView ? "/public/posts" : "/posts"}?limit=${limit}&offset=${offset}`;

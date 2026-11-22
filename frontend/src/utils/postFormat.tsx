@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom';
 
 // Must mirror the backend rules in app/services/post_service.go.
 export const POST_RULES = {
-  titleMin: 5,
-  titleMax: 100,
+  titleMin: 10,
+  titleMax: 130,
   descriptionMinChars: 160,
   descriptionMinWords: 160,
   descriptionMaxWords: 6000,

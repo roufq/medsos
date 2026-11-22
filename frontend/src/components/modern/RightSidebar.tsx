@@ -1,7 +1,9 @@
 import AdPlacement from '../common/AdPlacement';
-import { useLanguage } from "../../context/LanguageContext";import { useEffect, useMemo, useState } from 'react';
+import { useLanguage } from "../../context/LanguageContext";import { useEffect, useMemo, useRef, useState } from 'react';
 import { Flame, Users, Hash, ArrowRight, ChevronRight } from 'lucide-react';
 import { networkApi } from '../../api/networkApi';
+import { postApi } from '../../api/postApi';
+import VerifiedBadge from '../common/VerifiedBadge';
 import { Link } from 'react-router-dom';
 
 interface RightSidebarProps {
@@ -14,20 +16,40 @@ interface RightSidebarProps {
 
 export default function RightSidebar({ posts, followedUsers, onFollowSuggestion, onNavigate, onOpenProfile }: RightSidebarProps) {const { t } = useLanguage();
   const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [globalTopics, setGlobalTopics] = useState<[string, number][]>([]);
+  const asideRef = useRef<HTMLElement>(null);
+  const [stickyTop, setStickyTop] = useState(89);
+  useEffect(() => {
+    const updateTop = () => {
+      if (!asideRef.current) return;
+      setStickyTop(Math.min(89, window.innerHeight - asideRef.current.offsetHeight - 20));
+    };
+    updateTop();
+    const ro = typeof ResizeObserver !== 'undefined' && asideRef.current ? new ResizeObserver(updateTop) : null;
+    if (ro && asideRef.current) ro.observe(asideRef.current);
+    window.addEventListener('resize', updateTop);
+    return () => { ro?.disconnect(); window.removeEventListener('resize', updateTop); };
+  }, []);
   useEffect(() => {
     networkApi.getSuggestions().then((users) => setSuggestions((users || []).slice(0, 4))).
     catch((error) => console.error('Failed to load network suggestions', error));
   }, []);
+  useEffect(() => {
+    postApi.trendingTopics().then((rows) => {
+      if (Array.isArray(rows)) setGlobalTopics(rows.map((r: any) => [`#${r.tag}`, Number(r.count || 0)]));
+    }).catch(() => {});
+  }, [posts.length, posts[0]?.id]);
   const topics = useMemo(() => {
+    if (globalTopics.length > 0) return globalTopics;
     const counts = new Map<string, number>();
     posts.forEach((post) => {
       const tags = `${post.title || ''} ${post.content || ''}`.match(/#[\p{L}\p{N}_]+/gu) || [];
       new Set([...tags.map((tag) => tag.toLowerCase()), ...(post.hashtags || []).map((item: any) => `#${item.tag}`.toLowerCase())]).forEach((tag) => counts.set(tag, (counts.get(tag) || 0) + 1));
     });
     return [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
-  }, [posts]);
+  }, [globalTopics, posts]);
   return (
-    <aside className="poster-right" tabIndex={0} aria-label={t("Panel samping beranda")}><AdPlacement placement="sidebar"/>
+    <aside ref={asideRef} style={{ top: `${stickyTop}px` }} className="poster-right" tabIndex={0} aria-label={t("Panel samping beranda")}><AdPlacement placement="sidebar"/>
       <section className="poster-panel">
         <div className="poster-panel-heading"><h3><Flame size={20} />{t("Trending Topics")}</h3><Link to="/search">{t("Lihat Semua")}<ArrowRight size={14} /></Link></div>
         <div className="poster-topics">
@@ -45,7 +67,7 @@ export default function RightSidebar({ posts, followedUsers, onFollowSuggestion,
               <button className="poster-person-avatar" onClick={() => onOpenProfile?.(user.username || id)} aria-label={`Profil ${user.name}`}>
                 {user.avatar_url ? <img src={user.avatar_url} alt="" /> : user.name?.slice(0, 1).toUpperCase()}
               </button>
-              <button className="poster-person-info" onClick={() => onOpenProfile?.(user.username || id)}><strong>{user.name}</strong><span>@{user.username || t("user")}</span><span>{user.followers_count != null ? `${user.followers_count} followers` : user.title || user.company || ''}</span></button>
+              <button className="poster-person-info" onClick={() => onOpenProfile?.(user.username || id)}><strong className="inline-flex items-center gap-1">{user.name}{user.is_blue_verified && <VerifiedBadge size={13} />}</strong><span>@{user.username || t("user")}</span><span>{user.followers_count != null ? `${user.followers_count} followers` : user.title || user.company || ''}</span></button>
               <button className="poster-follow" disabled={followed} onClick={() => onFollowSuggestion(id)}>{followed ? t("Following") : t("Follow")}</button>
             </div>;
           })}

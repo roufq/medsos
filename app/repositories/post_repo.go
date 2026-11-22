@@ -10,7 +10,7 @@ type PostRepository interface {
 	Create(post *models.Post) error
 	GetByID(id int64) (*models.Post, error)
 	ListAll(viewerID int64, limit, offset int, beforeID int64, shortsOnly bool, kind ...string) ([]models.Post, error)
-	ListByUserID(viewerID, userID int64) ([]models.Post, error)
+	ListByUserID(viewerID, userID int64, pagination ...int) ([]models.Post, error)
 	GetForViewer(viewerID, postID int64) (*models.Post, error)
 	GetManyForViewer(viewerID int64, ids []int64) ([]models.Post, error)
 	Delete(id int64) error
@@ -127,7 +127,14 @@ func (r *postRepo) ListAll(viewerID int64, limit, offset int, beforeID int64, sh
 	return posts, nil
 }
 
-func (r *postRepo) ListByUserID(viewerID, userID int64) ([]models.Post, error) {
+func (r *postRepo) ListByUserID(viewerID, userID int64, pagination ...int) ([]models.Post, error) {
+	limit, offset := 50, 0
+	if len(pagination) >= 1 && pagination[0] > 0 && pagination[0] <= 50 {
+		limit = pagination[0]
+	}
+	if len(pagination) >= 2 && pagination[1] >= 0 {
+		offset = pagination[1]
+	}
 	var posts []models.Post
 	query := withCounters(db.DB.Model(&models.Post{}), viewerID).
 		Where("user_id = ?", userID).
@@ -139,7 +146,8 @@ func (r *postRepo) ListByUserID(viewerID, userID int64) ([]models.Post, error) {
 	query = postPreloads(query, viewerID)
 	err := query.
 		Order("posts.id desc").
-		Limit(50).
+		Offset(offset).
+		Limit(limit).
 		Find(&posts).Error
 	if err != nil {
 		return nil, err

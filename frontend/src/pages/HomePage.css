@@ -21,11 +21,6 @@
     position: sticky;
     align-self: start;
     top: 89px;
-    max-height: calc(100dvh - 113px);
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    scrollbar-width: thin;
-    scrollbar-gutter: stable;
   }
   .poster-app[data-page="home"] .poster-right > * { flex-shrink: 0; }
   .poster-app[data-page="home"]:has(.poster-right) .postter-page-tagline { max-width: 988px; }

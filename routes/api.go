@@ -61,6 +61,7 @@ func Api() {
 		public.Get("platform/settings", controllers.PlatformSettings)
 		public.Get("public/posts", postController.PublicFeed)
 		public.Get("public/explore", controllers.Explore)
+		public.Get("public/trending-topics", controllers.TrendingTopics)
 		public.Get("public/posts/{id}", postController.PublicPost)
 		public.Get("public/users/{id}", controllers.PublicProfile)
 	})

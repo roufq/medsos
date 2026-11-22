@@ -1,4 +1,5 @@
 import {useFeedbackState} from '../../hooks/useFeedbackState';
+import VerifiedBadge from '../common/VerifiedBadge';
 import {notify} from '../../utils/feedback';
 import { sharePost } from '../../utils/share';
 import { postUrl } from '../../utils/postUrl';
@@ -176,7 +177,7 @@ function OriginalPost({ post, onOpenImage }: { post: any; onOpenImage?: (index: 
         </Link>
         <Link to={profileUrl(post.user || { id: post.user_id })} className="text-xs font-bold hover:underline inline-flex items-center gap-1">
           {post.user?.name}
-          {post.user?.is_blue_verified && <span className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-sky-500 text-white text-[9px] leading-none">✓</span>}
+          {post.user?.is_blue_verified && <VerifiedBadge size={14} />}
         </Link>
         {post.user?.username && <span className="text-[11px] text-text-secondary">@{post.user.username}</span>}
         {post.post_type === 'shop' && <Link to="/shop" className="inline-flex items-center gap-0.5 text-[11px] font-bold text-primary hover:underline"><ShoppingBag className="w-3 h-3" />{translateUI("Shop")}</Link>}
@@ -347,7 +348,7 @@ export default function PostCard({ post: initialPost, onDeleted, onUpdated, onRe
           <div className="min-w-0">
             <Link to={profileUrl(displayPost.user || { id: displayPost.user_id })} className="font-bold text-text-primary text-sm hover:underline inline-flex items-center gap-1">
               {displayPost.user?.name || t("Pengguna")}
-              {displayPost.user?.is_blue_verified && <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-sky-500 text-white text-[10px] leading-none" title={t("Terverifikasi Centang Biru")} aria-label={t("Centang Biru")}>✓</span>}
+              {displayPost.user?.is_blue_verified && <VerifiedBadge size={16} />}
             </Link>
             {displayPost.user?.username && <span className="ml-1 text-xs text-text-secondary">@{displayPost.user.username}</span>}
             <div className="flex flex-wrap items-center text-xs text-text-secondary gap-1 mt-0.5">

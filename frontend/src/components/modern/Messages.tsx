@@ -1,4 +1,5 @@
 import {notify} from '../../utils/feedback';
+import VerifiedBadge from '../common/VerifiedBadge';
 import { useLanguage } from '../../context/LanguageContext';
 import { useState, useRef, useEffect, useMemo } from 'react';
 import {
@@ -1792,11 +1793,7 @@ export default function Messages({ currentUser }: MessagesProps) {
                         <span className="font-bold text-text-primary text-xs truncate inline-flex items-center gap-1">
                           {conv.nickname || conv.otherUser?.name}
                           {conv.muted && <BellOff className="w-3 h-3 shrink-0 text-text-secondary" aria-label={t("Messages muted")} />}
-                          {conv.otherUser?.is_blue_verified && (
-                            <span className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-sky-500 text-white text-[9px] leading-none shrink-0">
-                              ✓
-                            </span>
-                          )}
+                          {conv.otherUser?.is_blue_verified && <VerifiedBadge size={14} />}
                         </span>
                         <span className="text-[10px] text-text-secondary shrink-0">
                           {lastMsg?.created_at ? timeAgo(lastMsg.created_at, uiLanguage) : ''}
@@ -1867,11 +1864,7 @@ export default function Messages({ currentUser }: MessagesProps) {
                       className="font-bold text-text-primary text-sm truncate hover:underline inline-flex items-center gap-1 cursor-pointer"
                     >
                       {selectedConv.nickname || selectedConv.otherUser?.name}
-                      {selectedConv.otherUser?.is_blue_verified && (
-                        <span className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-sky-500 text-white text-[9px] leading-none">
-                          ✓
-                        </span>
-                      )}
+                      {selectedConv.otherUser?.is_blue_verified && <VerifiedBadge size={15} />}
                     </button>
                     <div className={`text-[11px] font-medium truncate ${selectedOnline ? 'text-emerald-600' : 'text-text-secondary'}`}>
                       {presenceLabel(selectedOnline)}

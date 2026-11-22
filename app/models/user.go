@@ -71,6 +71,8 @@ type User struct {
 	UpdatedAt           time.Time  `gorm:"autoUpdateTime" json:"updated_at"`
 	FollowersCount      int64      `gorm:"column:followers_count;->" json:"followers_count"`
 	FollowingCount      int64      `gorm:"column:following_count;->" json:"following_count"`
+	TotalLikes          int64      `gorm:"-" json:"total_likes"`
+	TotalViews          int64      `gorm:"-" json:"total_views"`
 	IsFollowedByMe      bool       `gorm:"column:is_followed_by_me;->" json:"is_followed_by_me"`
 	// FollowStatus is the viewer's follow state: "", "pending", or "accepted".
 	FollowStatus string `gorm:"-" json:"follow_status,omitempty"`

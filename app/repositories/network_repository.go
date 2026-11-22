@@ -55,6 +55,7 @@ func (r *NetworkRepositoryImpl) GetSuggestions(userID int64) ([]models.User, err
 			SELECT follower_id FROM follows WHERE followed_id = ?
 		)
 		AND NOT EXISTS (SELECT 1 FROM user_blocks b WHERE (b.blocker_id = ? AND b.blocked_id = u.id) OR (b.blocker_id = u.id AND b.blocked_id = ?))
+		ORDER BY u.is_blue_verified DESC, (SELECT COUNT(*) FROM follows f WHERE f.followed_id = u.id AND f.status = 'accepted') DESC, u.id DESC
 		LIMIT 10
 	`, userID, userID, userID, userID, userID).Scan(&users).Error
 	return users, err

@@ -3,6 +3,7 @@ package controllers
 import (
 	http "github.com/goravel/framework/contracts/http"
 	"goravel/app/repositories"
+	"goravel/pkg/db"
 	"strconv"
 	"strings"
 	"unicode/utf8"
@@ -28,4 +29,23 @@ func Explore(c http.Context) http.Response {
 		posts = posts[:limit]
 	}
 	return c.Response().Json(200, http.Json{"posts": posts, "has_more": more})
+}
+
+func TrendingTopics(c http.Context) http.Response {
+	type topicRow struct {
+		Tag   string `json:"tag"`
+		Count int64  `json:"count"`
+	}
+	var rows []topicRow
+	if db.DB != nil {
+		db.DB.Table("post_hashtags h").
+			Select("LOWER(h.tag) AS tag, COUNT(DISTINCT h.post_id) AS count").
+			Joins("JOIN posts p ON p.id = h.post_id AND p.deleted_at IS NULL AND p.visibility = 'public'").
+			Joins("JOIN users u ON u.id = p.user_id AND u.account_status = 'active' AND u.is_private = 0").
+			Group("LOWER(h.tag)").
+			Order("count DESC, MAX(h.post_id) DESC").
+			Limit(5).
+			Scan(&rows)
+	}
+	return c.Response().Json(200, rows)
 }

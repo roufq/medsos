@@ -140,8 +140,23 @@ func (h *UserController) GetProfileAPI(c goravelhttp.Context) goravelhttp.Respon
 			user.ProfileLocked = true
 		}
 	}
+	fillProfileEngagement(user)
 
 	return c.Response().Json(http.StatusOK, user)
+}
+
+func fillProfileEngagement(user *models.User) {
+	if user == nil || user.ProfileLocked || db.DB == nil {
+		return
+	}
+	db.DB.Table("post_likes l").
+		Joins("JOIN posts p ON p.id = l.post_id").
+		Where("p.user_id = ? AND p.deleted_at IS NULL AND p.repost_of_id IS NULL", user.ID).
+		Count(&user.TotalLikes)
+	db.DB.Table("post_views v").
+		Joins("JOIN posts p ON p.id = v.post_id").
+		Where("p.user_id = ? AND p.deleted_at IS NULL AND p.repost_of_id IS NULL", user.ID).
+		Count(&user.TotalViews)
 }
 
 func (h *UserController) UpdateProfileAPI(c goravelhttp.Context) goravelhttp.Response {

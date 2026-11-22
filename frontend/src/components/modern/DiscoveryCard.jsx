@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { BadgeCheck, Heart, MessageCircle, Share2, Play, Image, Link as LinkIcon, MapPin, ShoppingBag } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Play, Image, Link as LinkIcon, MapPin, ShoppingBag } from 'lucide-react';
+import VerifiedBadge from '../common/VerifiedBadge';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { postApi } from '../../api/postApi';
@@ -53,7 +54,7 @@ export default function DiscoveryCard({ post, onUpdated, product = false }) {
       {video && <span className="discovery-duration"><Play size={12} fill="currentColor" />{Math.floor((video.duration_seconds || 0)/60)}:{String((video.duration_seconds || 0)%60).padStart(2,'0')}</span>}
     </Link>
     <div className="discovery-copy">
-      <Link to={profileUrl(post.user || {})} className="discovery-author"><img src={post.user?.avatar_url || `${import.meta.env.BASE_URL}favicon.svg`} alt=""/><span><strong>{post.user?.name || t('Pengguna')}{post.user?.is_blue_verified && <BadgeCheck size={12}/>}</strong><time>{timeAgo(post.created_at,language)}</time></span></Link>
+      <Link to={profileUrl(post.user || {})} className="discovery-author"><img src={post.user?.avatar_url || `${import.meta.env.BASE_URL}favicon.svg`} alt=""/><span><strong>{post.user?.name || t('Pengguna')}{post.user?.is_blue_verified && <VerifiedBadge size={13} className="ml-1" />}</strong><time>{timeAgo(post.created_at,language)}</time></span></Link>
       <Link to={postUrl(post)} className="discovery-title">{post.title || t('Postingan')}</Link>
       <p className="discovery-description">{post.content}</p>
       {post.location && <span className="discovery-location"><MapPin size={12}/>{post.location}</span>}

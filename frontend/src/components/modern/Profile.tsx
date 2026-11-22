@@ -1,4 +1,5 @@
 import {notify} from '../../utils/feedback';
+import VerifiedBadge from '../common/VerifiedBadge';
 import { useAuth } from '../../context/AuthContext';
 import { postUrl } from '../../utils/postUrl';
 import { useLanguage } from "../../context/LanguageContext";
@@ -213,13 +214,18 @@ export default function Profile({ user, posts, isCurrentUser, onUserChange, onPo
   const trending = useMemo(() => {
     const groups = new Map<string, { title: string; post: any; count: number; score: number; }>();
     ownPosts.forEach((post) => {
-      const title = post.location || post.hashtags?.[0]?.tag;
-      if (!title) return;
-      const item = groups.get(title) || { title, post, count: 0, score: 0 };
-      item.count++; item.score += (post.likes_count || 0) + (post.views_count || 0);
-      groups.set(title, item);
+      const rawTags = new Set<string>([
+        ...(post.hashtags || []).map((h: any) => `#${String(h.tag || '').toLowerCase()}`),
+        ...(`${post.title || ''} ${post.content || ''}`.match(/#[\p{L}\p{N}_]+/gu) || []).map((t) => t.toLowerCase()),
+      ]);
+      rawTags.forEach((tag) => {
+        if (!tag || tag === '#') return;
+        const item = groups.get(tag) || { title: tag, post, count: 0, score: 0 };
+        item.count++; item.score += (post.likes_count || 0) + (post.views_count || 0);
+        groups.set(tag, item);
+      });
     });
-    return [...groups.values()].sort((a, b) => b.score - a.score).slice(0, 4);
+    return [...groups.values()].sort((a, b) => b.count - a.count || b.score - a.score).slice(0, 4);
   }, [ownPosts]);
   const chooseLayout = async (next: 'grid' | 'long') => {
     setLayout(next);
@@ -228,8 +234,8 @@ export default function Profile({ user, posts, isCurrentUser, onUserChange, onPo
       catch {/* Local layout remains available when preferences cannot be saved. */}
     }
   };
-  const totalLikes = ownPosts.reduce((sum, post) => sum + (post.likes_count || 0), 0);
-  const totalViews = ownPosts.reduce((sum, post) => sum + (post.views_count || 0), 0);
+  const totalLikes = Math.max(Number(user.total_likes || 0), ownPosts.reduce((sum, post) => sum + (post.likes_count || 0), 0));
+  const totalViews = Math.max(Number(user.total_views || 0), ownPosts.reduce((sum, post) => sum + (post.views_count || 0), 0));
   const replace = (post: any) => tab === 'saved' ? setSaved((list) => ((post.original_post?.is_saved_by_me ?? post.is_saved_by_me) ? (list || []).map((p) => p.id === post.id ? post : p) : (list || []).filter((p) => p.id !== post.id))) : onPostsChange(posts.map((p) => p.id === post.id ? post : p));
   const remove = (id: number) => tab === 'saved' ? setSaved((list) => (list || []).filter((p) => p.id !== id)) : onPostsChange(posts.filter((p) => p.id !== id));
   const field = 'w-full border border-border-subtle px-3 py-2 rounded-xl text-sm outline-none focus:border-primary';
@@ -242,7 +248,7 @@ export default function Profile({ user, posts, isCurrentUser, onUserChange, onPo
             {user.avatar_url ? <img src={user.avatar_url} alt={user.name} /> : <span>{user.name?.slice(0, 1).toUpperCase()}</span>}
             {isCurrentUser && <button type="button" disabled={uploading} onClick={() => avatarInput.current?.click()} aria-label={t("Ubah foto profil")}><Camera size={18} /></button>}
             <input ref={avatarInput} type="file" accept="image/*" className="hidden" onChange={(e) => uploadImage(e.target.files?.[0], 'avatar_url')} />
-          </div><div><h2>{user.name}{user.is_blue_verified && <span className="ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-sky-500 text-white text-[10px] leading-none align-middle" title={t("Terverifikasi Centang Biru")} aria-label={t("Centang Biru")}>✓</span>}{user.is_private && <Lock size={13} aria-label={t("Akun private")} />}</h2><p>@{user.username || t("user")}</p><p className="profile-bio">{user.bio || user.title || t("Belum ada bio.")}</p>{user.website && <a href={user.website} target="_blank" rel="noopener noreferrer nofollow"><LinkIcon size={12} />{user.website.replace(/^https?:\/\//, '')}</a>}</div></div>
+          </div><div><h2>{user.name}{user.is_blue_verified && <VerifiedBadge size={18} className="ml-1.5" />}{user.is_private && <Lock size={13} aria-label={t("Akun private")} />}</h2><p>@{user.username || t("user")}</p><p className="profile-bio">{user.bio || user.title || t("Belum ada bio.")}</p>{user.website && <a href={user.website} target="_blank" rel="noopener noreferrer nofollow"><LinkIcon size={12} />{user.website.replace(/^https?:\/\//, '')}</a>}</div></div>
           <div className="profile-summary-right"><div className="profile-summary-top"><div className="profile-numbers"><span>{t("Post")}<strong>{ownPosts.length}</strong></span><button disabled={user.profile_locked} onClick={() => setFollowList('followers')}>{t("Followers")}<strong>{user.followers_count || 0}</strong></button><button disabled={user.profile_locked} onClick={() => setFollowList('following')}>{t("Following")}<strong>{user.following_count || 0}</strong></button></div>
             {isCurrentUser ? <button className="profile-primary" onClick={openEdit}>{t("Edit Profile")}</button> : !user.is_blocked_by_me && <button className="profile-primary" onClick={toggleFollow}>{user.follow_status === 'accepted' ? t("Mengikuti") : user.follow_status === 'pending' ? t("Diminta") : t("Ikuti")}</button>}
             <div className="profile-options"><button aria-label={t("Menu profil")} onClick={() => setMenuOpen(!menuOpen)}><MoreHorizontal size={20} /></button>{menuOpen && <div className="profile-options-menu">{isCurrentUser ? <><button onClick={() => navigate('/settings')}><Settings size={15} />{t("Pengaturan")}</button></> : <><button onClick={async () => { setMenuOpen(false); try { const { token } = await messageApi.createIntent({ user_id: (user as any).public_hash || user.username || user.id }); navigate(`/messages?t=${encodeURIComponent(token)}`); } catch { navigate('/messages'); } }}>{t("Pesan")}</button><button onClick={toggleBlock}><Ban size={15} />{user.is_blocked_by_me ? t("Buka blokir") : t("Blokir")}</button></>}</div>}</div>

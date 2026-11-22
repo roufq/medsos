@@ -39,8 +39,8 @@ func TestPostRules(t *testing.T) {
 		return &dto.ShopPostRequest{PriceMinor: 150000, Currency: "idr", Category: "Elektronik", Condition: "New", Fulfillment: "pickup, cod"}
 	}
 	cases := map[string]func(d *postDraft){
-		"title too short":              func(d *postDraft) { d.title = "abcd" },
-		"title too long":               func(d *postDraft) { d.title = strings.Repeat("a", 101) },
+		"title too short":              func(d *postDraft) { d.title = "123456789" },
+		"title too long":               func(d *postDraft) { d.title = strings.Repeat("a", 131) },
 		"description < 160 characters": func(d *postDraft) { d.content = strings.Repeat("a", 159) },
 		"description > 6000":           func(d *postDraft) { d.content = words(6001) },
 		"fewer than 3 hashtags":        func(d *postDraft) { d.tags = d.tags[:2] },

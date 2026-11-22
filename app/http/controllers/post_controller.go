@@ -169,7 +169,9 @@ func (h *PostController) GetFeedAPI(c goravelhttp.Context) goravelhttp.Response 
 	if userIDStr != "" {
 		userID, err := strconv.ParseInt(userIDStr, 10, 64)
 		if err == nil {
-			posts, err := h.postService.GetUserPosts(viewerID, userID)
+			limitParam, _ := strconv.Atoi(c.Request().Query("limit", "50"))
+			offsetParam, _ := strconv.Atoi(c.Request().Query("offset", "0"))
+			posts, err := h.postService.GetUserPosts(viewerID, userID, limitParam, offsetParam)
 			if err != nil {
 				return c.Response().Json(http.StatusInternalServerError, goravelhttp.Json{"error": err.Error()})
 			}
@@ -263,7 +265,6 @@ func (h *PostController) UploadMediaAPI(c goravelhttp.Context) goravelhttp.Respo
 		return c.Response().Json(http.StatusInternalServerError, goravelhttp.Json{"error": fmt.Sprintf("Failed to record file: %s", err.Error())})
 	}
 
-
 	return c.Response().Json(http.StatusOK, goravelhttp.Json{
 		"url": stored.URL, "media_type": stored.Type, "duration_seconds": stored.DurationSeconds, "size_bytes": stored.SizeBytes,
 		"is_short": stored.Type == "video" && stored.DurationSeconds >= services.ShortMinSeconds && stored.DurationSeconds <= services.ShortMaxSeconds,
@@ -306,7 +307,6 @@ func (h *PostController) LikePostAPI(c goravelhttp.Context) goravelhttp.Response
 	if err != nil {
 		return c.Response().Json(http.StatusInternalServerError, goravelhttp.Json{"error": err.Error()})
 	}
-
 
 	var likesCount int64
 	db.DB.Model(&models.PostLike{}).Where("post_id = ?", post.ID).Count(&likesCount)

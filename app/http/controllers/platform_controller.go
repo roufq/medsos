@@ -53,7 +53,7 @@ func (h *PostController) PublicFeed(c goravelhttp.Context) goravelhttp.Response 
 		if db.DB.First(&user, target).Error != nil || user.AccountStatus != "active" {
 			return c.Response().Json(404, goravelhttp.Json{"error": "Profil tidak ditemukan"})
 		}
-		posts, err = h.postService.GetUserPosts(0, target)
+		posts, err = h.postService.GetUserPosts(0, target, limit, offset)
 	} else {
 		posts, err = h.postService.GetFeed(0, limit, offset, before, false, c.Request().Query("kind", ""))
 	}
@@ -85,6 +85,7 @@ func PublicProfile(c goravelhttp.Context) goravelhttp.Response {
 	user.ProfileLocked = user.IsPrivate
 	db.DB.Model(&models.Follow{}).Where("followed_id = ? AND status = 'accepted'", user.ID).Count(&user.FollowersCount)
 	db.DB.Model(&models.Follow{}).Where("follower_id = ? AND status = 'accepted'", user.ID).Count(&user.FollowingCount)
+	fillProfileEngagement(&user)
 	return c.Response().Json(200, user)
 }
 
