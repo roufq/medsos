@@ -7,6 +7,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/netip"
 	"net/url"
 	"regexp"
 	"strings"
@@ -87,7 +88,9 @@ func FetchPreview(targetURL string) (*Preview, error) {
 		case "og:description":
 			preview.Description = content
 		case "og:image":
-			preview.ImageURL = content
+			if imgURL, err := url.Parse(strings.TrimSpace(content)); err == nil && (imgURL.Scheme == "http" || imgURL.Scheme == "https") && imgURL.Host != "" {
+				preview.ImageURL = imgURL.String()
+			}
 		case "og:site_name":
 			preview.SiteName = content
 		}
@@ -189,6 +192,9 @@ func validateURL(targetURL string) error {
 	if (u.Scheme != "http" && u.Scheme != "https") || u.Hostname() == "" {
 		return fmt.Errorf("invalid URL scheme: %s", u.Scheme)
 	}
+	if port := u.Port(); port != "" && port != "80" && port != "443" {
+		return fmt.Errorf("disallowed URL port: %s", port)
+	}
 
 	ips, err := net.LookupIP(u.Hostname())
 	if err != nil {
@@ -203,15 +209,35 @@ func validateURL(targetURL string) error {
 	return nil
 }
 
+var blockedPrefixes = func() []netip.Prefix {
+	cidrs := []string{
+		"0.0.0.0/8", "10.0.0.0/8", "100.64.0.0/10", "127.0.0.0/8",
+		"169.254.0.0/16", "172.16.0.0/12", "192.0.0.0/24", "192.0.2.0/24",
+		"192.168.0.0/16", "198.18.0.0/15", "198.51.100.0/24", "203.0.113.0/24",
+		"224.0.0.0/4", "240.0.0.0/4",
+		"::/128", "::1/128", "::ffff:0:0/96", "64:ff9b::/96", "100::/64",
+		"2001::/32", "2001:db8::/32", "2002::/16", "fc00::/7", "fe80::/10", "ff00::/8",
+	}
+	out := make([]netip.Prefix, 0, len(cidrs))
+	for _, c := range cidrs {
+		out = append(out, netip.MustParsePrefix(c))
+	}
+	return out
+}()
+
 func isPrivateIP(ip net.IP) bool {
-	if ip.IsPrivate() || ip.IsLoopback() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() || ip.IsUnspecified() {
+	addr, ok := netip.AddrFromSlice(ip)
+	if !ok {
 		return true
 	}
-	if ip4 := ip.To4(); ip4 != nil {
-		return ip4[0] == 0 || ip4[0] == 10 ||
-			(ip4[0] == 100 && ip4[1]&0xc0 == 64) ||
-			(ip4[0] == 172 && ip4[1] >= 16 && ip4[1] <= 31) ||
-			(ip4[0] == 192 && ip4[1] == 168)
+	addr = addr.Unmap()
+	if addr.IsPrivate() || addr.IsLoopback() || addr.IsLinkLocalUnicast() || addr.IsLinkLocalMulticast() || addr.IsInterfaceLocalMulticast() || addr.IsMulticast() || addr.IsUnspecified() {
+		return true
 	}
-	return ip[0] == 0xfc || ip[0] == 0xfd
+	for _, p := range blockedPrefixes {
+		if p.Contains(addr) {
+			return true
+		}
+	}
+	return false
 }

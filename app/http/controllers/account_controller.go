@@ -25,6 +25,7 @@ import (
 
 	goravelhttp "github.com/goravel/framework/contracts/http"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type AccountController struct{}
@@ -367,22 +368,30 @@ func issueCode(user *models.User, target, channel, purpose string) (string, erro
 }
 
 func verifyCode(userID int64, purpose, code string) error {
-	var record models.VerificationCode
-	if err := db.DB.Where("user_id = ? AND purpose = ? AND used_at IS NULL", userID, purpose).Order("id desc").First(&record).Error; err != nil {
-		return errors.New("verification code is invalid")
-	}
-	if record.ExpiresAt.Before(time.Now()) {
-		return errors.New("verification code has expired")
-	}
-	if record.Attempts >= 5 {
-		return errors.New("too many verification attempts")
-	}
-	if !hash.CheckPasswordHash(code, record.CodeHash) {
-		db.DB.Model(&record).UpdateColumn("attempts", gorm.Expr("attempts + 1"))
-		return errors.New("verification code is invalid")
-	}
-	now := time.Now()
-	return db.DB.Model(&record).Update("used_at", now).Error
+	return db.DB.Transaction(func(tx *gorm.DB) error {
+		var record models.VerificationCode
+		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where("user_id = ? AND purpose = ? AND used_at IS NULL", userID, purpose).Order("id desc").First(&record).Error; err != nil {
+			return errors.New("verification code is invalid")
+		}
+		if record.ExpiresAt.Before(time.Now()) {
+			return errors.New("verification code has expired")
+		}
+		if record.Attempts >= 5 {
+			return errors.New("too many verification attempts")
+		}
+		if !hash.CheckPasswordHash(code, record.CodeHash) {
+			tx.Model(&record).Where("used_at IS NULL").UpdateColumn("attempts", gorm.Expr("attempts + 1"))
+			return errors.New("verification code is invalid")
+		}
+		res := tx.Model(&record).Where("used_at IS NULL AND attempts < 5").Update("used_at", time.Now())
+		if res.Error != nil {
+			return res.Error
+		}
+		if res.RowsAffected != 1 {
+			return errors.New("verification code is invalid")
+		}
+		return nil
+	})
 }
 
 func (h *AccountController) ForgotPassword(c goravelhttp.Context) goravelhttp.Response {

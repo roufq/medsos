@@ -264,11 +264,11 @@ func AdminPurgePost(c http.Context) http.Response {
 }
 func AdminEditPost(c http.Context) http.Response {
 	var input struct {
-		Title    string `json:"title"`
-		Content  string `json:"content"`
-		Featured *bool  `json:"is_featured"`
+		Title    *string `json:"title"`
+		Content  *string `json:"content"`
+		Featured *bool   `json:"is_featured"`
 	}
-	if c.Request().Bind(&input) != nil || utf8.RuneCountInString(input.Title) > 255 || utf8.RuneCountInString(input.Content) > 100000 {
+	if c.Request().Bind(&input) != nil || (input.Title != nil && utf8.RuneCountInString(*input.Title) > 255) || (input.Content != nil && utf8.RuneCountInString(*input.Content) > 100000) {
 		return consoleError(c, 400, "Invalid content")
 	}
 	var post models.Post
@@ -278,13 +278,24 @@ func AdminEditPost(c http.Context) http.Response {
 	if input.Featured != nil && c.Value("userRole") != models.RoleAdmin {
 		return consoleError(c, 403, "Only administrators can feature content")
 	}
-	values := map[string]any{"title": input.Title, "content": input.Content}
+	values := map[string]any{}
+	if input.Title != nil {
+		values["title"] = *input.Title
+	}
+	if input.Content != nil {
+		values["content"] = *input.Content
+	}
 	if input.Featured != nil {
-		values = map[string]any{"is_featured": *input.Featured}
+		values["is_featured"] = *input.Featured
+	}
+	if len(values) == 0 {
+		return consoleError(c, 400, "No changes provided")
 	}
 	if db.DB.Model(&post).Updates(values).Error != nil {
 		return consoleError(c, 503, "Cannot save content")
 	}
+	actor, _ := c.Value("userID").(int64)
+	_ = db.DB.Create(&models.UserActivity{UserID: actor, Action: "PUT", Target: "/api/v1/admin/posts/" + c.Request().Route("id"), Description: "Edited content", IPAddress: c.Request().Ip()}).Error
 	return c.Response().Json(200, http.Json{"ok": true})
 }
 func AdminConsoleSettings(c http.Context) http.Response {

@@ -99,7 +99,7 @@ var probeVideo = func(path string) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	output, err := exec.CommandContext(ctx, probe, "-v", "error", "-show_entries", "format=duration:stream=codec_type,codec_name", "-of", "json", path).Output()
+	output, err := exec.CommandContext(ctx, probe, "-protocol_whitelist", "file", "-v", "error", "-show_entries", "format=duration:stream=codec_type,codec_name", "-of", "json", path).Output()
 	if err != nil {
 		return 0, fmt.Errorf("cannot inspect video; ensure ffprobe is installed: %w", err)
 	}

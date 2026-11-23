@@ -12,18 +12,21 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
-	goravelhttp "github.com/goravel/framework/contracts/http"
 	"goravel/app/facades"
 	"goravel/app/models"
 	"goravel/app/repositories"
 	"goravel/pkg/db"
+
+	goravelhttp "github.com/goravel/framework/contracts/http"
 )
 
 type MessageController struct {
@@ -100,7 +103,6 @@ var validMessageTypes = map[string]bool{
 	"location": true,
 	"shop":     true,
 	"link":     true,
-	"call":     true,
 }
 
 func (c *MessageController) GetConversations(ctx goravelhttp.Context) goravelhttp.Response {
@@ -169,7 +171,8 @@ func (c *MessageController) GetMessages(ctx goravelhttp.Context) goravelhttp.Res
 
 // UploadAttachment handles uploading images, videos, audio, documents, and archives for direct messages.
 func (c *MessageController) UploadAttachment(ctx goravelhttp.Context) goravelhttp.Response {
-	if _, authErr := authenticatedUserID(ctx); authErr != nil {
+	senderID, authErr := authenticatedUserID(ctx)
+	if authErr != nil {
 		return ctx.Response().Json(401, goravelhttp.Json{"error": "Unauthorized"})
 	}
 
@@ -232,7 +235,7 @@ func (c *MessageController) UploadAttachment(ctx goravelhttp.Context) goravelhtt
 		return ctx.Response().Json(500, goravelhttp.Json{"error": "Gagal memproses file"})
 	}
 
-	uploadDir := filepath.Join(".", "uploads")
+	uploadDir := filepath.Join(".", "storage", "message_uploads")
 	if err := os.MkdirAll(uploadDir, 0755); err != nil {
 		return ctx.Response().Json(500, goravelhttp.Json{"error": "Gagal menyiapkan direktori upload"})
 	}
@@ -255,13 +258,73 @@ func (c *MessageController) UploadAttachment(ctx goravelhttp.Context) goravelhtt
 		return ctx.Response().Json(500, goravelhttp.Json{"error": "Gagal menulis file"})
 	}
 
+	attachmentURL := "/api/v1/messages/attachments/" + storedName
+	if err := db.DB.Create(&models.MediaUpload{UserID: senderID, URL: attachmentURL, MediaType: models.MediaType(spec.kind)}).Error; err != nil {
+		_ = os.Remove(dstPath)
+		return ctx.Response().Json(500, goravelhttp.Json{"error": "Gagal mencatat upload"})
+	}
+
 	return ctx.Response().Json(200, goravelhttp.Json{
-		"url":          "/uploads/" + storedName,
+		"url":          attachmentURL,
 		"file_name":    origName,
 		"file_size":    written,
 		"mime_type":    spec.mime,
 		"message_type": spec.kind,
 	})
+}
+
+var msgAttachmentPattern = regexp.MustCompile(`^msg_[a-f0-9]{32}\.[a-z0-9]{1,8}$`)
+
+func (c *MessageController) DownloadAttachment(ctx goravelhttp.Context) goravelhttp.Response {
+	viewerID, err := authenticatedUserID(ctx)
+	if err != nil {
+		return ctx.Response().Json(401, goravelhttp.Json{"error": "Unauthorized"})
+	}
+	file := ctx.Request().Route("file")
+	if !msgAttachmentPattern.MatchString(file) {
+		return ctx.Response().Json(404, goravelhttp.Json{"error": "File tidak ditemukan"})
+	}
+	attachmentURL := "/api/v1/messages/attachments/" + file
+	var upload models.MediaUpload
+	var msg models.Message
+	hasAccess := db.DB.Where("user_id = ? AND url = ?", viewerID, attachmentURL).First(&upload).Error == nil ||
+		db.DB.Where("(sender_id = ? OR receiver_id = ?) AND attachment_url = ?", viewerID, viewerID, attachmentURL).First(&msg).Error == nil
+	if !hasAccess {
+		return ctx.Response().Json(403, goravelhttp.Json{"error": "Forbidden"})
+	}
+	fullPath := filepath.Join(".", "storage", "message_uploads", file)
+	if _, err := os.Stat(fullPath); err != nil {
+		return ctx.Response().Json(404, goravelhttp.Json{"error": "File tidak ditemukan"})
+	}
+	return ctx.Response().Header("X-Content-Type-Options", "nosniff").Header("Cache-Control", "private, max-age=3600").File(fullPath)
+}
+
+func isSafeMessageURL(raw string, allowRelative bool) bool {
+	s := strings.TrimSpace(raw)
+	if s == "" {
+		return true
+	}
+	if allowRelative && strings.HasPrefix(s, "/") && !strings.HasPrefix(s, "//") {
+		return true
+	}
+	u, err := url.Parse(s)
+	return err == nil && (u.Scheme == "http" || u.Scheme == "https") && u.Host != ""
+}
+
+func validateMessageMetadataJSON(raw string) error {
+	if raw == "" {
+		return nil
+	}
+	var m map[string]any
+	if err := json.Unmarshal([]byte(raw), &m); err != nil {
+		return errors.New("Invalid metadata_json")
+	}
+	for _, key := range []string{"url", "map_url", "image_url"} {
+		if v, ok := m[key].(string); ok && !isSafeMessageURL(v, key == "url" || key == "image_url") {
+			return errors.New("Invalid URL in metadata_json")
+		}
+	}
+	return nil
 }
 
 func (c *MessageController) SendMessage(ctx goravelhttp.Context) goravelhttp.Response {
@@ -377,8 +440,17 @@ func (c *MessageController) SendMessage(ctx goravelhttp.Context) goravelhttp.Res
 	if len(metadataJSON) > 8000 || len(attachmentURL) > 500 || len(attachmentName) > 255 {
 		return ctx.Response().Json(400, goravelhttp.Json{"error": "Attachment metadata is too long"})
 	}
-	if attachmentURL != "" && !strings.HasPrefix(attachmentURL, "/uploads/") && !strings.HasPrefix(attachmentURL, "http://") && !strings.HasPrefix(attachmentURL, "https://") {
-		return ctx.Response().Json(400, goravelhttp.Json{"error": "Invalid attachment_url"})
+	if err := validateMessageMetadataJSON(metadataJSON); err != nil {
+		return ctx.Response().Json(400, goravelhttp.Json{"error": err.Error()})
+	}
+	if attachmentURL != "" {
+		if !strings.HasPrefix(attachmentURL, "/api/v1/messages/attachments/") && !strings.HasPrefix(attachmentURL, "/uploads/") {
+			return ctx.Response().Json(400, goravelhttp.Json{"error": "Invalid attachment_url"})
+		}
+		var ownedUpload models.MediaUpload
+		if db.DB.Where("user_id = ? AND url = ?", senderID, attachmentURL).First(&ownedUpload).Error != nil {
+			return ctx.Response().Json(403, goravelhttp.Json{"error": "Attachment not owned by sender"})
+		}
 	}
 
 	var receiver models.User
@@ -687,6 +759,16 @@ func cleanupStaleCallsLocked(now int64) {
 			delete(callSessions, id)
 		}
 	}
+	for uid, q := range callQueues {
+		if len(q) == 0 || now-q[len(q)-1].CreatedAt > 300 {
+			delete(callQueues, uid)
+		}
+	}
+	for uid, seen := range userLastSeen {
+		if now-seen > 86400 {
+			delete(userLastSeen, uid)
+		}
+	}
 }
 
 func queueCallEventLocked(targetUserID int64, ev callSignalEvent) {
@@ -782,6 +864,16 @@ func (c *MessageController) SendCallSignal(ctx goravelhttp.Context) goravelhttp.
 		callMu.Lock()
 		userLastSeen[userID] = now
 		cleanupStaleCallsLocked(now)
+		activeCalls := 0
+		for _, existing := range callSessions {
+			if existing.CallerID == userID {
+				activeCalls++
+			}
+		}
+		if activeCalls >= 5 {
+			callMu.Unlock()
+			return ctx.Response().Json(429, goravelhttp.Json{"error": "Terlalu banyak sesi panggilan aktif"})
+		}
 		calleeOnline := userOnlineLocked(calleeID, now)
 		sess := &callSession{
 			CallID:     callID,
@@ -900,8 +992,8 @@ func (c *MessageController) SendCallSignal(ctx goravelhttp.Context) goravelhttp.
 		})
 
 		if shouldLog {
-			dur := body.DurationSeconds
-			if dur <= 0 && wasConnected && connectedAt > 0 {
+			var dur int64
+			if wasConnected && connectedAt > 0 {
 				dur = now - connectedAt
 			}
 			callStatus := "completed"

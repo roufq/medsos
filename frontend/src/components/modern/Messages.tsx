@@ -1494,16 +1494,25 @@ export default function Messages({ currentUser }: MessagesProps) {
       );
     }
 
+    const safeMsgUrl = (raw?: string, allowRelative = false) => {
+      const s = String(raw || '').trim();
+      if (!s) return '';
+      if (allowRelative && s.startsWith('/') && !s.startsWith('//')) return s;
+      try { const u = new URL(s); return u.protocol === 'http:' || u.protocol === 'https:' ? u.href : ''; } catch { return ''; }
+    };
+
     // 5. Shop Product Card (matches screenshot: Nike Air Max 270 + Rp 1.499.000 + red "Lihat Produk" button)
     if (msgType === 'shop' && meta) {
-      const rawUrl = meta.url ? String(meta.url).replace(/^\/posts\//, '/post/') : '';
+      const rawUrl = meta.url ? safeMsgUrl(String(meta.url).replace(/^\/posts\//, '/post/'), true) : '';
       const targetUrl = rawUrl || (meta.post_id ? `/post/${meta.post_id}` : '/shop');
+      const shopImage = safeMsgUrl(meta.image_url, true);
       return (
         <div className="w-72 sm:w-85 rounded-2xl p-3 bg-white border border-border-subtle/40 shadow-xs text-text-primary flex items-center gap-3">
-          {meta.image_url ? (
+          {shopImage ? (
             <img
-              src={meta.image_url}
+              src={shopImage}
               alt={meta.title}
+              referrerPolicy="no-referrer"
               className="w-16 h-16 rounded-xl object-cover bg-surface-container-low shrink-0"
             />
           ) : (
@@ -1537,7 +1546,7 @@ export default function Messages({ currentUser }: MessagesProps) {
       const label = meta?.label || 'Lokasi Saya';
       const address = meta?.address || msg.content?.replace(/^📍\s*(Lokasi Saya:\s*)?/i, '') || 'Lihat di Peta';
       const mapUrl =
-        meta?.map_url || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+        safeMsgUrl(meta?.map_url) || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
       return (
         <a
           href={mapUrl}
@@ -1619,7 +1628,7 @@ export default function Messages({ currentUser }: MessagesProps) {
     // 8. Link Card (matches screenshot: circular link icon + title + url + chevron)
     const inlineUrlMatch = msg.content?.match(URL_REGEX);
     if (msgType === 'link' || inlineUrlMatch) {
-      const url = meta?.url || inlineUrlMatch?.[1] || '#';
+      const url = safeMsgUrl(meta?.url || inlineUrlMatch?.[1]) || '#';
       let defaultTitle = url;
       try {
         defaultTitle = new URL(url).hostname.replace(/^www\./, '');

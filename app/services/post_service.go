@@ -721,9 +721,20 @@ func dispatchLinkPreview(link *models.PostLink) {
 }
 
 func dispatchTranscodes(media []models.PostMedia) {
+	maximum := 10000
+	if configured, err := strconv.Atoi(os.Getenv("QUEUE_MAX_PENDING")); err == nil && configured > 0 {
+		maximum = configured
+	}
 	for _, item := range media {
 		if item.MediaType != models.MediaTypeVideo {
 			continue
+		}
+		if db.DB != nil {
+			var pending int64
+			if db.DB.Table("jobs").Where("queue = ?", "default").Count(&pending).Error == nil && pending >= int64(maximum) {
+				_ = db.DB.Model(&models.PostMedia{}).Where("id = ?", item.ID).Update("processing_status", "failed").Error
+				continue
+			}
 		}
 		if err := facades.Queue().Job(&jobs.TranscodePostMedia{}, []queue.Arg{{Value: item.ID, Type: "int64"}}).Dispatch(); err != nil {
 			_ = db.DB.Model(&models.PostMedia{}).Where("id = ?", item.ID).Update("processing_status", "failed").Error

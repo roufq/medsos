@@ -192,6 +192,9 @@ func (h *AuthController) ShowLoginWeb(c goravelhttp.Context) goravelhttp.Respons
 }
 
 func (h *AuthController) HandleLoginWeb(c goravelhttp.Context) goravelhttp.Response {
+	if c.Request().Header("Sec-Fetch-Site") == "cross-site" {
+		return c.Response().String(http.StatusForbidden, "cross-site request blocked")
+	}
 	email := c.Request().Input("Email address")
 	if email == "" {
 		email = c.Request().Input("email")
@@ -240,6 +243,9 @@ func (h *AuthController) ShowRegisterWeb(c goravelhttp.Context) goravelhttp.Resp
 }
 
 func (h *AuthController) HandleRegisterWeb(c goravelhttp.Context) goravelhttp.Response {
+	if c.Request().Header("Sec-Fetch-Site") == "cross-site" {
+		return c.Response().String(http.StatusForbidden, "cross-site request blocked")
+	}
 	firstName := c.Request().Input("First name")
 	if firstName == "" {
 		firstName = c.Request().Input("first_name")
@@ -283,8 +289,13 @@ func (h *AuthController) HandleRegisterWeb(c goravelhttp.Context) goravelhttp.Re
 }
 
 func (h *AuthController) HandleLogoutWeb(c goravelhttp.Context) goravelhttp.Response {
-	if c.Request().Header("Sec-Fetch-Site") == "cross-site" || (c.Request().Method() == http.MethodGet && c.Request().Header("Sec-Fetch-Mode") != "" && c.Request().Header("Sec-Fetch-Mode") != "navigate") {
-		return c.Response().Redirect(http.StatusSeeOther, "/web/beranda")
+	if c.Request().Method() == http.MethodGet {
+		site := c.Request().Header("Sec-Fetch-Site")
+		if (site != "same-origin" && site != "same-site") || c.Request().Header("Sec-Fetch-Mode") != "navigate" {
+			return c.Response().Redirect(http.StatusSeeOther, "/web/beranda")
+		}
+	} else if !csrf.Valid(c.Request().Cookie(csrf.CookieName), c.Request().Header(csrf.HeaderName, ""), c.Request().Input("_csrf")) {
+		return c.Response().String(http.StatusForbidden, "invalid CSRF token")
 	}
 	h.authService.Logout(c.Request().Cookie("refresh_token"))
 	clearAuthCookies(c)

@@ -14,6 +14,7 @@ import (
 	"goravel/pkg/csrf"
 	"goravel/pkg/db"
 	"goravel/pkg/jwt"
+	"goravel/pkg/platform"
 	"goravel/pkg/session"
 	"goravel/resources/views/backend"
 
@@ -74,6 +75,14 @@ func (h *UserController) getWebUser(c goravelhttp.Context) (*models.User, gorave
 	user, err := h.userService.GetByID(claims.UserID)
 	if err != nil {
 		return nil, c.Response().Redirect(http.StatusSeeOther, "/web/login")
+	}
+	if s, err := platform.Settings(); err == nil && user.Role != models.RoleAdmin {
+		if s.Maintenance {
+			return nil, c.Response().String(http.StatusServiceUnavailable, "Platform sedang dalam pemeliharaan")
+		}
+		if s.RequireEmailVerification && !csrf.SafeMethod(c.Request().Method()) && user.EmailVerifiedAt == nil {
+			return nil, c.Response().String(http.StatusForbidden, "Email verification required")
+		}
 	}
 
 	return user, nil
@@ -284,6 +293,9 @@ func (h *UserController) AdminGetStatsAPI(c goravelhttp.Context) goravelhttp.Res
 	var recentUsers []models.User
 	if err := db.DB.Order("created_at desc").Limit(5).Find(&recentUsers).Error; err != nil {
 		return c.Response().Json(http.StatusInternalServerError, goravelhttp.Json{"error": "Failed to load recent users"})
+	}
+	for i := range recentUsers {
+		recentUsers[i].HidePrivateData()
 	}
 	return c.Response().Json(http.StatusOK, goravelhttp.Json{
 		"total_users":       counts["total_users"],

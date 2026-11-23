@@ -12,7 +12,7 @@ if [[ "$EUID" -ne 0 || ! -f /opt/postter/.env ]]; then
 fi
 domain="$1"
 # DNS must point to this server and EC2 must allow inbound TCP 80 and 443.
-certbot --nginx --domain "$domain" --redirect
+certbot --nginx --domain "$domain" --redirect --hsts
 sed -i \
   -e "s|^APP_URL=.*|APP_URL=https://${domain}|" \
   -e "s|^FRONTEND_URL=.*|FRONTEND_URL=https://${domain}|" \

@@ -1,16 +1,21 @@
 import { ExternalLink } from 'lucide-react';
 
+const safeHttp = (raw) => {
+  try { const u = new URL(String(raw || '').trim()); return u.protocol === 'http:' || u.protocol === 'https:' ? u.href : ''; } catch { return ''; }
+};
+
 const LinkPreviewCard = ({ link }) => {
   if (!link) return null;
 
   const title = link.title || 'Shared Link';
   const description = link.description || 'Click to visit page and read more details.';
-  const imageUrl = link.image_url;
+  const href = safeHttp(link.url) || '#';
+  const imageUrl = safeHttp(link.image_url);
   const siteName = link.site_name;
 
   return (
     <a
-      href={link.url}
+      href={href}
       target="_blank"
       rel="noopener noreferrer"
       className="block border border-gray-200/60 rounded-xl overflow-hidden hover:bg-gray-50/50 transition-all duration-300 group shadow-sm bg-white"
@@ -20,6 +25,7 @@ const LinkPreviewCard = ({ link }) => {
           <img
             src={imageUrl}
             alt={title}
+            referrerPolicy="no-referrer"
             className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
           />
         </div>

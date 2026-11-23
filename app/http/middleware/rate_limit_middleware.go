@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -33,7 +34,7 @@ func RateLimit(name string, maximum int, window time.Duration) goravelhttp.Middl
 		identity := ctx.Request().Ip()
 		if userID := ctx.Value("userID"); userID != nil {
 			identity = "user:" + fmt.Sprint(userID)
-		} else if target := ctx.Request().Input("identifier", ctx.Request().Input("target", ctx.Request().Input("email", ""))); target != "" && len(target) <= 100 {
+		} else if target := strings.ToLower(strings.TrimSpace(ctx.Request().Input("identifier", ctx.Request().Input("target", ctx.Request().Input("email", ctx.Request().Input("username", "")))))); target != "" && len(target) <= 100 {
 			if ok, _, resetAt := requestLimiter.take(name+":target:"+target, maximum, window, now); !ok {
 				ctx.Response().Header("Retry-After", strconv.Itoa(max(1, int(time.Until(resetAt).Seconds()))))
 				ctx.Request().AbortWithStatusJson(http.StatusTooManyRequests, goravelhttp.Json{"error": "Too many requests. Please try again later."})

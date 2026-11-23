@@ -164,11 +164,7 @@ func (s *authService) Register(req *dto.RegisterRequest) (*dto.AuthResponse, err
 	if err := s.userRepo.Create(user); err != nil {
 		return nil, err
 	}
-	if ref := normalizeUsername(req.ReferralCode); ref != "" && ref != username {
-		if referrer, err := s.userRepo.GetByUsername(ref); err == nil && referrer.AccountStatus == "active" && db.DB != nil {
-			_ = db.DB.Model(&models.User{}).Where("id = ?", referrer.ID).Update("referral_bonus_until", time.Now().Add(30*24*time.Hour)).Error
-		}
-	}
+	// Referral bonus is granted only after account verification (see OAuth verified flow), not on unverified registration.
 
 	return issueTokens(user)
 }

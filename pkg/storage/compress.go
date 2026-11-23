@@ -7,6 +7,7 @@ import (
 	"image"
 	"image/color"
 	"image/draw"
+	_ "image/gif"
 	"image/jpeg"
 	"image/png"
 	"io"
@@ -28,6 +29,13 @@ const (
 //
 // It returns the bytes to store and the (possibly unchanged) extension.
 func compressImage(original []byte, extension string) ([]byte, string, error) {
+	if extension == ".gif" {
+		config, _, err := image.DecodeConfig(bytes.NewReader(original))
+		if err != nil || config.Width <= 0 || config.Height <= 0 || config.Width*config.Height > maxImagePixels {
+			return nil, "", errors.New("image cannot be decoded or dimensions are too large")
+		}
+		return original, extension, nil
+	}
 	if extension != ".jpg" && extension != ".png" {
 		return original, extension, nil
 	}
@@ -58,10 +66,7 @@ func compressImage(original []byte, extension string) ([]byte, string, error) {
 	if err := encoder.Encode(&out, img); err != nil {
 		return nil, "", err
 	}
-	if out.Len() < len(original) {
-		return out.Bytes(), ".png", nil
-	}
-	return original, ".png", nil
+	return out.Bytes(), ".png", nil
 }
 
 // downscale shrinks img so its longest edge is at most maxEdge, averaging the

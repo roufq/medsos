@@ -152,6 +152,7 @@ func Api() {
 		router.Get("messages", msgController.GetMessages)
 		router.Post("messages", msgController.SendMessage)
 		router.Post("messages/upload", msgController.UploadAttachment)
+		router.Get("messages/attachments/{file}", msgController.DownloadAttachment)
 		router.Post("messages/intent", msgController.CreateIntent)
 		router.Post("messages/intent/resolve", msgController.ResolveIntent)
 		router.Post("messages/call/signal", msgController.SendCallSignal)
