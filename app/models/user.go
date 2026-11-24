@@ -52,7 +52,7 @@ type User struct {
 	ShopCategory          *string    `gorm:"type:varchar(100)" json:"shop_category,omitempty"`
 	IsPrivate             bool       `gorm:"not null;default:false;index" json:"is_private"`
 	SubscriptionPlan      string     `gorm:"type:varchar(20);not null;default:'free'" json:"subscription_plan"`
-	IsBlueVerified        bool       `gorm:"not null;default:false" json:"is_blue_verified"`
+	IsBlueVerified        bool       `gorm:"not null;default:false;index" json:"is_blue_verified"`
 	AdminVerified         bool       `gorm:"not null;default:false" json:"admin_verified"`
 	SubscriptionExpiresAt *time.Time `json:"subscription_expires_at,omitempty"`
 	ReferralBonusUntil    *time.Time `json:"referral_bonus_until,omitempty"`
@@ -67,7 +67,7 @@ type User struct {
 	// the user's outstanding access and refresh tokens at once.
 	TokenVersion        int64      `gorm:"not null;default:0" json:"-"`
 	DeletionRequestedAt *time.Time `gorm:"index" json:"deletion_requested_at,omitempty"`
-	CreatedAt           time.Time  `gorm:"autoCreateTime" json:"created_at"`
+	CreatedAt           time.Time  `gorm:"autoCreateTime;index" json:"created_at"`
 	UpdatedAt           time.Time  `gorm:"autoUpdateTime" json:"updated_at"`
 	FollowersCount      int64      `gorm:"column:followers_count;->" json:"followers_count"`
 	FollowingCount      int64      `gorm:"column:following_count;->" json:"following_count"`

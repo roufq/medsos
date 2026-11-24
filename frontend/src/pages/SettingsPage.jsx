@@ -65,11 +65,8 @@ export default function SettingsPage() {const { t } = useLanguage();
   const [deletion, setDeletion] = useState({ password: '', confirm: '' });
   const [deleteNotice, setDeleteNotice] = useFeedbackState({}, 'error');
 
-  const [formUser, setFormUser] = useState(null);
-  if (user !== formUser) {
-    setFormUser(user);
-    if (!user) setForm(null);
-    else {
+  useEffect(() => {
+    if (!user) { setForm(null); return; }
     const country = user.phone_country || 'ID';
     const dial = dialCode(country);
     const phone = user.phone || '';
@@ -81,8 +78,7 @@ export default function SettingsPage() {const { t } = useLanguage();
       gender: user.gender || '', account_type: user.account_type || 'personal', city: user.city || '', country: user.country || '',
       interests: user.interests || [], shop_category: user.shop_category || '', is_private: Boolean(user.is_private), profile_layout: user.profile_layout || 'grid'
     });
-    }
-  }
+  }, [user]);
 
   useEffect(() => {userApi.getBlockedUsers().then((list) => setBlocked(list || [])).catch(() => setBlocked([]));}, []);
 
@@ -193,10 +189,10 @@ export default function SettingsPage() {const { t } = useLanguage();
               <label className={label}>{t("Email")} {verifiedBadge(user.email_verified_at)}<input type="email" value={form.email} onChange={(e) => set('email', e.target.value)} className={input} required /></label>
               <div className={label}>{t("Nomor telepon")} {user.phone && verifiedBadge(user.phone_verified_at)}
                 <div className="mt-1 flex gap-2">
-                  <select value={form.phone_country} onChange={(e) => set('phone_country', e.target.value)} className="rounded-lg border border-border-subtle p-2.5 text-sm w-36" aria-label={t("Kode negara")}>
+                  <select value={form.phone_country} onChange={(e) => set('phone_country', e.target.value)} className="rounded-lg border border-border-subtle p-2.5 text-sm w-28 sm:w-36 shrink-0" aria-label={t("Kode negara")}>
                     {COUNTRIES.map(([iso, name, dial]) => <option key={iso} value={iso}>{iso} +{dial} {name}</option>)}
                   </select>
-                  <input inputMode="tel" value={form.phone_local} onChange={(e) => set('phone_local', e.target.value)} placeholder="81234567890" className="flex-1 rounded-lg border border-border-subtle p-2.5 text-sm" aria-label={t("Nomor telepon")} />
+                  <input inputMode="tel" value={form.phone_local} onChange={(e) => set('phone_local', e.target.value)} placeholder="81234567890" className="flex-1 min-w-0 rounded-lg border border-border-subtle p-2.5 text-sm" aria-label={t("Nomor telepon")} />
                 </div>
               </div>
             </div>
@@ -245,7 +241,7 @@ export default function SettingsPage() {const { t } = useLanguage();
             </div>
           </Section>
 
-          <div className="sticky bottom-4 z-10">
+          <div className="sticky bottom-20 md:bottom-4 z-10">
             <button disabled={saving} className="w-full rounded-full bg-primary p-3 font-semibold text-white shadow-lg disabled:opacity-60">{saving ? t("Menyimpan…") : t("Simpan perubahan")}</button>
             <Notice state={t(notice)} />
           </div>
@@ -286,9 +282,9 @@ export default function SettingsPage() {const { t } = useLanguage();
           <div className="flex flex-col gap-2">
               {blocked.map((u) =>
             <div key={u.id} className="flex items-center gap-3">
-                  <img src={u.avatar_url || '/favicon.svg'} alt="" className="w-9 h-9 rounded-full object-cover" />
-                  <div className="flex-1 text-sm"><strong>{u.name}</strong> <span className="text-text-secondary">@{u.username}</span></div>
-                  <button type="button" onClick={() => unblock(u.id)} className="rounded-full bg-surface-container px-3 py-1.5 text-xs font-bold">{t("Buka blokir")}</button>
+                  <img src={u.avatar_url || '/favicon.svg'} alt="" className="w-9 h-9 shrink-0 rounded-full object-cover" />
+                  <div className="flex-1 min-w-0 text-sm truncate"><strong>{u.name}</strong> <span className="text-text-secondary">@{u.username}</span></div>
+                  <button type="button" onClick={() => unblock(u.id)} className="shrink-0 rounded-full bg-surface-container px-3 py-1.5 text-xs font-bold">{t("Buka blokir")}</button>
                 </div>
             )}
             </div>

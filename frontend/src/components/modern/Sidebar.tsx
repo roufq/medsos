@@ -55,12 +55,12 @@ export default function Sidebar({
 
   const go = (tab: string) => {onCloseMobile?.();if(tab==='newpost')onRequestCreatePost();else onNavigate(tab);};
   const asideClass = mobileOpen ?
-  'fixed inset-y-0 left-0 z-[60] flex flex-col w-72 max-w-[85vw] gap-2 p-4 bg-white shadow-xl overflow-y-auto md:hidden' :
+  'fixed inset-y-0 left-0 z-[90] flex flex-col w-72 max-w-[85vw] gap-2 p-4 bg-white shadow-xl overflow-y-auto md:hidden' :
   'poster-rail hidden md:flex';
 
   return (
     <>
-    {mobileOpen && <div className="fixed inset-0 z-[55] bg-black/40 md:hidden" onClick={onCloseMobile} />}
+    {mobileOpen && <div className="fixed inset-0 z-[85] bg-black/40 md:hidden" onClick={onCloseMobile} />}
     <aside className={asideClass}>
       {mobileOpen && <button type="button" onClick={onCloseMobile} className="self-end p-1" aria-label={t("Tutup menu")}><X className="w-5 h-5" /></button>}
       <div className="mb-6 px-2">

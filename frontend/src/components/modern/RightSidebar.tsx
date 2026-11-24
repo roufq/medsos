@@ -38,7 +38,7 @@ export default function RightSidebar({ posts, followedUsers, onFollowSuggestion,
     postApi.trendingTopics().then((rows) => {
       if (Array.isArray(rows)) setGlobalTopics(rows.map((r: any) => [`#${r.tag}`, Number(r.count || 0)]));
     }).catch(() => {});
-  }, [posts.length, posts[0]?.id]);
+  }, []);
   const topics = useMemo(() => {
     if (globalTopics.length > 0) return globalTopics;
     const counts = new Map<string, number>();

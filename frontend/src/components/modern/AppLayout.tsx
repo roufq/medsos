@@ -61,7 +61,7 @@ export default function AppLayout({ currentTab, children, onPostCreated, compose
   const setComposer = setComposerOpen ?? setOwnComposer;
   const openComposer = () => { if (!user) { navigate('/login'); return; } onComposerTypeChange?.('image'); (setComposerType ?? setOwnComposerType)(undefined); setComposer(true); };
 
-  const currentUser = { id: user?.id, username: user?.username || '', name: user?.name || '', title: user?.title || '', company: user?.company || '', avatar: user?.avatar_url || `${import.meta.env.BASE_URL}favicon.svg` };
+  const currentUser = useMemo(() => ({ id: user?.id, username: user?.username || '', name: user?.name || '', title: user?.title || '', company: user?.company || '', avatar: user?.avatar_url || `${import.meta.env.BASE_URL}favicon.svg` }), [user?.id, user?.username, user?.name, user?.title, user?.company, user?.avatar_url]);
 
   const [globalIncomingCall, setGlobalIncomingCall] = useState<{
     callId: string;
@@ -77,7 +77,7 @@ export default function AppLayout({ currentTab, children, onPostCreated, compose
     }
     let active = true;
     const pollGlobalCall = async () => {
-      if (!active) return;
+      if (!active || document.visibilityState === 'hidden') return;
       try {
         const data = await messageApi.pollCallSignals();
         const inc = data?.active_incoming;
@@ -185,7 +185,7 @@ export default function AppLayout({ currentTab, children, onPostCreated, compose
         <div className={`flex-grow min-w-0 ${currentTab === 'messages' ? 'h-full' : ''}`}>{currentTab !== 'messages' && <p className="postter-page-tagline">{translateUI(copy[1])}</p>}<GuestComposer/><AdPlacement placement="top_banner"/>{currentTab==='profile'&&<AdPlacement placement="profile"/>}{currentTab==='explore'&&<AdPlacement placement="explore"/>}{children}</div>
       </main>
       <MobileNav user={user} currentTab={isComposerOpen ? 'newpost' : currentTab} onCreate={openComposer} />
-      {user && <CreatePostModal onTypeChange={onComposerTypeChange} initialType={setComposerType ? composerType : ownComposerType} isOpen={isComposerOpen} onClose={() => setComposer(false)} onSaved={(post) => (onPostCreated ? onPostCreated(post) : navigate(postUrl(post)))} />}
+      {user && isComposerOpen && <CreatePostModal onTypeChange={onComposerTypeChange} initialType={setComposerType ? composerType : ownComposerType} isOpen={isComposerOpen} onClose={() => setComposer(false)} onSaved={(post) => (onPostCreated ? onPostCreated(post) : navigate(postUrl(post)))} />}
 
       {globalIncomingCall && currentTab !== 'messages' && (
         <div className="fixed inset-0 z-[130] bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">

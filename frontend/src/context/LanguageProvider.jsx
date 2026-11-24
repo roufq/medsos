@@ -1,5 +1,5 @@
 import { LanguageContext } from './LanguageContext';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import translations from '../i18n/translations.json';
 import { LANGUAGE_KEY as KEY, normalizeLanguage, translate } from '../i18n/language';
 
@@ -10,5 +10,6 @@ export function LanguageProvider({ children }) {
   useEffect(() => { const sync = (event) => { if (event.key === KEY || event.key === null) setLanguage(normalizeLanguage(event.newValue)); }; window.addEventListener('storage', sync); return () => window.removeEventListener('storage', sync); }, []);
   const t = useCallback(text => translate(text, language, translations), [language]);
   const selectLanguage = useCallback(value => setLanguage(normalizeLanguage(value)), []);
-  return <LanguageContext.Provider value={{ language, setLanguage: selectLanguage, t }}>{children}</LanguageContext.Provider>;
+  const value = useMemo(() => ({ language, setLanguage: selectLanguage, t }), [language, selectLanguage, t]);
+  return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
 }

@@ -230,11 +230,11 @@ export default function Signup({ onRegister, onNavigateToLogin }: SignupProps) {
                   <div className="pl-3.5 pr-2 flex items-center text-text-secondary">
                     <Phone size={18} strokeWidth={1.25} />
                   </div>
-                  <select aria-label={t("Kode negara telepon")} value={phoneCode} onChange={e => setPhoneCode(e.target.value)} className="bg-transparent text-[13px] text-text-primary py-2.5 outline-none font-medium appearance-none border-r border-border-subtle pr-2">
+                  <select aria-label={t("Kode negara telepon")} value={phoneCode} onChange={e => setPhoneCode(e.target.value)} className="bg-transparent text-[13px] text-text-primary py-2.5 outline-none font-medium appearance-none border-r border-border-subtle pr-2 max-w-[125px] sm:max-w-[155px] truncate shrink-0">
                     {REGISTRATION_COUNTRIES.map(item=><option key={item.iso} value={item.dial}>{item.dial} {t(item.label)}</option>)}
                   </select>
                   <input aria-label={t("Nomor HP")} type="tel" autoComplete="tel-national" value={phoneLocal} onChange={e => setPhoneLocal(e.target.value.replace(/\D/g, ''))}
-                    className="flex-1 px-3 py-2.5 bg-transparent text-[13px] outline-none placeholder:text-text-secondary"
+                    className="flex-1 min-w-0 w-0 px-3 py-2.5 bg-transparent text-[13px] outline-none placeholder:text-text-secondary"
                     placeholder="812 3456 7890"
                   />
                 </div>
@@ -382,7 +382,7 @@ export default function Signup({ onRegister, onNavigateToLogin }: SignupProps) {
 
           {/* Agreement */}
           <div className="flex items-center gap-2.5 pt-2">
-            <input type="checkbox" aria-label={t("Syarat dan Ketentuan")} checked={agree} onChange={e => setAgree(e.target.checked)} required className="w-[15px] h-[15px] accent-gray-900" />
+            <input type="checkbox" aria-label={t("Syarat dan Ketentuan")} checked={agree} onChange={e => setAgree(e.target.checked)} required className="w-[15px] h-[15px] shrink-0 accent-gray-900" />
             <p className="text-[11px] text-text-secondary leading-tight">
               {t("Saya menyetujui")} <a href="#" className="auth-link font-semibold hover:underline">{t("Syarat dan Ketentuan")}</a> {t("serta")} <a href="#" className="auth-link font-semibold hover:underline">{t("Kebijakan Privasi")}</a> {t("Postter.")}
             </p>

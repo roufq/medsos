@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { socialApi } from '../api/socialApi';
 import { messageApi } from '../api/messageApi';
 import { useNavigate } from 'react-router-dom';
@@ -18,7 +18,9 @@ export function useNotifications(onOpen) {
   const loadNotifications = useCallback(() => {
     const version = ++requestVersion.current;
     return socialApi.notifications().then(data => {
-      if (version === requestVersion.current) setNotifications(Array.isArray(data) ? data : []);
+      if (version !== requestVersion.current) return;
+      const next = Array.isArray(data) ? data : [];
+      setNotifications(prev => (prev.length === next.length && prev[0]?.id === next[0]?.id && prev[0]?.read_at === next[0]?.read_at && prev.filter(i => !i.read_at).length === next.filter(i => !i.read_at).length) ? prev : next);
     }).catch(error => {
       console.error('Failed to load notifications', error);
     }).finally(() => {
@@ -35,7 +37,7 @@ export function useNotifications(onOpen) {
     return () => { window.clearInterval(interval); requests.current++; };
   }, [loadNotifications]);
 
-  const unreadCount = notifications.filter((item) => !item.read_at).length;
+  const unreadCount = useMemo(() => notifications.filter((item) => !item.read_at).length, [notifications]);
 
   const openNotification = async (notification) => {
     if (!notification.read_at) {

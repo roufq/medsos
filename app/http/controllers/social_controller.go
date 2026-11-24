@@ -324,7 +324,7 @@ func (h *SocialController) SavedPosts(c goravelhttp.Context) goravelhttp.Respons
 		return c.Response().Json(401, goravelhttp.Json{"error": "Unauthorized"})
 	}
 	var posts []models.Post
-	err = db.DB.Model(&models.Post{}).Joins("JOIN saved_posts ON saved_posts.post_id = posts.id").Where("saved_posts.user_id = ?", userID).Preload("User").Preload("Media").Preload("Link").Preload("Hashtags").Preload("Shop").Order("saved_posts.id desc").Limit(100).Find(&posts).Error
+	err = db.DB.Model(&models.Post{}).Joins("JOIN saved_posts ON saved_posts.post_id = posts.id").Where("saved_posts.user_id = ?", userID).Order("saved_posts.id desc").Limit(100).Find(&posts).Error
 	if err != nil {
 		return c.Response().Json(500, goravelhttp.Json{"error": "failed to load saved posts"})
 	}

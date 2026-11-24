@@ -11,7 +11,7 @@ type UserBlock struct {
 
 type SavedPost struct {
 	ID        int64     `gorm:"primaryKey;autoIncrement" json:"id"`
-	UserID    int64     `gorm:"not null;uniqueIndex:idx_saved_post" json:"user_id"`
+	UserID    int64     `gorm:"not null;uniqueIndex:idx_saved_post;index:idx_saved_user_id" json:"user_id"`
 	PostID    int64     `gorm:"not null;uniqueIndex:idx_saved_post;index" json:"post_id"`
 	CreatedAt time.Time `gorm:"autoCreateTime" json:"created_at"`
 }
@@ -58,14 +58,14 @@ type PostReport struct {
 
 type Notification struct {
 	ID         int64      `gorm:"primaryKey;autoIncrement" json:"id"`
-	UserID     int64      `gorm:"not null;index:idx_notification_user_created,priority:1" json:"user_id"`
+	UserID     int64      `gorm:"not null;index:idx_notification_user_created,priority:1;index:idx_notification_conv_read,priority:1" json:"user_id"`
 	ActorID    *int64     `gorm:"index" json:"actor_id,omitempty"`
 	Type       string     `gorm:"type:varchar(32);not null;index" json:"type"`
 	EntityType string     `gorm:"type:varchar(32)" json:"entity_type,omitempty"`
 	EntityID   *int64     `json:"entity_id,omitempty"`
 	EntityHash string     `gorm:"column:entity_hash;->" json:"entity_hash,omitempty"`
 	Message    string     `gorm:"type:varchar(500);not null" json:"message"`
-	ReadAt     *time.Time `json:"read_at,omitempty"`
+	ReadAt     *time.Time `gorm:"index:idx_notification_conv_read,priority:4" json:"read_at,omitempty"`
 	CreatedAt  time.Time  `gorm:"autoCreateTime;index:idx_notification_user_created,priority:2" json:"created_at"`
 	Actor      *User      `gorm:"foreignKey:ActorID" json:"actor,omitempty"`
 }

@@ -1350,7 +1350,10 @@ export default function Messages({ currentUser }: MessagesProps) {
         if (!active) return;
         callOwnerRef.current = true;
         void pollSignals();
-        interval = window.setInterval(pollSignals, 900);
+        interval = window.setInterval(() => {
+          if (document.visibilityState === 'hidden' && !activeCallRef.current) return;
+          void pollSignals();
+        }, 900);
         window.addEventListener('focus', pollSignals);
         document.addEventListener('visibilitychange', pollSignals);
         await new Promise<void>((resolve) => { release = resolve; });
@@ -1398,7 +1401,7 @@ export default function Messages({ currentUser }: MessagesProps) {
     // 1. Video message card (matches screenshot)
     if (msgType === 'video' && msg.attachment_url) {
       return (
-        <div className="w-72 sm:w-96 rounded-2xl overflow-hidden bg-white border border-border-subtle/30 shadow-xs text-text-primary">
+        <div className="w-full max-w-72 sm:max-w-96 rounded-2xl overflow-hidden bg-white border border-border-subtle/30 shadow-xs text-text-primary">
           <div className="relative bg-black aspect-video">
             <video
               src={msg.attachment_url}
@@ -1454,7 +1457,7 @@ export default function Messages({ currentUser }: MessagesProps) {
     // 3. Audio message card
     if (msgType === 'audio' && msg.attachment_url) {
       return (
-        <div className="w-72 sm:w-80 rounded-2xl p-3.5 bg-white border border-border-subtle/40 shadow-xs text-text-primary flex flex-col gap-2">
+        <div className="w-full max-w-72 sm:max-w-80 rounded-2xl p-3.5 bg-white border border-border-subtle/40 shadow-xs text-text-primary flex flex-col gap-2">
           <div className="flex items-center gap-2.5">
             <span className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
               <Music className="w-4 h-4" />
@@ -1477,7 +1480,7 @@ export default function Messages({ currentUser }: MessagesProps) {
           download={msg.attachment_name || true}
           target="_blank"
           rel="noopener noreferrer"
-          className="w-72 sm:w-85 rounded-2xl p-3.5 bg-surface-container-low hover:bg-surface-container border border-border-subtle/40 shadow-xs text-text-primary flex items-center gap-3 transition-colors"
+          className="w-full max-w-72 sm:max-w-85 rounded-2xl p-3.5 bg-surface-container-low hover:bg-surface-container border border-border-subtle/40 shadow-xs text-text-primary flex items-center gap-3 transition-colors"
         >
           <span className="w-10 h-10 rounded-xl bg-white border border-border-subtle/30 flex items-center justify-center shrink-0 text-primary">
             <FileText className="w-5 h-5" />
@@ -1507,7 +1510,7 @@ export default function Messages({ currentUser }: MessagesProps) {
       const targetUrl = rawUrl || (meta.post_id ? `/post/${meta.post_id}` : '/shop');
       const shopImage = safeMsgUrl(meta.image_url, true);
       return (
-        <div className="w-72 sm:w-85 rounded-2xl p-3 bg-white border border-border-subtle/40 shadow-xs text-text-primary flex items-center gap-3">
+        <div className="w-full max-w-72 sm:max-w-85 rounded-2xl p-3 bg-white border border-border-subtle/40 shadow-xs text-text-primary flex items-center gap-3">
           {shopImage ? (
             <img
               src={shopImage}
@@ -1552,7 +1555,7 @@ export default function Messages({ currentUser }: MessagesProps) {
           href={mapUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="w-72 sm:w-85 rounded-2xl p-2.5 bg-surface-container-low hover:bg-surface-container border border-border-subtle/40 shadow-xs text-text-primary flex items-center gap-3 transition-colors"
+          className="w-full max-w-72 sm:max-w-85 rounded-2xl p-2.5 bg-surface-container-low hover:bg-surface-container border border-border-subtle/40 shadow-xs text-text-primary flex items-center gap-3 transition-colors"
         >
           <div className="w-20 h-14 rounded-xl bg-[#e8f0fe] relative overflow-hidden flex items-center justify-center shrink-0 border border-border-subtle/20">
             <div
@@ -1582,7 +1585,7 @@ export default function Messages({ currentUser }: MessagesProps) {
       const status = meta?.status || 'completed';
       const isMissedOrRejected = status === 'missed' || status === 'rejected' || status === 'busy';
       return (
-        <div className="w-64 sm:w-76 rounded-2xl p-3 bg-surface-container-low border border-border-subtle/40 shadow-xs text-text-primary flex items-center justify-between gap-3">
+        <div className="w-full max-w-64 sm:max-w-76 rounded-2xl p-3 bg-surface-container-low border border-border-subtle/40 shadow-xs text-text-primary flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <span
               className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
@@ -1644,7 +1647,7 @@ export default function Messages({ currentUser }: MessagesProps) {
           href={url}
           target="_blank"
           rel="noopener noreferrer nofollow ugc"
-          className="w-72 sm:w-85 rounded-2xl p-3 bg-surface-container-low hover:bg-surface-container border border-border-subtle/40 shadow-xs text-text-primary flex items-center gap-3 transition-colors"
+          className="w-full max-w-72 sm:max-w-85 rounded-2xl p-3 bg-surface-container-low hover:bg-surface-container border border-border-subtle/40 shadow-xs text-text-primary flex items-center gap-3 transition-colors"
         >
           <span className="w-9 h-9 rounded-full bg-white border border-border-subtle/30 flex items-center justify-center shrink-0 text-text-primary">
             <LinkIcon className="w-4 h-4" />
@@ -1920,7 +1923,7 @@ export default function Messages({ currentUser }: MessagesProps) {
               {chatBlocked && <p role="status" className="px-5 py-2 text-xs text-red-500">{t("Pesan dan panggilan tidak tersedia karena pengguna diblokir.")}</p>}
               {/* Pending Shop Product Banner (when redirected from Shop) */}
               {pendingShopPost && (
-                <div className="mx-5 mt-3 p-3 rounded-2xl bg-surface-container-low border border-border-subtle/40 flex items-center justify-between gap-3">
+                <div className="mx-3 sm:mx-5 mt-3 p-3 rounded-2xl bg-surface-container-low border border-border-subtle/40 flex flex-wrap items-center justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
                     {pendingShopPost.media?.[0]?.media_url ? (
                       <img

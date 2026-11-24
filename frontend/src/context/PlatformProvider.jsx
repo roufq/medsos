@@ -1,7 +1,7 @@
 import {configurePlatformDate} from '../utils/platformDate';
 import { PlatformContext } from './PlatformContext';
 import {useLanguage} from './LanguageContext';
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import api from '../api/axios';
 
 
@@ -21,5 +21,6 @@ export function PlatformProvider({ children }) {
     return () => { active = false; };
   }, []);
   useEffect(()=>{if(settings?.language&&missingLanguage.current){missingLanguage.current=false;setLanguage(settings.language);}},[settings?.language,setLanguage]);
-  return <PlatformContext.Provider value={{ uploadLimitsEnabled, refreshSettings, settings }}>{children}</PlatformContext.Provider>;
+  const value = useMemo(() => ({ uploadLimitsEnabled, refreshSettings, settings }), [uploadLimitsEnabled, refreshSettings, settings]);
+  return <PlatformContext.Provider value={value}>{children}</PlatformContext.Provider>;
 }

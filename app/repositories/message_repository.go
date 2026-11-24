@@ -256,8 +256,12 @@ func (r *MessageRepositoryImpl) MarkAsRead(convID, userID int64) error {
 	if member == 0 {
 		return ErrConversationNotFound
 	}
+	var unread int64
+	if err := db.DB.Model(&models.Message{}).Where("conversation_id = ? AND sender_id != ? AND is_read = false", convID, userID).Count(&unread).Error; err != nil || unread == 0 {
+		return err
+	}
 	return db.DB.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Model(&models.Message{}).Where("conversation_id = ? AND sender_id != ?", convID, userID).Update("is_read", true).Error; err != nil {
+		if err := tx.Model(&models.Message{}).Where("conversation_id = ? AND sender_id != ? AND is_read = false", convID, userID).Update("is_read", true).Error; err != nil {
 			return err
 		}
 		return tx.Model(&models.Notification{}).Where("user_id = ? AND entity_type = ? AND entity_id = ? AND read_at IS NULL", userID, "conversation", convID).Update("read_at", time.Now()).Error

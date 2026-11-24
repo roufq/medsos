@@ -27,7 +27,7 @@ function ShortItem({ post, muted, onToggleMute, onLike, onShare }) {const { t } 
 
   if (!video) return null;
   return (
-    <section className="snap-start relative h-[calc(100vh-120px)] max-h-[860px] w-full max-w-[480px] mx-auto rounded-2xl overflow-hidden bg-black">
+    <section className="snap-start relative h-[calc(100dvh-180px)] md:h-[calc(100dvh-120px)] max-h-[860px] w-full max-w-[480px] mx-auto rounded-2xl overflow-hidden bg-black">
       {video.processing_status === 'ready' ?
       <video ref={videoRef} src={video.media_url} loop muted={muted} playsInline preload="metadata" className="w-full h-full object-contain" onClick={(e) => e.currentTarget.paused ? e.currentTarget.play() : e.currentTarget.pause()} /> :
 
@@ -35,8 +35,8 @@ function ShortItem({ post, muted, onToggleMute, onLike, onShare }) {const { t } 
       }
       <button type="button" onClick={onToggleMute} className="absolute top-3 right-3 rounded-full bg-black/50 p-2 text-white" aria-label={muted ? t("Nyalakan suara") : t("Matikan suara")}>{muted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}</button>
       <div className="absolute bottom-0 inset-x-0 p-4 pr-16 bg-gradient-to-t from-black/80 to-transparent text-white">
-        <Link to={profileUrl(post.user || { id: post.user_id })} className="flex items-center gap-2 font-bold text-sm mb-1">
-          <img src={post.user?.avatar_url || '/favicon.svg'} alt="" className="w-8 h-8 rounded-full object-cover" />@{post.user?.username || post.user?.name}
+        <Link to={profileUrl(post.user || { id: post.user_id })} className="flex items-center gap-2 font-bold text-sm mb-1 min-w-0">
+          <img src={post.user?.avatar_url || '/favicon.svg'} alt="" className="w-8 h-8 shrink-0 rounded-full object-cover" /><span className="truncate">@{post.user?.username || post.user?.name}</span>
         </Link>
         <Link to={postUrl(post)} className="block font-semibold text-sm">{post.title}</Link>
         <p className="text-xs text-white/80 line-clamp-2">{(post.hashtags || []).map((h) => '#' + h.tag).join(' ')}</p>
@@ -86,7 +86,7 @@ export default function ShortsPage() {const { t } = useLanguage();
 
   return (
     <AppLayout currentTab="shorts">
-      <div className="h-[calc(100vh-110px)] overflow-y-auto snap-y snap-mandatory flex flex-col gap-4 pb-6">
+      <div className="h-[calc(100dvh-170px)] md:h-[calc(100dvh-110px)] overflow-y-auto snap-y snap-mandatory flex flex-col gap-4 pb-6">
         {error && <p role="alert" className="text-error">{t(error)}</p>}
         {posts.map((post) =>
         <ShortItem key={post.id} post={post} muted={muted} onToggleMute={() => setMuted((m) => !m)} onLike={() => like(post)} onShare={() => setSharing(post.public_hash || post.id)} />

@@ -170,7 +170,7 @@ export default function Header({ currentUser, searchQuery, setSearchQuery, onNav
                 {unreadCount > 0 && <span className="absolute right-0 top-0 min-w-4 h-4 px-1 rounded-full bg-error text-white text-[9px] font-bold flex items-center justify-center">{unreadCount > 99 ? '99+' : unreadCount}</span>}
               </button>
               {notificationsOpen &&
-              <div className="absolute right-0 top-11 w-80 max-h-[70vh] overflow-y-auto rounded-2xl border border-border-subtle bg-white p-2 shadow-xl text-text-primary">
+              <div className="absolute right-0 top-11 w-80 max-w-[calc(100vw-2rem)] max-h-[70vh] overflow-y-auto rounded-2xl border border-border-subtle bg-white p-2 shadow-xl text-text-primary">
                   <div className="flex items-center justify-between gap-2 px-3 py-2">
                     <span className="text-sm font-bold">{t("Notifications")}</span>
                     <div className="flex items-center gap-2">
@@ -317,10 +317,6 @@ export default function Header({ currentUser, searchQuery, setSearchQuery, onNav
               </div>
             </div>
           )}
-          <div className="hidden">
-            <img src={currentUser.avatar} alt={currentUser.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-          </div>
-          <button onClick={() => navigate('/settings')} aria-label={t("Pengaturan akun")} className="hidden"><ChevronDown size={16} /></button>
         </div>
       </div>
     </header>);

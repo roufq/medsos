@@ -216,8 +216,8 @@ export default function PostPage() {
             {/* Details & Actions / Right Column */}
             <div className={`${hasMedia ? 'lg:col-span-5' : 'lg:col-span-12'} p-4 sm:p-6 flex flex-col gap-3.5 min-w-0`}>
               {/* Action row like Pinterest */}
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-3 text-sm font-semibold text-text-primary">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-sm font-semibold text-text-primary min-w-0">
                   <button type="button" onClick={toggleLike} className={`inline-flex items-center gap-1.5 py-1.5 px-2 rounded-full hover:bg-surface-container-low ${post.is_liked_by_me ? 'text-error' : ''}`}>
                     <Heart className={`w-5 h-5 ${post.is_liked_by_me ? 'fill-current' : ''}`} />
                     <span>{post.likes_count || 0}</span>
@@ -234,7 +234,7 @@ export default function PostPage() {
                       <MoreHorizontal className="w-5 h-5" />
                     </button>
                     {menuOpen && (
-                      <div className="absolute left-0 top-10 z-20 w-48 rounded-xl border border-border-subtle bg-white dark:bg-surface-card py-1 shadow-lg text-sm">
+                      <div className="absolute right-0 sm:left-0 sm:right-auto top-10 z-20 w-48 max-w-[calc(100vw-2rem)] rounded-xl border border-border-subtle bg-white dark:bg-surface-card py-1 shadow-lg text-sm">
                         <button type="button" onClick={() => { setMenuOpen(false); setModal('repost'); }} className="w-full flex items-center gap-2 px-3 py-2 hover:bg-surface-container-low"><Repeat2 className="w-4 h-4" />Repost</button>
                         <button type="button" onClick={async () => { setMenuOpen(false); const r = await postApi.share(token, 'copy'); await copyToClipboard(r.share_url); }} className="w-full flex items-center gap-2 px-3 py-2 hover:bg-surface-container-low"><LinkIcon className="w-4 h-4" />{t('Salin link')}</button>
                         {post.visibility !== 'followers' && <button type="button" onClick={() => { setMenuOpen(false); setModal('embed'); }} className="w-full flex items-center gap-2 px-3 py-2 hover:bg-surface-container-low"><Code className="w-4 h-4" />Embed</button>}
@@ -248,7 +248,7 @@ export default function PostPage() {
                 <button
                   type="button"
                   onClick={toggleSave}
-                  className={`rounded-full px-5 py-2 text-xs font-bold text-white transition-colors ${post.is_saved_by_me ? 'bg-neutral-800 hover:bg-neutral-900' : 'bg-[#e60023] hover:brightness-110'}`}
+                  className={`shrink-0 rounded-full px-5 py-2 text-xs font-bold text-white transition-colors ${post.is_saved_by_me ? 'bg-neutral-800 hover:bg-neutral-900' : 'bg-[#e60023] hover:brightness-110'}`}
                 >
                   {post.is_saved_by_me ? t('Tersimpan') : t('Simpan')}
                 </button>
@@ -264,7 +264,7 @@ export default function PostPage() {
                     <span className="truncate">{post.user?.name || t('Pengguna')}</span>
                     {post.user?.is_blue_verified && <VerifiedBadge size={14} />}
                   </Link>
-                  <div className="text-[11px] text-text-secondary">@{post.user?.username} · {timeAgo(post.created_at, language)}</div>
+                  <div className="text-[11px] text-text-secondary truncate">@{post.user?.username} · {timeAgo(post.created_at, language)}</div>
                 </div>
               </div>
 

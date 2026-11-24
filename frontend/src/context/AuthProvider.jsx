@@ -1,6 +1,6 @@
 import { AuthContext } from './AuthContext';
 import IdleSession from '../components/common/IdleSession';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { authApi } from '../api/authApi';
 import { userApi } from '../api/userApi';
 
@@ -29,17 +29,17 @@ export const AuthProvider = ({ children }) => {
 
   // `loading` only covers the initial session check; toggling it here would
   // unmount the login/register page (PublicRoute) and lose its error state.
-  const login = async (email, password, otp) => {
+  const login = useCallback(async (email, password, otp) => {
     const data = await authApi.login(email, password, otp);
     setUser(data.user);
     return data.user;
-  };
+  }, []);
 
-  const register = async (name, email, password, extra = {}) => {
+  const register = useCallback(async (name, email, password, extra = {}) => {
     const data = await authApi.register(name, email, password, extra);
     setUser(data.user);
     return data.user;
-  };
+  }, []);
 
   const logout = useCallback(async () => {
     try {
@@ -56,18 +56,18 @@ export const AuthProvider = ({ children }) => {
     setUser(updatedUser);
   }, []);
 
+  const value = useMemo(() => ({
+    user,
+    loading,
+    login,
+    register,
+    logout,
+    updateProfileState,
+    isAuthenticated: !!user,
+  }), [user, loading, login, register, logout, updateProfileState]);
+
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        loading,
-        login,
-        register,
-        logout,
-        updateProfileState,
-        isAuthenticated: !!user,
-      }}
-    >
+    <AuthContext.Provider value={value}>
       <IdleSession key={user?.id || "guest"} />
       {children}
     </AuthContext.Provider>

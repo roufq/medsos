@@ -7,6 +7,8 @@ import (
 	"log"
 )
 
+var activitySem = make(chan struct{}, 256)
+
 // Store successful actions, never request bodies or private message contents.
 func ActivityLog() http.Middleware {
 	return func(c http.Context) {
@@ -24,8 +26,16 @@ func ActivityLog() http.Middleware {
 		if len(target) > 255 {
 			target = target[:255]
 		}
-		if err := db.DB.Create(&models.UserActivity{UserID: id, Action: method, Target: target, IPAddress: c.Request().Ip(), Description: models.ActivityDescription(method, target)}).Error; err != nil {
-			log.Printf("activity recording failed: %v", err)
+		entry := models.UserActivity{UserID: id, Action: method, Target: target, IPAddress: c.Request().Ip(), Description: models.ActivityDescription(method, target)}
+		select {
+		case activitySem <- struct{}{}:
+			go func() {
+				defer func() { <-activitySem }()
+				if err := db.DB.Create(&entry).Error; err != nil {
+					log.Printf("activity recording failed: %v", err)
+				}
+			}()
+		default:
 		}
 	}
 }

@@ -1,18 +1,20 @@
+import { Suspense, lazy, useMemo } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 import { Construction, ArrowLeft } from 'lucide-react';
 import AppLayout from '../components/modern/AppLayout';
-import Network from '../components/modern/Network';
-import Messages from '../components/modern/Messages';
+import PageLoader from '../components/common/PageLoader';
 import { useAuth } from '../context/AuthContext';
 import { messageApi } from '../api/messageApi';
+const Network = lazy(() => import('../components/modern/Network'));
+const Messages = lazy(() => import('../components/modern/Messages'));
 
 const FeaturePage = ({ page }) => {
   const { t: translateUI } = useLanguage();
 
   const navigate = useNavigate();
   const { user } = useAuth();
-  const currentUser = { id: user?.id, name: user?.name || '', title: user?.title || '', avatar: user?.avatar_url || '/favicon.svg' };
+  const currentUser = useMemo(() => ({ id: user?.id, name: user?.name || '', title: user?.title || '', avatar: user?.avatar_url || '/favicon.svg' }), [user?.id, user?.name, user?.title, user?.avatar_url]);
 
   const handleNavigateToMessages = async (userId) => {
     if (!userId) {
@@ -29,10 +31,12 @@ const FeaturePage = ({ page }) => {
 
   return (
     <AppLayout currentTab={page}>
-          {page === 'network' && <Network onNavigateToMessages={handleNavigateToMessages} onOpenProfile={(userId) => navigate(`/profile/${userId}`)} />}
-          {page === 'messages' && <Messages currentUser={currentUser} />}
+          <Suspense fallback={<PageLoader />}>
+            {page === 'network' && <Network onNavigateToMessages={handleNavigateToMessages} onOpenProfile={(userId) => navigate(`/profile/${userId}`)} />}
+            {page === 'messages' && <Messages currentUser={currentUser} />}
+          </Suspense>
           {page === 'analytics' && (
-            <div className="bg-white rounded-2xl border border-border-subtle/40 shadow-sm flex flex-col items-center justify-center text-center p-12 h-[calc(100vh-130px)]">
+            <div className="bg-white rounded-2xl border border-border-subtle/40 shadow-sm flex flex-col items-center justify-center text-center p-6 sm:p-12 min-h-[calc(100dvh-190px)] md:h-[calc(100dvh-130px)]">
               <div className="bg-surface-container-low p-6 rounded-full mb-6">
                 <Construction size={48} className="text-primary" />
               </div>

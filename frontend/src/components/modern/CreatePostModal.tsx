@@ -214,21 +214,27 @@ export default function CreatePostModal({ isOpen, onClose, onSaved, editPost, in
       setError(kind === 'image' ? `Maksimal ${R.imagesMax} gambar.` : 'Maksimal 1 video.');
       return;
     }
-    let uploadedCount=0;
+    let uploadedCount = 0;
     setUploading((n) => n + selected.length);
-    for (const file of selected) {
+    const uploaded = await Promise.all(selected.map(async (file) => {
       try {
         const res = await postApi.uploadMedia(file);
         if (res.media_type !== kind) throw new Error(kind === 'image' ? 'File bukan gambar.' : 'File bukan video.');
-        mediaTouched.current = true;uploadedCount++;
-        setMedia((current) => [...current, { url: res.url, type: res.media_type, duration: res.duration_seconds || 0 }]);
+        uploadedCount++;
+        return { url: res.url, type: res.media_type, duration: res.duration_seconds || 0 };
       } catch (err) {
         setError(errorText(err, `Gagal mengunggah ${file.name}`));
+        return null;
       } finally {
         setUploading((n) => n - 1);
       }
+    }));
+    const valid = uploaded.filter(Boolean) as { url: string; type: string; duration: number }[];
+    if (valid.length) {
+      mediaTouched.current = true;
+      setMedia((current) => [...current, ...valid]);
     }
-    if(uploadedCount)notify.success('Media berhasil diunggah.');
+    if (uploadedCount) notify.success('Media berhasil diunggah.');
   };
 
   const removeMedia = (url: string) => {mediaTouched.current = true;setMedia((current) => current.filter((m) => m.url !== url));};

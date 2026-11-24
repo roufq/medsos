@@ -50,7 +50,7 @@
 .explore-author-link>img { flex:none; width:21px; height:21px; object-fit:cover; border-radius:50%; }
 .explore-author-link>div { min-width:0; }
 .explore-author-link span { display:flex; align-items:center; gap:3px; font-size:8px; white-space:nowrap; }
-.explore-author-link strong { font-weight:600; overflow:hidden; text-overflow:ellipsis; }
+.explore-author-link strong { font-weight:600; min-width:0; overflow:hidden; text-overflow:ellipsis; }
 .explore-author-link time { display:block; color:rgb(var(--text-secondary)); font-size:8px; margin-top:2px; }
 .explore-verified { flex:none; color:#1687ed; }
 .explore-pin-menu { position:relative; flex:none; }

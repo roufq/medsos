@@ -1,17 +1,17 @@
 import {useFeedbackState} from '../../hooks/useFeedbackState';
-import {useCallback,useEffect,useRef,useState} from 'react';
+import {Suspense,lazy,useCallback,useEffect,useRef,useState} from 'react';
 import {Link,useLocation,useNavigate} from 'react-router-dom';
 import {LayoutDashboard,Users,FileText,Megaphone,ShieldCheck,BarChart3,Settings,Logs,UserRound,LogOut,Search,Bell,RefreshCw,Eye,MousePointer2,X,Download,Check,Flag} from 'lucide-react';
 import {useAuth} from '../../context/AuthContext';
 import {adminApi} from '../../api/adminApi';
 import {useNotifications} from '../../hooks/useNotifications';
 import {postUrl} from '../../utils/postUrl';
-import ConsoleDashboard from './ConsoleDashboard';
-import ConsoleUsers from './ConsoleUsers';
-import ConsoleContent from './ConsoleContent';
-import ConsoleAds from './ConsoleAds';
-import ConsoleSettings from './ConsoleSettings';
-import ConsoleProfile from './ConsoleProfile';
+const ConsoleDashboard=lazy(()=>import('./ConsoleDashboard'));
+const ConsoleUsers=lazy(()=>import('./ConsoleUsers'));
+const ConsoleContent=lazy(()=>import('./ConsoleContent'));
+const ConsoleAds=lazy(()=>import('./ConsoleAds'));
+const ConsoleSettings=lazy(()=>import('./ConsoleSettings'));
+const ConsoleProfile=lazy(()=>import('./ConsoleProfile'));
 import {Avatar,Badge,Cards,Pager,Preview} from './ConsoleShared';
 import {date,number} from './consoleUtils';
 import {dateSeries,downloadCSV} from './consoleUtils';
@@ -36,10 +36,11 @@ export default function AdminConsole(){
  const {user,logout,updateProfileState}=useAuth(),route=useLocation(),navigate=useNavigate();const admin=user.role==='admin';let section=route.pathname.split('/')[2]||'dashboard';if(section==='posts')section='content';if(section==='reports')section='moderation';if(!sections.some(([key])=>key===section))section='dashboard';if(!admin&&!['content','moderation'].includes(section))section='moderation';
  const [query,setQuery]=useState(''),[days,setDays]=useState(30),[analytics,setAnalytics]=useState(null),[revision,setRevision]=useState(0),[busy,setBusy]=useState(false),[error,setError]=useFeedbackState('', 'error'),[notice,setNotice]=useFeedbackState('', 'success'),[navOpen,setNavOpen]=useState(false);const lock=useRef(false);
  const run=useCallback(async(fn,message='',refresh=true)=>{if(lock.current)return false;lock.current=true;setBusy(true);setError('');setNotice('');try{await fn();setNotice(message);if(refresh)setRevision(n=>n+1);return true;}catch(e){setError(e.response?.data?.error||e.message||'Action failed');return false;}finally{lock.current=false;setBusy(false);}},[setError,setNotice]);
- useEffect(()=>{if(!admin)return;let active=true;adminApi.analytics(days).then(data=>{if(active)setAnalytics(data);}).catch(e=>{if(active)setError(e.response?.data?.error||'Analytics unavailable');});return()=>{active=false};},[admin,days,revision,setError]);
+ useEffect(()=>{if(!admin||!['dashboard','analytics','content','users'].includes(section))return;let active=true;adminApi.analytics(days).then(data=>{if(active)setAnalytics(data);}).catch(e=>{if(active)setError(e.response?.data?.error||'Analytics unavailable');});return()=>{active=false};},[admin,days,revision,section,setError]);
  const notifications=useNotifications(n=>{if(n.entity_type==='moderation')navigate('/admin/moderation');else if(n.entity_hash)navigate(`/post/${n.entity_hash}`);});const tabs=sections.filter(([id])=>admin||['content','moderation'].includes(id));
  const go=id=>{navigate(`/admin/${id}`);setQuery('');setError('');setNotice('');setNavOpen(false);};const title=sections.find(([id])=>id===section)?.[1];
  return <div className="admin-console"><aside id="console-navigation" className={`console-sidebar ${navOpen?'open':''}`}><button className="console-mobile-toggle console-nav-close" aria-label="Close admin navigation" onClick={()=>setNavOpen(false)}><X size={18}/></button><Link className="console-logo" to="/explore"><img src={`${import.meta.env.BASE_URL}images/postter-logo.png`} alt=""/>postter.us</Link><nav>{tabs.map(([id,label,Icon])=><button key={id} aria-current={section===id?'page':undefined} onClick={()=>go(id)}><Icon size={21}/>{label}</button>)}<button onClick={()=>run(async()=>{await logout();navigate('/explore',{replace:true});},'',false)}><LogOut size={21}/>Logout</button></nav><div className="console-admin-card"><Avatar user={user}/><span><strong>{user.name}</strong><small>{user.role}</small></span></div></aside><div className="console-body"><header className="console-header"><button className="console-mobile-toggle" onClick={()=>setNavOpen(!navOpen)} aria-label="Toggle admin navigation" aria-expanded={navOpen} aria-controls="console-navigation">☰</button><label><Search size={23}/><input aria-label="Search administrator data" value={query} onChange={e=>{setQuery(e.target.value);if(section==='dashboard')navigate('/admin/users');}} placeholder="Search users, content, or anything…"/></label><button aria-label="Notifications" onClick={()=>{notifications.setNotificationsOpen(!notifications.notificationsOpen);notifications.loadNotifications();}}><Bell size={23}/>{notifications.unreadCount>0&&<span className="console-notification-count">{notifications.unreadCount}</span>}</button><button onClick={()=>go('profile')} aria-label="Administrator profile"><Avatar user={user}/></button>{notifications.notificationsOpen&&<div className="console-notifications console-panel"><header><h2>Notifications</h2><button onClick={()=>notifications.setNotificationsOpen(false)}>×</button></header>{notifications.notifications.map(n=><button key={n.id} onClick={()=>notifications.openNotification(n)}>{n.message}<small>{date(n.created_at)}</small></button>)}{!notifications.notifications.length&&<p>No notifications</p>}</div>}</header><main><div className="console-heading"><div><h1>{title}</h1><p>{section==='dashboard'?`Welcome back, ${user.name}!`:`Manage ${title?.toLowerCase()} on Postter.us`}</p></div><div><select aria-label="Analytics date range" value={days} onChange={e=>setDays(Number(e.target.value))}>{[7,30,90,365].map(d=><option key={d} value={d}>Last {d} Days</option>)}</select><button aria-label="Refresh admin data" disabled={busy} onClick={()=>setRevision(n=>n+1)}><RefreshCw size={17}/></button></div></div>{busy&&<p role="status" className="console-status">Processing…</p>}{error&&<p className="console-error" role="alert">{error}</p>}{notice&&<p className="console-notice" role="status">{notice}</p>}
+ <Suspense fallback={<p role="status" className="console-status">Loading…</p>}>
  {section==='users'&&<ConsoleUsers query={query} setQuery={setQuery} run={run} revision={revision} actor={user} analytics={analytics}/>}
  {section==='content'&&<ConsoleContent query={query} setQuery={setQuery} run={run} revision={revision} analytics={analytics} isAdmin={admin}/>}
  {section==='ads'&&<ConsoleAds query={query} setQuery={setQuery} run={run} revision={revision}/>}
@@ -49,5 +50,6 @@ export default function AdminConsole(){
  {section==='logs'&&<LogsPanel query={query} days={days} run={run} revision={revision}/>}
  {section==='analytics'&&<Analytics data={analytics} days={days}/>}
  {section==='dashboard'&&<ConsoleDashboard analytics={analytics} run={run} revision={revision}/>}
+ </Suspense>
  </main></div></div>;
 }

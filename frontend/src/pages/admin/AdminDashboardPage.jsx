@@ -90,7 +90,7 @@ const {language:uiLanguage}=useLanguage();
   return (
     <div className="bg-background text-text-primary antialiased flex min-h-screen">
       {/* Sidebar */}
-      <aside className="fixed left-0 h-screen w-64 bg-surface-container-lowest dark:bg-surface-dim border-r border-border-subtle dark:border-outline-variant shadow-sm flex flex-col p-4 gap-2 z-50">
+      <aside className="fixed left-0 h-screen w-64 bg-surface-container-lowest dark:bg-surface-dim border-r border-border-subtle dark:border-outline-variant shadow-sm hidden md:flex flex-col p-4 gap-2 z-50">
         <div className="flex flex-col gap-1 mb-6 px-2">
           <span className="font-headline-md text-headline-md font-black text-primary dark:text-primary-fixed">postter.us</span>
           <span className="font-label-md text-label-md text-text-secondary">Professional Suite</span>
@@ -148,11 +148,11 @@ const {language:uiLanguage}=useLanguage();
       </aside>
 
       {/* Main Content */}
-      <main className="ml-64 flex-1 flex flex-col min-h-screen relative w-full">
+      <main className="md:ml-64 flex-1 flex flex-col min-h-screen relative w-full min-w-0">
         {/* Header */}
-        <header className="fixed top-0 right-0 left-64 bg-surface dark:bg-surface-dim border-b border-border-subtle dark:border-outline-variant z-40">
-          <div className="flex justify-between items-center px-6 py-4 w-full">
-            <div className="relative w-full max-w-md">
+        <header className="fixed top-0 right-0 left-0 md:left-64 bg-surface dark:bg-surface-dim border-b border-border-subtle dark:border-outline-variant z-40">
+          <div className="flex justify-between items-center gap-2 px-4 sm:px-6 py-3 sm:py-4 w-full">
+            <div className="relative flex-1 min-w-0 max-w-md">
               <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">search</span>
               <input
                 type="text"
@@ -163,13 +163,13 @@ const {language:uiLanguage}=useLanguage();
               />
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4 shrink-0">
               <div className="relative">
                 <button onClick={() => { const next = !notificationsOpen; setNotificationsOpen(next); if (next) loadNotifications(); }} className="relative p-2 text-text-secondary hover:bg-surface-container-low rounded-full transition-colors" aria-label="Notifications">
                   <span className="material-symbols-outlined">notifications</span>
                   {unreadCount > 0 && <span className="absolute right-0 top-0 min-w-4 h-4 rounded-full bg-error px-1 text-[9px] font-bold text-white">{unreadCount > 99 ? '99+' : unreadCount}</span>}
                 </button>
-                {notificationsOpen && <div className="absolute right-0 top-12 w-80 max-h-[70vh] overflow-y-auto rounded-2xl border border-border-subtle bg-white p-2 shadow-xl">
+                {notificationsOpen && <div className="absolute right-0 top-12 w-80 max-w-[calc(100vw-2rem)] max-h-[70vh] overflow-y-auto rounded-2xl border border-border-subtle bg-white p-2 shadow-xl">
                   <div className="px-3 py-2 text-sm font-bold">Notifications</div>
                   {notifications.length === 0 && <p className="px-3 py-4 text-xs text-text-secondary">No notifications yet.</p>}
                   {notifications.map((notification) => <button key={notification.id} type="button" onClick={() => handleNotification(notification)} className={`flex w-full gap-3 rounded-xl p-3 text-left hover:bg-surface-container-low ${notification.read_at ? '' : 'bg-secondary-container/40'}`}><div className="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-secondary-container flex items-center justify-center font-bold text-primary">{notification.actor?.avatar_url ? <img src={notification.actor.avatar_url} alt="" className="h-full w-full object-cover" /> : notification.actor?.name?.slice(0,1) || '!'}</div><div><p className="text-xs"><strong>{notification.actor?.name || 'System'}</strong> {notification.actor ? String(notification.message).replace(/^Someone\s+/i, '') : notification.message}</p><p className="mt-1 text-[10px] text-outline">{new Date(notification.created_at).toLocaleString(uiLanguage === 'en' ? 'en-US' : 'id-ID')}</p></div></button>)}
@@ -181,14 +181,14 @@ const {language:uiLanguage}=useLanguage();
               <button onClick={() => navigate('/settings')} className="p-2 text-text-secondary hover:bg-surface-container-low rounded-full transition-colors">
                 <span className="material-symbols-outlined">settings</span>
               </button>
-              <div className="h-8 w-px bg-border-subtle mx-2"></div>
+              <div className="hidden sm:block h-8 w-px bg-border-subtle mx-1"></div>
               <div onClick={() => navigate(profileUrl(user))} className="flex items-center gap-3 cursor-pointer group">
                 <img
                   src={user?.avatar_url || '/favicon.svg'}
                   alt="Admin Avatar"
                   className="w-9 h-9 rounded-full object-cover border border-border-subtle group-hover:ring-2 group-hover:ring-primary transition-all"
                 />
-                <div className="flex flex-col">
+                <div className="hidden sm:flex flex-col">
                   <span className="font-label-md text-label-md text-text-primary leading-tight">{user?.name || 'Admin'}</span>
                   <span className="text-[11px] text-text-secondary">{user?.role || ''}</span>
                 </div>
@@ -198,7 +198,13 @@ const {language:uiLanguage}=useLanguage();
         </header>
 
         {/* Dashboard Content */}
-        <div className="pt-24 pb-12 px-6 flex-1 bg-background w-full">
+        <div className="pt-20 md:pt-24 pb-12 px-4 sm:px-6 flex-1 bg-background w-full">
+          <div className="flex md:hidden gap-2 overflow-x-auto pb-4 mb-2">
+            {[['overview', 'Dashboard'], ['users', 'Users'], ['moderation', 'Moderation']].map(([id, label]) => (
+              <button key={id} type="button" onClick={() => setActiveTab(id)} className={`px-3.5 py-2 rounded-full text-xs font-bold shrink-0 ${activeTab === id ? 'bg-primary text-white' : 'bg-surface-container-low text-text-secondary'}`}>{label}</button>
+            ))}
+            <button type="button" onClick={handleLogout} className="px-3.5 py-2 rounded-full text-xs font-bold shrink-0 bg-error/10 text-error ml-auto">Logout</button>
+          </div>
           {error && (
             <div className="mb-6 rounded-xl border border-error/30 bg-error/10 px-4 py-3 text-error">
               Failed to load database data: {error}

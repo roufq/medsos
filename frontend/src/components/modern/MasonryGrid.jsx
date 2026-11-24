@@ -1,17 +1,27 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
-const getCols = (w) => (w <= 767 ? 2 : w <= 900 ? 3 : w <= 1100 ? 4 : w <= 1350 ? 5 : 6);
+const getCols = (w) => (w <= 767 ? 2 : w <= 1023 ? 3 : w <= 1180 ? 4 : w <= 1350 ? 5 : 6);
 
 export default function MasonryGrid({ items, renderItem, className = '' }) {
   const [cols, setCols] = useState(() => (typeof window === 'undefined' ? 6 : getCols(window.innerWidth)));
 
   useEffect(() => {
-    const onResize = () => setCols(getCols(window.innerWidth));
+    let raf = 0;
+    const onResize = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const next = getCols(window.innerWidth);
+        setCols(prev => (prev === next ? prev : next));
+      });
+    };
     window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
+    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', onResize); };
   }, []);
 
-  const buckets = Array.from({ length: cols }, (_, c) => items.filter((_, i) => i % cols === c));
+  const buckets = useMemo(
+    () => Array.from({ length: cols }, (_, c) => items.filter((_, i) => i % cols === c)),
+    [cols, items]
+  );
 
   return (
     <div

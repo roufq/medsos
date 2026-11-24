@@ -32,8 +32,8 @@ export default function ForgotPasswordPage() {const { t } = useLanguage();
     } catch (err) {setError(err.response?.data?.error || 'Kode tidak valid atau sudah kedaluwarsa.');}
   }
 
-  return <main className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-    <section className="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm">
+  return <main className="min-h-screen bg-gray-50 flex items-center justify-center p-3 sm:p-6">
+    <section className="w-full max-w-md rounded-2xl bg-white p-5 sm:p-8 shadow-sm">
       <h1 className="text-2xl font-bold text-gray-900">{t("Lupa password")}</h1>
       <p className="mt-2 text-sm text-gray-500">{t("Kami akan mengirim kode verifikasi ke akunmu.")}</p>
       {error && <div className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{t(error)}</div>}

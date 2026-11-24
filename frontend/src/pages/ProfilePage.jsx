@@ -34,15 +34,18 @@ const ProfilePage = () => {
         if (!active) return;
         setProfileUser(user);
         setLoadedKey(key);
-        let allPosts = [];
         if (!user.profile_locked && !user.is_blocked_by_me) {
           for (let offset = 0; offset <= 1000; offset += 50) {
             const batch = (await postApi.getFeed(50, offset, user.id, null, '', !authId)) || [];
+            if (!active) return;
             allPosts = allPosts.concat(batch);
+            setPosts(allPosts);
+            if (offset === 0) setLoading(false);
             if (batch.length < 50) break;
           }
+        } else if (active) {
+          setPosts([]);
         }
-        if (active) setPosts(allPosts);
       } catch (e) {
         if (active) {
           setProfileUser(null);

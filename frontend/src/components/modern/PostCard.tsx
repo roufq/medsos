@@ -6,7 +6,7 @@ import { postUrl } from '../../utils/postUrl';
 import { copyToClipboard } from '../../utils/clipboard';
 import { useLanguage } from "../../context/LanguageContext";
 import { profileUrl } from '../../utils/profileUrl';
-import { useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Heart, MessageCircle, Repeat2, Share2, Bookmark, BookmarkCheck, MoreHorizontal, Pencil, Trash2,
@@ -192,7 +192,7 @@ function OriginalPost({ post, onOpenImage }: { post: any; onOpenImage?: (index: 
   );
 }
 
-export default function PostCard({ post: initialPost, onDeleted, onUpdated, onReposted, defaultCommentsOpen, hideMedia }: PostCardProps) {
+function PostCard({ post: initialPost, onDeleted, onUpdated, onReposted, defaultCommentsOpen, hideMedia }: PostCardProps) {
   const { t , language: uiLanguage} = useLanguage();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -331,9 +331,9 @@ export default function PostCard({ post: initialPost, onDeleted, onUpdated, onRe
   return (
     <article ref={cardRef} className="poster-post bg-white rounded-2xl border border-border-subtle/20 p-5">
       {isRepost &&
-        <div className="flex items-center gap-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400 mb-3 pb-2 border-b border-border-subtle/15">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 mb-3 pb-2 border-b border-border-subtle/15 min-w-0">
           <Repeat2 className="w-4 h-4 shrink-0" />
-          <Link to={profileUrl(post.user || { id: post.user_id })} className="hover:underline font-bold">
+          <Link to={profileUrl(post.user || { id: post.user_id })} className="hover:underline font-bold truncate max-w-full">
             {post.user_id === user?.id ? t("Anda") : post.user?.name}
           </Link>
           <span>{t("merepost")}</span>
@@ -381,7 +381,7 @@ export default function PostCard({ post: initialPost, onDeleted, onUpdated, onRe
 
       {actionError && <p role="alert" className="mb-3 rounded-lg bg-error/10 px-3 py-2 text-xs text-error">{t(actionError)}</p>}
       {displayPost.title && (!isRepost || isPureRepost) && (
-        <h3 className="text-lg font-bold text-text-primary mb-2 leading-snug">
+        <h3 className="text-lg font-bold text-text-primary mb-2 leading-snug break-words">
           <Link to={postUrl(displayPost)} className="hover:underline">{displayPost.title}</Link>
         </h3>
       )}
@@ -408,9 +408,9 @@ export default function PostCard({ post: initialPost, onDeleted, onUpdated, onRe
         </>
       }
 
-      <div className="flex justify-between items-center text-xs text-text-secondary pb-3 border-b border-border-subtle/20">
+      <div className="flex flex-wrap justify-between items-center gap-x-3 gap-y-1 text-xs text-text-secondary pb-3 border-b border-border-subtle/20">
         <span className="flex items-center gap-1"><Heart className="w-3.5 h-3.5 fill-error text-error" />{displayPost.likes_count || 0}</span>
-        <span className="flex gap-3">
+        <span className="flex flex-wrap gap-x-3 gap-y-1">
           <button type="button" onClick={() => user ? setCommentsOpen((v) => !v) : navigate('/login')} className="hover:underline">{displayPost.comments_count || 0} {t("komentar")}</button>
           <span>{repostsCount} {t("repost")}</span>
           <span>{displayPost.shares_count || 0} {t("dibagikan")}</span>
@@ -460,3 +460,5 @@ export default function PostCard({ post: initialPost, onDeleted, onUpdated, onRe
     </article>
   );
 }
+
+export default memo(PostCard);

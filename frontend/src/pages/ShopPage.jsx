@@ -1,4 +1,4 @@
-import { useLanguage } from "../context/LanguageContext";import { useEffect, useState } from 'react';
+import { useLanguage } from "../context/LanguageContext";import { useEffect, useMemo, useState } from 'react';
 import { Loader2, ShoppingBag, Shuffle, Gift, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import AppLayout from '../components/modern/AppLayout';
 import DiscoveryCard from '../components/modern/DiscoveryCard';
@@ -33,10 +33,10 @@ export default function ShopPage() {const { t } = useLanguage();
           for (const item of batch) {
             if (!seen.has(item.id)) { seen.add(item.id); all.push(item); }
           }
+          if (active) { setProducts([...all]); setLoading(false); }
           if (batch.length < BATCH_SIZE) break;
           beforeId = batch[batch.length - 1].id;
         }
-        if (active) setProducts(all);
       } catch (err) {
         if (active) setError(err.response?.data?.error || 'Gagal memuat produk.');
       } finally {
@@ -47,9 +47,13 @@ export default function ShopPage() {const { t } = useLanguage();
     return () => {active = false;};
   }, [userId, authLoading]);
   const addProduct = (post) => {if (post.post_type === 'shop') setProducts((current) => [post, ...current.filter((item) => item.id !== post.id)]);};
-  const categories=[...new Set(products.map(post=>post.shop?.category).filter(Boolean))];
-  const visible=products.filter(post=>category==='all' || post.shop?.category===category);
-  const shown=randomOrder ? [...visible].sort((a,b)=>randomOrder.indexOf(a.id)-randomOrder.indexOf(b.id)) : visible;
+  const categories = useMemo(() => [...new Set(products.map(post=>post.shop?.category).filter(Boolean))], [products]);
+  const visible = useMemo(() => products.filter(post=>category==='all' || post.shop?.category===category), [products, category]);
+  const shown = useMemo(() => {
+    if (!randomOrder) return visible;
+    const rank = new Map(randomOrder.map((id, idx) => [id, idx]));
+    return [...visible].sort((a, b) => (rank.get(a.id) ?? 0) - (rank.get(b.id) ?? 0));
+  }, [visible, randomOrder]);
   const pages=Math.max(1, Math.ceil(shown.length / PER_PAGE));
   const currentPage=Math.min(page, pages);
   const pageItems=shown.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);

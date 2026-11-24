@@ -112,7 +112,7 @@ export default function Network({ onNavigateToMessages, onOpenProfile }: Network
                         <div className="text-[11px] text-text-secondary truncate">{req.title} @ {req.company}</div>
                       </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 shrink-0">
                       <button 
                         onClick={() => handleDecline(req.id)}
                         className="p-2 border border-border-subtle hover:bg-surface-container hover:text-error transition-all rounded-full cursor-pointer"

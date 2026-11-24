@@ -6,7 +6,7 @@ import { useLanguage } from "../../context/LanguageContext";
 import { profileUrl } from '../../utils/profileUrl';
 import { useEffect, useRef, useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Camera, MapPin, Link as LinkIcon, LayoutGrid, Rows3, Trash2, Lock, Ban, Search, Heart, MessageCircle, Share2, Play, Settings, Eye, Flame, ArrowRight, ChevronLeft, ChevronRight, MoreHorizontal, FileText, ShoppingBag, Repeat2 } from 'lucide-react';
+import { Camera, MapPin, Link as LinkIcon, LayoutGrid, Rows3, Trash2, Lock, Ban, Search, Heart, MessageCircle, Share2, Play, Settings, Eye, Flame, ArrowRight, MoreHorizontal, FileText, ShoppingBag, Repeat2 } from 'lucide-react';
 import { timeAgo } from '../../utils/postFormat';
 import { postApi } from '../../api/postApi';
 import { userApi } from '../../api/userApi';
@@ -207,9 +207,8 @@ export default function Profile({ user, posts, isCurrentUser, onUserChange, onPo
     return ownPosts;
   }, [tab, saved, ownPosts, repostPosts, posts, user.id]);
   useEffect(() => { setPage(1); }, [tab, user.id]);
-  const pages = Math.max(1, Math.ceil(shownPosts.length / 9));
-  const currentPage = Math.min(page, pages);
-  const pagePosts = shownPosts.slice((currentPage - 1) * 9, currentPage * 9);
+  const pagePosts = shownPosts.slice(0, page * 9);
+  const hasMore = pagePosts.length < shownPosts.length;
   const latest = useMemo(() => [...ownPosts].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5), [ownPosts]);
   const trending = useMemo(() => {
     const groups = new Map<string, { title: string; post: any; count: number; score: number; }>();
@@ -258,7 +257,13 @@ export default function Profile({ user, posts, isCurrentUser, onUserChange, onPo
           <div className="profile-toolbar"><div className="profile-tabs" aria-label={t("Jenis postingan")}>{[['posts', t("Posts")], ['reposts', `Repost${repostPosts.length ? ` (${repostPosts.length})` : ''}`], ['reels', 'Reels'], ['tagged', 'Tagged'], ['shop', 'Shop'], ['location', t("Location")], ...(isCurrentUser ? [['saved', t("Tersimpan")]] : [])].map(([id, label]) => <button key={id} onClick={() => setTab(id as typeof tab)} className={tab === id ? 'active' : ''} aria-pressed={tab === id}>{t(label)}</button>)}</div><div className="profile-layout-buttons"><button className={layout === 'grid' ? 'active' : ''} aria-label={t("Tampilan grid")} aria-pressed={layout === 'grid'} onClick={() => chooseLayout('grid')}><LayoutGrid size={13} />{t("Grid")}</button><button className={layout === 'long' ? 'active' : ''} aria-label={t("Tampilan list")} aria-pressed={layout === 'long'} onClick={() => chooseLayout('long')}><Rows3 size={13} />{t("List")}</button></div></div>
           {shownPosts.length === 0 && <div className="profile-empty"><FileText size={32} /><p>{tab === 'saved' && saved === null ? t("Memuat postingan tersimpan...") : t("Belum ada postingan untuk kategori ini.")}</p></div>}
           {layout === 'grid' && tab !== 'reposts' ? <div className="profile-post-grid">{pagePosts.map((post) => <GridTile key={post.id} post={post} />)}</div> : <div className="profile-post-list">{pagePosts.map((post) => <PostCard key={post.id} post={post} onUpdated={replace} onDeleted={remove} />)}</div>}
-          {pages > 1 && <nav className="profile-pagination" aria-label={t("Halaman postingan")}><button disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)} aria-label={t("Halaman sebelumnya")}><ChevronLeft size={14} /></button>{Array.from({ length: pages }, (_, index) => <button key={index} className={currentPage === index + 1 ? 'active' : ''} onClick={() => setPage(index + 1)} aria-current={currentPage === index + 1 ? 'page' : undefined}>{index + 1}</button>)}<button disabled={currentPage === pages} onClick={() => setPage(currentPage + 1)} aria-label={t("Halaman berikutnya")}><ChevronRight size={14} /></button></nav>}
+          {hasMore && (
+            <div className="profile-pagination">
+              <button type="button" className="profile-load-more" onClick={() => setPage((p) => p + 1)}>
+                {t("Muat lebih banyak")} ({shownPosts.length - pagePosts.length})
+              </button>
+            </div>
+          )}
         </section>}
         {!user.profile_locked && !user.is_blocked_by_me && portfolios.length > 0 && <details className="profile-portfolio"><summary>{t("Karya unggulan (")}{portfolios.length})</summary>{portfolios.map((item) => <div key={item.id}><a href={/^https?:\/\//i.test(item.link_url || '') ? item.link_url : undefined} target="_blank" rel="noopener noreferrer">{item.title}</a>{isCurrentUser && <button aria-label={t("Hapus karya")} onClick={async () => { if (window.confirm('Hapus karya ini?')) { await userApi.deletePortfolio(item.id); setPortfolios((list) => list.filter((p) => p.id !== item.id)); } }}><Trash2 size={14} /></button>}</div>)}</details>}
       </div>

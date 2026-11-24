@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, Navigate, useSearchParams } from 'react-router-dom';
 import { Search, Image, Play, ShoppingBag, LayoutGrid, Users, Loader2 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
@@ -41,10 +41,10 @@ export default function SearchPage() {
     loadAll().catch(e => { if (active) setError(e.response?.data?.error || 'Pencarian gagal'); });
     return () => { active = false; };
   }, [query,retry]);
-  const posts = uniquePosts([...(results?.posts || []), ...(results?.products || [])]);
-  const filtered = filterResults(posts,{kind:kind==='users'?'all':kind,sort,period,location});
-  const locations = [...new Set(posts.map(post=>post.location).filter(Boolean))];
-  const tabs = [['all','Semua',LayoutGrid,posts.length],['image','Gambar',Image,posts.filter(p=>postKind(p)==='image').length],['video','Video',Play,posts.filter(p=>postKind(p)==='video').length],['shop','Shop',ShoppingBag,posts.filter(p=>postKind(p)==='shop').length],['users','Akun',Users,results?.users?.length || 0]];
+  const posts = useMemo(() => uniquePosts([...(results?.posts || []), ...(results?.products || [])]), [results?.posts, results?.products]);
+  const filtered = useMemo(() => filterResults(posts,{kind:kind==='users'?'all':kind,sort,period,location}), [posts, kind, sort, period, location]);
+  const locations = useMemo(() => [...new Set(posts.map(post=>post.location).filter(Boolean))], [posts]);
+  const tabs = useMemo(() => [['all','Semua',LayoutGrid,posts.length],['image','Gambar',Image,posts.filter(p=>postKind(p)==='image').length],['video','Video',Play,posts.filter(p=>postKind(p)==='video').length],['shop','Shop',ShoppingBag,posts.filter(p=>postKind(p)==='shop').length],['users','Akun',Users,results?.users?.length || 0]], [posts, results?.users?.length]);
   const update = post => setResults(current=>({...current,posts:(current.posts || []).map(p=>p.id===post.id?post:p),products:(current.products || []).map(p=>p.id===post.id?post:p)}));
   if (query.trim().toLowerCase() === 'shop') return <Navigate to="/shop" replace/>;
   return <AppLayout wide currentTab="search"><div className="reference-search">
