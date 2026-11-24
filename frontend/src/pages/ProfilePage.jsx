@@ -35,6 +35,7 @@ const ProfilePage = () => {
         setProfileUser(user);
         setLoadedKey(key);
         if (!user.profile_locked && !user.is_blocked_by_me) {
+          let allPosts = [];
           for (let offset = 0; offset <= 1000; offset += 50) {
             const batch = (await postApi.getFeed(50, offset, user.id, null, '', !authId)) || [];
             if (!active) return;

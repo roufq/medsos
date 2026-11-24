@@ -5,7 +5,7 @@ import './AppLayout.css';
 import './ReferenceLayout.css';
 import { postUrl } from '../../utils/postUrl';
 import { profileUrl } from '../../utils/profileUrl';
-import { ReactNode, useEffect, useRef, useState } from 'react';
+import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Phone, PhoneIncoming, PhoneOff, Video as VideoIcon } from 'lucide-react';
 import Header from './Header';
